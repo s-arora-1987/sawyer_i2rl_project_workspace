@@ -1,0 +1,7 @@
+[compileoptions]
+buildtype = EXECUTABLE
+out = bin
+outname = IrlD
+buildtool = $DEEBUILDER.COMPILEREXEPATH @build.rf
+extraOptions = -od$DEEBUILDER.OUTPUTPATH\n-of$DEEBUILDER.OUTPUTEXE\n-gc\n-noboundscheck\n$DEEBUILDER.SRCLIBS.-I\n-L/usr/local/lib/liblbfgs.a\n$DEEBUILDER.SRCFOLDERS.-I\n$DEEBUILDER.SRCMODULES
+

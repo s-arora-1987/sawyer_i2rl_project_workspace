@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package>
+  <name>irld</name>
+  <version>1.0.0</version>
+  <description>The irld package</description>
+
+  <maintainer email="kbogert@uga.edu">Kenneth Bogert</maintainer>
+
+
+  <license>BSD</license>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+
+</package>
