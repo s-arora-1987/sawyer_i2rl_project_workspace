@@ -23,8 +23,9 @@ int main() {
 	Model model;
 	//model = new sortingModel(0.05,null);
 	//model = new sortingModelbyPSuresh(0.05,null);
-	//model = new sortingModelbyPSuresh2(0.05,null);
-	model = new sortingModelbyPSuresh3(0.05,null);
+	model = new sortingModelbyPSuresh2(0.05,null);
+	//model = new sortingModelbyPSuresh3(0.05,null);
+	//model = new sortingModelbyPSuresh4(0.05,null);
 	//model = new sortingModel2(0.05,null);
 
 	//reward = new sortingReward2(model,dim); 
@@ -32,6 +33,7 @@ int main() {
 	//reward = new sortingReward4(model,dim); 
 	//reward = new sortingReward5(model,dim); 
 	reward = new sortingReward6(model,dim); 
+	//reward = new sortingReward7(model,dim); 
     reward_weights = new double[dim];
 	reward_weights[] = 0;
 

@@ -20,7 +20,7 @@ sortingModelbyPSuresh2,sortingModelbyPSuresh3
 
 from sortingMDP.reward import sortingReward2,\
 sortingReward3,sortingReward4,sortingReward5,\
-sortingReward6
+sortingReward6,sortingReward7
 
 from mdp.solvers import *
 import mdp.agent
@@ -306,15 +306,18 @@ if __name__ == "__main__":
 	# model = sortingModel(p_fail) 
 	# model = sortingModel2(p_fail) 
 	# model = sortingModelbyPSuresh(p_fail)
-	model = sortingModelbyPSuresh2(p_fail)
-	# model = sortingModelbyPSuresh3(p_fail)
+	# model = sortingModelbyPSuresh2(p_fail)
+	model = sortingModelbyPSuresh3(p_fail)
+
 	# print(sortingModelbyPSuresh._p_fail)
 	model.gamma = 0.99
 	# sortingReward = sortingReward2(8) 
 	# sortingReward = sortingReward3(10) 
 	# sortingReward = sortingReward4(10) 
 	# sortingReward = sortingReward5(8) 
-	sortingReward = sortingReward6(11) 
+	# sortingReward = sortingReward6(11) 
+	sortingReward = sortingReward7(11) 
+
 	reward_dim = sortingReward._dim
 	print("reward_dim ",reward_dim)
 
@@ -353,6 +356,7 @@ if __name__ == "__main__":
 	List_TrueWeights = []
 	# index 0 for pick-inspect-place 
 	params = params_pickinspectplace_reward6
+	# params = params_pip_reward7_psurmodel4
 	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
 	List_TrueWeights.append(norm_params)
 	# index 1 for stay-still 
@@ -363,13 +367,18 @@ if __name__ == "__main__":
 	params = params_rolling_reward6
 	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
 	List_TrueWeights.append(norm_params)
+	# index 3 for placeallonconvyor (specific to psuresh4 mdp model)
+	# params = params_placeallonconvyor_reward7_psurmodel4
+	# norm_params = [float(i)/sum(np.absolute(params)) for i in params]
+	# List_TrueWeights.append(norm_params)
 
 	#############################################################
 	# demonstration had two runs with one trajectory for each run 
-	true_assignments = [0,1,2]
+	true_assignments = [0,1,2s]
+	# true_assignments = [0,1,2,3]
 
 	# pick-inspect-place
-	params = List_TrueWeights[true_assignments[2]]
+	params = List_TrueWeights[true_assignments[0]]
 	# roll-pick-place
 	# params = List_TrueWeights[true_assignments[0]]
 	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
@@ -391,7 +400,7 @@ if __name__ == "__main__":
 	args = [get_home() + "/catkin_ws/devel/bin/solveSortingMDP", ]
 	p = subprocess.Popen(args, stdin	=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	stdin = str(norm_params) 
-	# print("input to solveSortingMDP ",stdin)
+	print("input to solveSortingMDP ",stdin)
 	(stdout, stderr) = p.communicate(stdin) 
 	# print("output to solveSortingMDP ",stdout)
 	policy = parse_sorting_policy(stdout) 
@@ -588,7 +597,7 @@ if __name__ == "__main__":
 	f_input_IRL.close()
 
 	# print(outtraj)
-	# exit(0)
+	exit(0)
 
 	(stdout, stderr) = p.communicate(outtraj)
 

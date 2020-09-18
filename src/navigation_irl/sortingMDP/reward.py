@@ -478,3 +478,88 @@ class sortingReward6(LinearReward):
                      result += '|{: 4.4f}|'.format(self.reward(s, a))
                 result += '\n\n'
         return result
+
+
+class sortingReward7(LinearReward):
+    '''
+    
+    '''
+    def __init__(self,dim):
+        super(sortingReward7,self).__init__()
+        self._dim = dim
+        
+    @property
+    def dim(self):
+        return self._dim
+    
+    def features(self, state, action):        
+        result = numpy.zeros( self._dim )
+        next_state = action.apply(state)
+
+        '''
+        Feature functions:
+
+        // good placed on belt
+        // not placing bad on belt
+        // not placing good in bin
+        // bad placed in bin
+        
+        '''
+        if next_state._prediction == 1 and next_state._onion_location == 4:
+            result[0] = 1
+        if next_state._prediction == 0 and next_state._onion_location != 4:
+            result[1] = 1
+        if next_state._prediction == 1 and next_state._onion_location != 2:
+            result[2] = 1
+        if next_state._prediction == 0 and next_state._onion_location == 2:
+            result[3] = 1
+
+        # not staying still
+        if not (state._onion_location == next_state._onion_location and\
+        state._prediction == next_state._prediction and\
+        state._EE_location == next_state._EE_location and\
+        state._listIDs_status == next_state._listIDs_status): 
+            result[4] = 1
+
+        # claim new onion from belt 
+        if (next_state._prediction == 2 and \
+        next_state._onion_location == 0): 
+            result[5] = 1 
+
+        # create list 
+        if state._listIDs_status == 0 and next_state._listIDs_status == 1: 
+            result[6] = 1 
+
+        # picking an onion with unknown prediction 
+        if state._onion_location == 0 and state._prediction == 2 \
+        and (next_state._prediction == 2 and next_state._EE_location == 3): 
+            result[7] = 1
+
+        # picking an onion with known pred - blemished  
+        if state._onion_location == 0 and state._prediction == 0 \
+        and (next_state._prediction == 0 and next_state._EE_location == 3): 
+            result[8] = 1
+
+        # empty list 
+        if state._listIDs_status == 1 and next_state._listIDs_status == 0: 
+            result[9] = 1 
+
+        # inspect picked onion 
+        if state._onion_location == 3 and state._prediction == 2 and\
+        next_state._prediction != 2: 
+            result[10] = 1 
+
+        return result
+    
+    def __str__(self):
+        return 'sortingReward7'
+        
+    def info(self, model = None):
+        result = 'sortingReward7:\n'
+        if model is not None:        
+            for a in self._actions:
+                result += str(a) + '\n'
+                for s in model.S():
+                     result += '|{: 4.4f}|'.format(self.reward(s, a))
+                result += '\n\n'
+        return result

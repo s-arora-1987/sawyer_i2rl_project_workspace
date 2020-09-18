@@ -195,10 +195,12 @@ int main() {
 					//models ~= new sortingModel2(0.05,null);
 					//models ~= new sortingModelbyPSuresh(0.05,null);
 					//models ~= new sortingModelbyPSuresh(0.05,null);
-					models ~= new sortingModelbyPSuresh2(0.05,null);
-					models ~= new sortingModelbyPSuresh2(0.05,null);
+					//models ~= new sortingModelbyPSuresh2(0.05,null);
+					//models ~= new sortingModelbyPSuresh2(0.05,null);
 					//models ~= new sortingModelbyPSuresh3(0.05,null);
 					//models ~= new sortingModelbyPSuresh3(0.05,null);
+					models ~= new sortingModelbyPSuresh4(0.05,null);
+					models ~= new sortingModelbyPSuresh4(0.05,null);
 				} else {
 					map = boydrightPatrollerMap();
 					models ~= new BoydModel(null, map, T[0], 1, &simplefeatures);
@@ -283,7 +285,8 @@ int main() {
 						//reward = new sortingReward4(models[i],dim); 
 						//reward = new sortingReward5(models[i],dim); 
 						dim = 11;
-						reward = new sortingReward6(models[i],dim); 
+						//reward = new sortingReward6(models[i],dim); 
+						reward = new sortingReward7(models[i],dim); 
 
 						reward_weights = new double[reward.dim()];
 						reward_weights[] = 0;
@@ -1653,6 +1656,8 @@ int main() {
                 }
                 writeln("\n EVD1:",avg_EVD1);
                 writeln("\n EVD2:",avg_EVD2);
+                writeln("\n learned weights",foundWeightsGlbl[0]);
+                writeln("\n learned weights",foundWeightsGlbl[1]);
 			}
 		}
 

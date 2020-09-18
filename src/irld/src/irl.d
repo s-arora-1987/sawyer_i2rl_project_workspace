@@ -1076,8 +1076,10 @@ class MaxEntIrlZiebartApprox : MaxEntIrlZiebartExact {
 		bool usePathLengthBounds = true, size_t moving_average_length = 5) {
 		  
 		usePathLengthBounds = false;
-	    nu = 0.01;
 	    //nu = 0.25;
+	    //nu = 0.01;
+	    nu = 0.0075;
+	    //nu = 0.005;
 		double diff;
 		double lastdiff = double.max;
 		err = 1;
