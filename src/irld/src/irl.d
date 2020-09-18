@@ -1077,9 +1077,11 @@ class MaxEntIrlZiebartApprox : MaxEntIrlZiebartExact {
 		  
 		usePathLengthBounds = false;
 	    //nu = 0.25;
+	    //nu = 0.2;
+	    //nu = 0.1;
 	    //nu = 0.01;
 	    nu = 0.0075;
-	    //nu = 0.005;
+	    //nu = 0.001;
 		double diff;
 		double lastdiff = double.max;
 		err = 1;

@@ -6,7 +6,7 @@ ClaimNextInList,sortingState,sortingModelbyPSuresh,\
 sortingModelbyPSuresh2,sortingModelbyPSuresh3 
 from reward import sortingReward1 
 from reward import sortingReward2,sortingReward4,\
-sortingReward6
+sortingReward6,sortingReward7
 import mdp.agent
 import util.classes
 import mdp.simulation
@@ -425,7 +425,8 @@ if __name__ == "__main__":
 
 	# sortingReward = sortingReward2(8) 
 	# sortingReward = sortingReward4(10) 
-	sortingReward = sortingReward6(11) 
+	# sortingReward = sortingReward6(11) 
+	sortingReward = sortingReward7(11) 
 
 	sortingMDP.reward_function = sortingReward 
 	sortingMDP.gamma = 0.99

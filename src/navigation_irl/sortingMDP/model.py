@@ -662,6 +662,129 @@ class sortingModelbyPSuresh3(sortingModel): # alllowed claim new onion in 0202
 
         return res
 
+class sortingModelbyPSuresh4(sortingModel): # alllowed claim new onion in 0202, placeinbin for good onion
+    
+    def __init__(self, p_fail=0.05, terminal=sortingState(-1,-1,-1,-1) ):
+        super(sortingModelbyPSuresh4,self).__init__(p_fail, terminal)
+
+        # print("__init__(self ", self._p_fail)
+        self._p_fail = self._p_fail
+
+        statesList = [[ 0, 2, 0, 0],\
+        [ 3, 2, 3, 0],\
+        [ 1, 0, 1, 2],\
+        [ 2, 2, 2, 2],\
+        [ 0, 2, 2, 2],\
+        [ 3, 2, 3, 2],\
+        [ 1, 1, 1, 2],\
+        [ 4, 2, 0, 2],\
+        [ 0, 0, 0, 1],\
+        [ 3, 0, 3, 1],\
+        [ 2, 2, 2, 1],\
+        [ 0, 0, 2, 1],\
+        [ 2, 2, 2, 0],\
+        [0, 2, 0, 2],\
+        [0, 2, 2, 0],\
+        [0,1,0,0],[0,1,1,0],[0,1,2,0],[0,1,3,0],[0,2,1,0],[0,2,3,0],\
+        [3,1,3,0],[0,0,1,1],[0,0,3,1],\
+        [0,2,1,2],[0,2,3,2]]
+
+        # rolling states start from [ 0, 0, 0, 1],\ and last two are needed 
+        # for completing value iteration
+
+        result2 = []
+        for ls in statesList:
+            ol,pr,el,le = ls[0], ls[1], ls[2], ls[3]
+            result2.append( sortingState(ol,pr,el,le) )
+
+        # onion_locations = [0,1,2,3,4]
+        # predictions = [0,1,2] 
+        # EE_locations = [0,1,2,3]
+        # listIDs_status_opts = [0,1,2]
+
+        # for ol in onion_locations:
+        #     for pr in predictions:
+        #         for el in EE_locations:
+        #             for le in listIDs_status_opts:
+        #                 # invalid if onion infront/ athome and EE loc not same
+        #                 if (ol == 1 and el != 1) or \
+        #                 (ol == 3 and el != 3) or\
+        #                 (ol == 2 and el != 2): # (ol == 4 and el != 0)
+        #                     pass
+        #                 else:
+        #                     result2.append( sortingState(ol,pr,el,le) )
+        
+        self._states = result2
+        print("number of states in mdp ",len(self._states))
+
+
+    def A(self,state=None):
+        ''' {0: 'InspectAfterPicking', 1: 'PlaceOnConveyor', 
+        2: 'PlaceInBin', 3: 'Pick', 
+        4: 'ClaimNewOnion', 5: 'InspectWithoutPicking', 
+        6: 'ClaimNextInList'}'''
+
+        res = []
+        if state._onion_location == 0: 
+            # on conveyor (not picked yet) 
+            if state._listIDs_status == 2: 
+                res = [Pick(),ClaimNewOnion()] 
+            elif state._listIDs_status == 0:  
+                # res = [InspectWithoutPicking()]
+                res = [InspectWithoutPicking(), Pick(), ClaimNewOnion()]
+            else:
+                # list not empty
+                if state._prediction == 2:
+                    res = [ClaimNextInList()]
+                else:
+                    res = [Pick()]
+
+        elif state._onion_location == 1:
+            ##
+            # if result of inspection is good, then placeinbin is not allowed 
+            # if result of inspection is bad, then placeonconveyor is not allowed 
+            ##
+            if (state._listIDs_status == 2) :
+                if state._prediction == 0:
+                    res = [PlaceInBin()] #,PlaceOnConveyor()]
+                elif state._prediction == 1:
+                    res = [PlaceOnConveyor(),PlaceInBin()]
+                else: 
+                    res = [InspectAfterPicking()]
+            else :
+                if state._prediction == 0:
+                    res = [PlaceInBin()]
+                elif state._prediction == 1:
+                    res = [PlaceOnConveyor()]
+                else: 
+                    res = [InspectAfterPicking()]
+
+        elif state._onion_location == 2:
+            if state._listIDs_status == 2: 
+                res = [ClaimNewOnion()] 
+            elif state._listIDs_status == 0:  
+                res = [InspectWithoutPicking()]
+            else:
+                res = [ClaimNextInList()]
+
+        elif state._onion_location == 3:
+            if state._prediction == 2: 
+                res = [InspectAfterPicking()] 
+            elif state._prediction == 0: 
+                res = [PlaceInBin()] 
+            else: 
+                res = [PlaceOnConveyor()] 
+
+        else: # onion placed
+            if state._listIDs_status == 2: 
+                res = [ClaimNewOnion()] 
+            elif state._listIDs_status == 0: 
+                res = [InspectWithoutPicking()] 
+            else: 
+                res = [ClaimNextInList()] 
+
+        return res
+
 class sortingModel2(sortingModel):
     
     def __init__(self, p_fail=0.05, terminal=sortingState(-1,-1,-1) ):

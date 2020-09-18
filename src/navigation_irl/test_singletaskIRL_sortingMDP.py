@@ -16,7 +16,7 @@ PlaceOnConveyor,PlaceInBin,Pick,ClaimNewOnion,InspectWithoutPicking,\
 ClaimNextInList,sortingState 
 from sortingMDP.model import sortingModel2,\
 PlaceInBinClaimNextInList,sortingModelbyPSuresh,\
-sortingModelbyPSuresh2,sortingModelbyPSuresh3
+sortingModelbyPSuresh2,sortingModelbyPSuresh3,sortingModelbyPSuresh4
 
 from sortingMDP.reward import sortingReward2,\
 sortingReward3,sortingReward4,sortingReward5,\
@@ -306,8 +306,9 @@ if __name__ == "__main__":
 	# model = sortingModel(p_fail) 
 	# model = sortingModel2(p_fail) 
 	# model = sortingModelbyPSuresh(p_fail)
-	# model = sortingModelbyPSuresh2(p_fail)
-	model = sortingModelbyPSuresh3(p_fail)
+	model = sortingModelbyPSuresh2(p_fail)
+	# model = sortingModelbyPSuresh3(p_fail)
+	# model = sortingModelbyPSuresh4(p_fail)
 
 	# print(sortingModelbyPSuresh._p_fail)
 	model.gamma = 0.99
@@ -356,6 +357,9 @@ if __name__ == "__main__":
 	List_TrueWeights = []
 	# index 0 for pick-inspect-place 
 	params = params_pickinspectplace_reward6
+	# for psuresh4 model
+	# params_pickinspectplace_reward7_psurmodel4 = [0,7,0,9,0.2,1,0,4,0,0,4]
+	# params = params_pickinspectplace_reward7_psurmodel4
 	# params = params_pip_reward7_psurmodel4
 	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
 	List_TrueWeights.append(norm_params)
@@ -368,19 +372,25 @@ if __name__ == "__main__":
 	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
 	List_TrueWeights.append(norm_params)
 	# index 3 for placeallonconvyor (specific to psuresh4 mdp model)
-	# params = params_placeallonconvyor_reward7_psurmodel4
-	# norm_params = [float(i)/sum(np.absolute(params)) for i in params]
-	# List_TrueWeights.append(norm_params)
+	params_placeallonconvyor_reward7_psurmodel4 = [2,0,2,0,0.2,1,0,4,0,0,4]
+	params = params_placeallonconvyor_reward7_psurmodel4
+	# index 3 for placeallinbin (specific to psuresh4 mdp model)
+	# params_placeallinbin_reward7_psurmodel4 = [-5,1,0,1,0.2,1,0,4,0,0,4]
+	# params = params_placeallinbin_reward7_psurmodel4
+	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
+	List_TrueWeights.append(norm_params)
 
 	#############################################################
 	# demonstration had two runs with one trajectory for each run 
-	true_assignments = [0,1,2s]
-	# true_assignments = [0,1,2,3]
+	# true_assignments = [0,1,2]
+	true_assignments = [0,1,2,3]
 
 	# pick-inspect-place
-	params = List_TrueWeights[true_assignments[0]]
+	# params = List_TrueWeights[true_assignments[0]]
 	# roll-pick-place
 	# params = List_TrueWeights[true_assignments[0]]
+
+	params = List_TrueWeights[true_assignments[2]]
 	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
 
 	initial = util.classes.NumMap()
@@ -411,10 +421,10 @@ if __name__ == "__main__":
 	n_samples = 2
 
 	# for each of two runs of irl, t_max will be divided into length_subtrajectory long trajs
-	# t_max = 200
+	t_max = 200
 	# t_max = 300
 	# t_max = 400
-	t_max = 2500
+	# t_max = 2500
 	length_subtrajectory = 50
 	traj = [[], []]
 
@@ -597,7 +607,7 @@ if __name__ == "__main__":
 	f_input_IRL.close()
 
 	# print(outtraj)
-	exit(0)
+	# exit(0)
 
 	(stdout, stderr) = p.communicate(outtraj)
 

@@ -195,12 +195,12 @@ int main() {
 					//models ~= new sortingModel2(0.05,null);
 					//models ~= new sortingModelbyPSuresh(0.05,null);
 					//models ~= new sortingModelbyPSuresh(0.05,null);
-					//models ~= new sortingModelbyPSuresh2(0.05,null);
-					//models ~= new sortingModelbyPSuresh2(0.05,null);
+					models ~= new sortingModelbyPSuresh2(0.05,null);
+					models ~= new sortingModelbyPSuresh2(0.05,null);
 					//models ~= new sortingModelbyPSuresh3(0.05,null);
 					//models ~= new sortingModelbyPSuresh3(0.05,null);
-					models ~= new sortingModelbyPSuresh4(0.05,null);
-					models ~= new sortingModelbyPSuresh4(0.05,null);
+					//models ~= new sortingModelbyPSuresh4(0.05,null);
+					//models ~= new sortingModelbyPSuresh4(0.05,null);
 				} else {
 					map = boydrightPatrollerMap();
 					models ~= new BoydModel(null, map, T[0], 1, &simplefeatures);

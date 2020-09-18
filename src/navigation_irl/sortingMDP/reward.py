@@ -505,13 +505,13 @@ class sortingReward7(LinearReward):
         // bad placed in bin
         
         '''
-        if next_state._prediction == 1 and next_state._onion_location == 4:
+        if state._prediction == 1 and next_state._onion_location == 4:
             result[0] = 1
-        if next_state._prediction == 0 and next_state._onion_location != 4:
+        if state._prediction == 0 and next_state._onion_location != 4:
             result[1] = 1
-        if next_state._prediction == 1 and next_state._onion_location != 2:
+        if state._prediction == 1 and next_state._onion_location != 2:
             result[2] = 1
-        if next_state._prediction == 0 and next_state._onion_location == 2:
+        if state._prediction == 0 and next_state._onion_location == 2:
             result[3] = 1
 
         # not staying still

@@ -1741,7 +1741,7 @@ class sortingReward6 : LinearReward {
 }
 
 
-class sortingReward7 : LinearReward {
+class sortingReward7 : LinearReward { // corrected phi[0,1,2,3,5]
 	
 	Model model;
 	int _dim;
@@ -1765,16 +1765,16 @@ class sortingReward7 : LinearReward {
 		result[] = 0;
 
 		// good placed on belt
-        if (next_state._prediction == 1 && next_state._onion_location == 4) result[0] = 1;
+        if (state._prediction == 1 && next_state._onion_location == 4) result[0] = 1;
 
 		// not placing bad on belt
-        if (next_state._prediction == 0 && next_state._onion_location != 4) result[1] = 1;
+        if (state._prediction == 0 && next_state._onion_location != 4) result[1] = 1;
 
 		// not placing good in bin
-        if (next_state._prediction == 1 && next_state._onion_location != 2) result[2] = 1;
+        if (state._prediction == 1 && next_state._onion_location != 2) result[2] = 1;
 
 		// bad placed in bin
-        if (next_state._prediction == 0 && next_state._onion_location == 2) result[3] = 1;
+        if (state._prediction == 0 && next_state._onion_location == 2) result[3] = 1;
 
         // not staying still
         if (!( state._onion_location == next_state._onion_location &&

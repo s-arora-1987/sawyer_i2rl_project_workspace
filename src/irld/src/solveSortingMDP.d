@@ -32,8 +32,9 @@ int main() {
 	//reward = new sortingReward3(model,dim); 
 	//reward = new sortingReward4(model,dim); 
 	//reward = new sortingReward5(model,dim); 
-	reward = new sortingReward6(model,dim); 
-	//reward = new sortingReward7(model,dim); 
+	//reward = new sortingReward6(model,dim); 
+	reward = new sortingReward7(model,dim); 
+	
     reward_weights = new double[dim];
 	reward_weights[] = 0;
 

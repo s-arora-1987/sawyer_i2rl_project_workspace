@@ -733,7 +733,7 @@ class NonParamMTIRL : MaxEntIrlZiebartApprox {
         bool usePathLengthBounds = true, size_t moving_average_length = 5) {
           
         usePathLengthBounds = false;
-        nu = 0.01;
+        nu = 0.0075;
         //nu = 0.1;
         double diff;
         double lastdiff = double.max;
@@ -1193,7 +1193,8 @@ int main() {
         //reward = new sortingReward4(model, dim); 
 
         dim = 11;
-        reward = new sortingReward6(model,dim); 
+        //reward = new sortingReward6(model,dim); 
+        reward = new sortingReward7(model,dim); 
 
     } else {
         byte[][] map;
