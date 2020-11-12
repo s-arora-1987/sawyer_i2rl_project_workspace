@@ -195,12 +195,17 @@ int main() {
 					//models ~= new sortingModel2(0.05,null);
 					//models ~= new sortingModelbyPSuresh(0.05,null);
 					//models ~= new sortingModelbyPSuresh(0.05,null);
-					models ~= new sortingModelbyPSuresh2(0.05,null);
-					models ~= new sortingModelbyPSuresh2(0.05,null);
+					//models ~= new sortingModelbyPSuresh2(0.05,null);
+					//models ~= new sortingModelbyPSuresh2(0.05,null);
 					//models ~= new sortingModelbyPSuresh3(0.05,null);
 					//models ~= new sortingModelbyPSuresh3(0.05,null);
 					//models ~= new sortingModelbyPSuresh4(0.05,null);
 					//models ~= new sortingModelbyPSuresh4(0.05,null);
+					//models ~= new sortingModelbyPSuresh2WOPlaced(0.05,null);
+					//models ~= new sortingModelbyPSuresh2WOPlaced(0.05,null);
+					models ~= new sortingModelbyPSuresh3multipleInit(0.05,null);
+					models ~= new sortingModelbyPSuresh3multipleInit(0.05,null);
+					
 				} else {
 					map = boydrightPatrollerMap();
 					models ~= new BoydModel(null, map, T[0], 1, &simplefeatures);
@@ -286,6 +291,7 @@ int main() {
 						//reward = new sortingReward5(models[i],dim); 
 						dim = 11;
 						//reward = new sortingReward6(models[i],dim); 
+						//reward = new sortingReward7WPlaced(models[i],dim); 
 						reward = new sortingReward7(models[i],dim); 
 
 						reward_weights = new double[reward.dim()];
@@ -895,8 +901,10 @@ int main() {
 						}
 
 						t = (t + 1) % length_subtrajectory;
-						//writeln()
+						//writeln(trajectories[agent_num]);
 					}
+					trajectories[agent_num].length -= 1;
+					//writeln(trajectories[agent_num]);
 					traj_lengths ~= length_subtrajectory;
 				} else {
 					// convert from array of trajectories to array of singleton arrays with one trajectory
@@ -967,7 +975,8 @@ int main() {
 			writeln("calling MaxEntIrlZiebartApprox.solve");
 			policy1 = irl1.solve(models[0], initials[0], trajectories[0], max_sample_length, 
 				lastWeights1, val1, foundWeights1, featureExpecExpert[0], num_Trajsofar, 
-				Ephi_thresh, gradient_descent_step_size, descent_duration_thresh_secs); 
+				Ephi_thresh, gradient_descent_step_size, descent_duration_thresh_secs,
+				trueWeights); 
 
 			//reward_weights =[0.15, 0.0, -0.1, 0.2, -0.1, 0.0, 0.3, -0.15];
 			//reward.setParams(reward_weights);
@@ -980,7 +989,8 @@ int main() {
 				nSamplesTrajSpace, grad_descent_threshold, VI_threshold);
 			policy2 = irl2.solve(models[1], initials[1], trajectories[1], max_sample_length,
 				lastWeights2, val2, foundWeights2, featureExpecExpert[1], num_Trajsofar, 
-				Ephi_thresh, gradient_descent_step_size, descent_duration_thresh_secs); 
+				Ephi_thresh, gradient_descent_step_size, descent_duration_thresh_secs,
+				trueWeights); 
 
 			//reward_weights =[ 0.10, 0.0, 0.0, 0.22, -0.12, 0.44, 0.0, -0.12];
 			//reward.setParams(reward_weights);

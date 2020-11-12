@@ -16,11 +16,13 @@ PlaceOnConveyor,PlaceInBin,Pick,ClaimNewOnion,InspectWithoutPicking,\
 ClaimNextInList,sortingState 
 from sortingMDP.model import sortingModel2,\
 PlaceInBinClaimNextInList,sortingModelbyPSuresh,\
-sortingModelbyPSuresh2,sortingModelbyPSuresh3,sortingModelbyPSuresh4
+sortingModelbyPSuresh2,sortingModelbyPSuresh3,\
+sortingModelbyPSuresh4,sortingModelbyPSuresh2WOPlaced,\
+sortingModelbyPSuresh3multipleInit
 
 from sortingMDP.reward import sortingReward2,\
 sortingReward3,sortingReward4,sortingReward5,\
-sortingReward6,sortingReward7
+sortingReward6,sortingReward7,sortingReward7WPlaced
 
 from mdp.solvers import *
 import mdp.agent
@@ -292,6 +294,78 @@ def parsePolicies(stdout, equilibrium, lineFoundWeights, lineFeatureExpec, \
 		sessionFinish, wt_data, normedRelDiff, lastQ, lineFeatureExpecfull)
 
 
+def computeLBA(fileTruePolicy,model,mapAgentLrndPolicy):
+	# read and compare policies using dictionaries 
+	f = open(fileTruePolicy,"r")
+	truePol = {}
+	for stateaction in f:
+		temp = stateaction.strip().split(" = ")
+		if len(temp) < 2: continue
+		state = temp[0]
+		action = temp[1]
+		state = state[1 : len(state) - 1]
+		pieces = state.split(",")	
+		
+		ss = (int(pieces[0]), int(pieces[1]), int(pieces[2]), int(pieces[3]))
+
+		if action == "InspectAfterPicking":
+			act = InspectAfterPicking()
+		elif action == "InspectWithoutPicking":
+			act = InspectWithoutPicking()
+		elif action == "Pick":
+			act = Pick()
+		elif action == "PlaceOnConveyor":
+			act = PlaceOnConveyor()
+		elif action == "PlaceInBin":
+			act = PlaceInBin()
+		elif action == "ClaimNewOnion":
+			act = ClaimNewOnion()
+		elif action == "ClaimNextInList":
+			act = ClaimNextInList()
+		elif action == "Pickpip":
+			act = Pickpip()
+		elif action == "PlaceInBinpip":
+			act = PlaceInBinpip()
+		else:
+			print("Invalid input policy to parse_sorting_policy")
+			exit(0)
+		
+		truePol[ss] = act
+	
+	# print("number of keys for truePolicy ", len(truePol))
+	# print("number of keys in leaerned policy ",len(mapAgentLrndPolicy._policy))
+	# print("number of states in model ",len(model.S()))
+
+	f.close()
+
+	totalsuccess = 0
+	totalstates = 0
+	if (mapAgentLrndPolicy.__class__.__name__ == "MapAgent"):
+		for s in model.S():
+			if s in mapAgentLrndPolicy._policy:# check key existence 
+				# print("number of actions in current state in learned policy",len(mapAgentLrndPolicy.actions(state).keys()))
+				action = mapAgentLrndPolicy.actions(s).keys()[0]
+				# action_name = action.__class__.__name__
+				# print("action_name ",action_name)
+				ss2 = (int(s._onion_location),int(s._prediction),\
+					int(s._EE_location),int(s._listIDs_status))
+
+				if ss2 in truePol.keys():
+					totalstates += 1
+					if (truePol[ss2] == action):
+						# print("found a matching action")
+						totalsuccess += 1
+					# else:
+					# 	print("for state {},  action {} neq action {} ".format(ss2,action,truePol[ss2]))
+
+	print("totalstates, totalsuccess: "+str(totalstates)+", "+str(totalsuccess))
+	if float(totalstates) == 0: 
+		print("Error: states in two policies are different")
+		return 0
+	lba=float(totalsuccess) / float(totalstates)
+
+	return lba
+
 
 ##############################################################
 ###############################################################
@@ -306,17 +380,21 @@ if __name__ == "__main__":
 	# model = sortingModel(p_fail) 
 	# model = sortingModel2(p_fail) 
 	# model = sortingModelbyPSuresh(p_fail)
-	model = sortingModelbyPSuresh2(p_fail)
-	# model = sortingModelbyPSuresh3(p_fail)
-	# model = sortingModelbyPSuresh4(p_fail)
+	# model = sortingModelbyPSuresh2(p_fail)
+	# model = sortingModelbyPSuresh3(p_fail) 
+	# model = sortingModelbyPSuresh4(p_fail) 
+	model = sortingModelbyPSuresh2WOPlaced(p_fail)
+	# model = sortingModelbyPSuresh3multipleInit(p_fail) 
 
-	# print(sortingModelbyPSuresh._p_fail)
+	# print(sortingModelbyPSuresh._p_fail) 
+
 	model.gamma = 0.99
 	# sortingReward = sortingReward2(8) 
 	# sortingReward = sortingReward3(10) 
 	# sortingReward = sortingReward4(10) 
 	# sortingReward = sortingReward5(8) 
 	# sortingReward = sortingReward6(11) 
+	# sortingReward = sortingReward7WPlaced(11) 
 	sortingReward = sortingReward7(11) 
 
 	reward_dim = sortingReward._dim
@@ -349,6 +427,7 @@ if __name__ == "__main__":
 	params_rolling_reward6 =[0,4,0,4,0.2,0,8,0,8,4,0]
 	params_pickinspectplace_reward6 =[2,1,2,1,0.2,1,0,4,0,0,4]
 	params_staystill_reward6 = [ 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  0.0, 0.0, 0.0] 
+	params_pickinspectplace_reward7woplacedmixedinit =[2,1,2,1,0.2,0.1,0,4,0,0,4]
 
 	#############################################################
 	# Needed for synchornizing BIRL input data
@@ -356,11 +435,12 @@ if __name__ == "__main__":
 
 	List_TrueWeights = []
 	# index 0 for pick-inspect-place 
-	params = params_pickinspectplace_reward6
+	# params = params_pickinspectplace_reward6
 	# for psuresh4 model
 	# params_pickinspectplace_reward7_psurmodel4 = [0,7,0,9,0.2,1,0,4,0,0,4]
 	# params = params_pickinspectplace_reward7_psurmodel4
 	# params = params_pip_reward7_psurmodel4
+	params = params_pickinspectplace_reward7woplacedmixedinit
 	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
 	List_TrueWeights.append(norm_params)
 	# index 1 for stay-still 
@@ -382,24 +462,34 @@ if __name__ == "__main__":
 
 	#############################################################
 	# demonstration had two runs with one trajectory for each run 
-	# true_assignments = [0,1,2]
-	true_assignments = [0,1,2,3]
+	true_assignments = [0,1,2]
+	# true_assignments = [0,1,2,3]
 
 	# pick-inspect-place
 	# params = List_TrueWeights[true_assignments[0]]
-	# roll-pick-place
+	# roll-pick-place kwAYGSH963e 
 	# params = List_TrueWeights[true_assignments[0]]
 
-	params = List_TrueWeights[true_assignments[2]]
+	params = List_TrueWeights[true_assignments[0]]
+
 	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
 
 	initial = util.classes.NumMap()
-	# ALWAYS START FROm  0,2,0,2
-	# pick-inspect-place
+	
+	# ALWAYS START FROM 0,2,0,2 
+	# pick-inspect-place 
 	# s = sortingState(0,2,0,2)	
-	# roll-pick-place
-	s = sortingState(0,2,0,0)	
-	initial[s] = 1.0
+	# roll-pick-place 
+	# s = sortingState(0,2,0,0)	
+	# initial[s] = 1.0 
+
+	# for multiple starting states 
+	count = 0
+	for s in model.S(): 
+		if s._onion_location == 0 and s._prediction == 2 and s._listIDs_status == 0: 
+			initial[s] = 1.0
+			count+=1
+	print("number of initial states ", count)
 	initial = initial.normalize()
 
 	#############################################################
@@ -421,11 +511,22 @@ if __name__ == "__main__":
 	n_samples = 2
 
 	# for each of two runs of irl, t_max will be divided into length_subtrajectory long trajs
-	t_max = 200
+	# t_max = 200
 	# t_max = 300
 	# t_max = 400
 	# t_max = 2500
 	length_subtrajectory = 50
+	# length_subtrajectory = 2
+	# length_subtrajectory = 4
+	# length_subtrajectory = 8
+	# length_subtrajectory = 10
+	# length_subtrajectory = 15
+	# length_subtrajectory = 25
+	# length_subtrajectory = 50
+
+	# t_max = length_subtrajectory*1
+	t_max = length_subtrajectory*4
+
 	traj = [[], []]
 
 	print( "demonstration")
@@ -454,6 +555,7 @@ if __name__ == "__main__":
 	for s in dummy_states:
 		ind = ind +1
 		dict_stateEnum[ind] = s
+	print("dict_stateEnum \n",dict_stateEnum)
 
 	acts = [InspectAfterPicking(),PlaceOnConveyor(),PlaceInBin(),\
 	Pick(),ClaimNewOnion(),InspectWithoutPicking(),ClaimNextInList()] 
@@ -613,6 +715,7 @@ if __name__ == "__main__":
 
 	print("output of boydirl ")
 	print(stdout)
+	exit(0)
 
 	p.stdin.close()
 	p.stdout.close()

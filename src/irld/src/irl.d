@@ -5,6 +5,8 @@ import std.stdio;
 import std.random;
 import std.numeric;
 import std.datetime;
+import core.stdc.stdlib : exit;
+
 
 alias extern(C) double function(void *, const double *, double *, const int, const double) evaluate_callback;
 alias extern(C) int function(void *, const double *, const double *, const double, const double, const double, const double, int, int, int) progress_callback;
@@ -743,7 +745,7 @@ class MaxEntIrlZiebartApprox : MaxEntIrlZiebartExact {
 	public Agent solve(Model model, double[State] initial, sar[][] true_samples,
 	size_t sample_length, double [] init_weights, out double opt_value, 
 	out double [] opt_weights, ref double [] featureExpecExpert, int num_Trajsofar,
-	double Ephi_thresh, double step_size, int descent_dur_thresh_secs) {
+	double Ephi_thresh, double step_size, int descent_dur_thresh_secs, double [] trueWeights) {
 
         this.model = model;
         this.initial = initial;
@@ -772,7 +774,7 @@ class MaxEntIrlZiebartApprox : MaxEntIrlZiebartExact {
 
         feature_expectations_per_trajectory = calc_feature_expectations_per_trajectory(model, true_samples);
         debug {
-        	//writeln("FE's ", feature_expectations_per_trajectory);
+        	writeln("FE's ", feature_expectations_per_trajectory);
         }	
 
         mu_E[] = 0;        
@@ -782,6 +784,7 @@ class MaxEntIrlZiebartApprox : MaxEntIrlZiebartExact {
         }        
         debug {
         	writeln("mu_E: ", mu_E);
+        	//exit(0);
         }
     	//writeln("mu_E: ", mu_E);
         //computing new target mu_E specific to current iteration
@@ -791,6 +794,7 @@ class MaxEntIrlZiebartApprox : MaxEntIrlZiebartExact {
         debug {
         	writeln("mu_E after update: ", mu_E);
         }
+
         
         opt_value=-double.max;
         double opt_value_grad_val = double.max;
@@ -805,7 +809,7 @@ class MaxEntIrlZiebartApprox : MaxEntIrlZiebartExact {
 	        //	error, max_sample_length,Ephi_thresh, grad_val, descent_dur_thresh_secs);
 
 	        temp_opt_weights = singleTaskUnconstrainedAdaptiveExponentiatedStochasticGradientDescent(temp_opt_weights.dup, 0.25, 
-	        	error, max_sample_length, Ephi_thresh, true, 1);
+	        	error, max_sample_length, Ephi_thresh, trueWeights, true, 1);
 
 			//double [] singleTaskUnconstrainedAdaptiveExponentiatedStochasticGradientDescent(double [] w,
 			//	double nu, double err, size_t max_iter, double Ephi_thresh,
@@ -1070,9 +1074,38 @@ class MaxEntIrlZiebartApprox : MaxEntIrlZiebartExact {
 		return w;
 	}
 
+    double computeLBA(MapAgent agent1, MapAgent agent2) {
+        double totalsuccess = 0.0;
+        double totalstates = 0.0;
+        // Mapagent is a deterministic policy by definition
+        foreach (s; this.model.S()) {
+            if (s in agent1.getPolicy()) {
+                // check key existence 
+                //writeln("number of actions in current state in learned policy",(agent1.policy[s]))
+
+                Action action = agent1.sample(s);
+
+                if (s in agent2.getPolicy()) {
+                    totalstates += 1;
+                    if (agent2.sample(s) == action) {
+                        //writeln("found a matching action");
+                        totalsuccess += 1;
+                    } //else writeln("for state {},  action {} neq action {} ".format(ss2,action,truePol[ss2]));                    
+                } else writeln("state ",s," not found in agent2");
+            } else writeln("state ",s," not found in agent1");
+        }
+
+        //print("totalstates, totalsuccess: "+str(totalstates)+", "+str(totalsuccess))
+        if (totalstates == 0.0) {
+            writeln("Error: states in two policies are different");
+            return 0;
+        }
+        double lba = (totalsuccess) / (totalstates);
+        return lba;
+    }
 
 	double [] singleTaskUnconstrainedAdaptiveExponentiatedStochasticGradientDescent(double [] w,
-		double nu, double err, size_t max_iter, double Ephi_thresh,
+		double nu, double err, size_t max_iter, double Ephi_thresh, double [] trueWeights,
 		bool usePathLengthBounds = true, size_t moving_average_length = 5) {
 		  
 		usePathLengthBounds = false;
@@ -1112,6 +1145,9 @@ class MaxEntIrlZiebartApprox : MaxEntIrlZiebartExact {
 	    double err_diff = double.infinity;
 
 	    writeln("starting singleTaskUnconstrainedAdaptiveExponentiatedStochasticGradientDescent");
+		LinearReward r = cast(LinearReward)this.model.getReward();
+        r.setParams(trueWeights);		
+		Agent truePolicy = this.solver.createPolicy(this.model, this.solver.solve(this.model, this.solverError));
 
 	    //while (iterations < max_iter && (err_diff > err || iterations < moving_average_length)) {
 
@@ -1151,9 +1187,12 @@ class MaxEntIrlZiebartApprox : MaxEntIrlZiebartExact {
 			diff = l1norm(z_t);
 
 			debug {
-				writeln("learned weights ",actual_weights);
-				writeln(" (lhs - rhs) of constraint: ", (z_t));
+				//writeln("learned weights ",actual_weights);
+				//writeln(" (lhs - rhs) of constraint: ", (z_t));
 				writeln("normed (lhs - rhs) of constraint: ", l1norm(z_t));
+		        r.setParams(actual_weights);		
+				Agent learnedPolicy = this.solver.createPolicy(this.model, this.solver.solve(this.model, this.solverError));
+				writeln("lba w.r.t trueWeights ",this.computeLBA(cast(MapAgent)learnedPolicy,cast(MapAgent)truePolicy));
 			}
 	            
 	        if (usePathLengthBounds) {

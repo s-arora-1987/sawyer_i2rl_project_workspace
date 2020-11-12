@@ -4,7 +4,7 @@ cd ~/catkin_ws
 source devel/setup.bash
 
 N=3
-multiple=3
+multiple=1
 TRIALS=$((multiple * N))
 j=1
 

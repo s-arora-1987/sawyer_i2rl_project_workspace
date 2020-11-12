@@ -399,7 +399,205 @@ class sortingModelbyPSuresh2 : sortingModel {
 	}
 }
 
+
+class sortingModelbyPSuresh2WOPlaced : sortingModel { 
+
+	public this(double p_fail, State terminal) {
+		super(p_fail, terminal);
+
+        int [][] statesList = [[ 0, 2, 0, 0],
+        [ 3, 2, 3, 0],
+        [ 1, 0, 1, 2],
+        [ 2, 2, 2, 2],
+        [ 0, 2, 2, 2],
+        [ 3, 2, 3, 2],
+        [ 1, 1, 1, 2],
+        [ 0, 0, 0, 1],
+        [ 3, 0, 3, 1],
+        [ 2, 2, 2, 1],
+        [ 0, 0, 2, 1],
+        [ 2, 2, 2, 0],
+        [0, 2, 0, 2],
+        [0, 2, 2, 0],
+        [0,1,0,0],[0,1,1,0],[0,1,2,0],[0,1,3,0],[0,2,1,0],[0,2,3,0],
+        [3,1,3,0],[0,0,1,1],[0,0,3,1] //,
+        //[0,0,0,0],[0,0,1,0],[0,0,2,0],[0,0,3,0],
+        //[3,0,3,0]
+        ];
+
+        writeln("created statesList");
+
+		sortingState [] states2;
+		foreach(ls; statesList){
+
+			states2 ~= new sortingState(ls);
+		}
+        writeln("created states ");
+
+		this.states = states2;
+		
+	}
+
+	public override Action[] A(State st = null) {
+
+		if (st is null) { 
+			return [new InspectAfterPicking(),new PlaceOnConveyor(),
+			new PlaceInBin(),
+			new Pick(),new ClaimNewOnion(),
+			new InspectWithoutPicking(),
+			new ClaimNextInList()];
+		}
+
+		sortingState state = cast(sortingState)st;
+
+		if (state._onion_location == 0 ) {
+			if (state._listIDs_status == 2) {
+				return [new Pick()]; 
+			} else if (state._listIDs_status == 0) {
+				//return [new InspectWithoutPicking()]; 
+				return [new InspectWithoutPicking(),new Pick()]; 
+			} else {
+				if ( state._prediction == 2) {
+					return [new ClaimNextInList()]; 
+				} else {
+					return [new Pick()]; 
+				}
+			}
+		} else if (state._onion_location == 1 ) {
+			if (state._prediction == 0) {
+				return [new PlaceInBin()]; 
+			} else if (state._prediction == 1) {
+				return [new PlaceOnConveyor()]; 
+			} else {
+				return [new InspectAfterPicking()];
+			}
+		} else if (state._onion_location == 2 ) {
+			if (state._listIDs_status == 2) {
+				return [new ClaimNewOnion()]; 
+			} else if (state._listIDs_status == 0) {
+				return [new InspectWithoutPicking()]; 
+			} else {
+				return [new ClaimNextInList()]; 
+			}
+		} else if (state._onion_location == 3 ) {
+			if (state._prediction == 2) {
+				return [new InspectAfterPicking()]; 
+			} else if (state._prediction == 0) {
+				return [new PlaceInBin()]; 
+			} else {
+				return [new PlaceOnConveyor()]; 
+			}
+		} else {
+			if (state._listIDs_status == 2) {
+				return [new ClaimNewOnion()]; 
+			} else if (state._listIDs_status == 0) {
+				return [new InspectWithoutPicking()]; 
+			} else {
+				return [new ClaimNextInList()]; 
+			}
+		}
+	}
+}
+
 class sortingModelbyPSuresh3 : sortingModel { 
+
+	public this(double p_fail, State terminal) {
+		super(p_fail, terminal);
+
+        int [][] statesList = [[ 0, 2, 0, 0],
+        [ 3, 2, 3, 0],
+        [ 1, 0, 1, 2],
+        [ 2, 2, 2, 2],
+        [ 0, 2, 2, 2],
+        [ 3, 2, 3, 2],
+        [ 1, 1, 1, 2],
+        [ 4, 2, 0, 2],
+        [ 0, 0, 0, 1],
+        [ 3, 0, 3, 1],
+        [ 2, 2, 2, 1],
+        [ 0, 0, 2, 1],
+        [ 2, 2, 2, 0],
+        [0, 2, 0, 2],
+        [0, 2, 2, 0],
+        [0,1,0,0],[0,1,1,0],[0,1,2,0],[0,1,3,0],[0,2,1,0],[0,2,3,0],
+        [3,1,3,0],[0,0,1,1],[0,0,3,1],
+        [0,2,1,2],[0,2,3,2]];
+
+        writeln("created statesList");
+
+		sortingState [] states2;
+		foreach(ls; statesList){
+
+			states2 ~= new sortingState(ls);
+		}
+        writeln("created states ");
+
+		this.states = states2;
+		
+	}
+
+	public override Action[] A(State st = null) {
+
+		if (st is null) { 
+			return [new InspectAfterPicking(),new PlaceOnConveyor(),
+			new PlaceInBin(),
+			new Pick(),new ClaimNewOnion(),
+			new InspectWithoutPicking(),
+			new ClaimNextInList()];
+		}
+
+		sortingState state = cast(sortingState)st;
+
+		if (state._onion_location == 0 ) {
+			if (state._listIDs_status == 2) {
+				return [new Pick(), new ClaimNewOnion()]; 
+			} else if (state._listIDs_status == 0) {
+				//return [new InspectWithoutPicking()]; 
+				return [new InspectWithoutPicking(),new Pick(), new ClaimNewOnion()]; 
+			} else {
+				if ( state._prediction == 2) {
+					return [new ClaimNextInList()]; 
+				} else {
+					return [new Pick()]; 
+				}
+			}
+		} else if (state._onion_location == 1 ) {
+			if (state._prediction == 0) {
+				return [new PlaceInBin()]; 
+			} else if (state._prediction == 1) {
+				return [new PlaceOnConveyor()]; 
+			} else {
+				return [new InspectAfterPicking()];
+			}
+		} else if (state._onion_location == 2 ) {
+			if (state._listIDs_status == 2) {
+				return [new ClaimNewOnion()]; 
+			} else if (state._listIDs_status == 0) {
+				return [new InspectWithoutPicking()]; 
+			} else {
+				return [new ClaimNextInList()]; 
+			}
+		} else if (state._onion_location == 3 ) {
+			if (state._prediction == 2) {
+				return [new InspectAfterPicking()]; 
+			} else if (state._prediction == 0) {
+				return [new PlaceInBin()]; 
+			} else {
+				return [new PlaceOnConveyor()]; 
+			}
+		} else {
+			if (state._listIDs_status == 2) {
+				return [new ClaimNewOnion()]; 
+			} else if (state._listIDs_status == 0) {
+				return [new InspectWithoutPicking()]; 
+			} else {
+				return [new ClaimNextInList()]; 
+			}
+		}
+	}
+}
+
+class sortingModelbyPSuresh3multipleInit : sortingModel { 
 
 	public this(double p_fail, State terminal) {
 		super(p_fail, terminal);
@@ -949,7 +1147,7 @@ public class PlaceOnConveyorold : Action {
 	}
 }
 
-public class PlaceOnConveyor : Action {
+public class PlaceOnConveyorWPlaced : Action {
 	
 	public override State apply(State state) {
         return new sortingState([ 4, 2, 0, 2 ]);
@@ -962,6 +1160,39 @@ public class PlaceOnConveyor : Action {
 
 	override hash_t toHash() {
 		return 9;
+	}	
+	
+	override bool opEquals(Object o) {
+		PlaceOnConveyor p = cast(PlaceOnConveyor)o;
+		
+		return p && true;
+		
+	}
+	
+	override int opCmp(Object o) {
+		PlaceOnConveyor p = cast(PlaceOnConveyor)o;
+		
+		if (!p) 
+			return -1;
+			
+		return 0;
+		
+	}
+}
+
+public class PlaceOnConveyor : Action {
+	
+	public override State apply(State state) {
+        return new sortingState([ 0, 2, 0, 2 ]);
+	}
+	
+	public override string toString() {
+		return "PlaceOnConveyor"; 
+	}
+
+
+	override hash_t toHash() {
+		return 24;
 	}	
 	
 	override bool opEquals(Object o) {
@@ -1741,7 +1972,7 @@ class sortingReward6 : LinearReward {
 }
 
 
-class sortingReward7 : LinearReward { // corrected phi[0,1,2,3,5]
+class sortingReward7WPlaced : LinearReward { // corrected phi[0,1,2,3,5]
 	
 	Model model;
 	int _dim;
@@ -1810,6 +2041,74 @@ class sortingReward7 : LinearReward { // corrected phi[0,1,2,3,5]
 	}
 }
 
+class sortingReward7 : LinearReward { // corrected phi[0,1,2,3,5]
+	
+	Model model;
+	int _dim;
+
+	public this (Model model, int dim) {
+		this.model = model;
+		this._dim = dim;
+	}
+	
+	public override int dim() {
+		return this._dim;
+	}
+			
+	public override double [] features(State st, Action action) {
+
+		sortingState state = cast(sortingState)st;
+		sortingState next_state = cast(sortingState)(action.apply(st));
+		
+		double [] result;
+		result.length = dim();
+		result[] = 0;
+
+		// good placed on belt
+        if (state._prediction == 1 && next_state._onion_location == 0) result[0] = 1;
+
+		// not placing bad on belt
+        if (state._prediction == 0 && next_state._onion_location != 0) result[1] = 1;
+
+		// not placing good in bin
+        if (state._prediction == 1 && next_state._onion_location != 2) result[2] = 1;
+
+		// bad placed in bin
+        if (state._prediction == 0 && next_state._onion_location == 2) result[3] = 1;
+
+        // not staying still
+        if (!( state._onion_location == next_state._onion_location &&
+        state._prediction == next_state._prediction &&
+        state._EE_location == next_state._EE_location &&
+        state._listIDs_status == next_state._listIDs_status)) result[4] = 1; 
+
+        // claim new onion 
+        if (next_state._prediction == 2 &&
+        next_state._onion_location == 0) result[5] = 1;
+
+        // create the list 
+        if (state._listIDs_status == 0 && 
+        	next_state._listIDs_status == 1) result[6] = 1;
+
+        // picking an unknown
+        if (state._onion_location == 0 && state._prediction == 2 
+        && ((next_state._prediction == 2 && next_state._EE_location == 3))) result[7] = 1;
+
+        // picking an onion with known pred - blemished  
+        if (state._onion_location == 0 && state._prediction == 0
+        && ((next_state._prediction == 0 && next_state._EE_location == 3))) result[8] = 1;
+
+        // finish the list 
+        if (state._listIDs_status == 1 && 
+        next_state._listIDs_status == 0) result[9] = 1;
+
+        // inspect picked onion 
+        if (state._onion_location == 3 && state._prediction == 2 && 
+        next_state._prediction != 2) result[10] = 1;
+
+		return result;
+	}
+}
 
 int print_FormattedOutput(sar pair) {
 	//s = pair.s;

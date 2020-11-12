@@ -1965,29 +1965,39 @@ def parse_sorting_policy(buf):
 
 class WrapperSortingForwardRL():
 
-	def __init__(self, p_fail=0.1, reward_type='sortingReward2'):
+	def __init__(self, p_fail=0.05, reward_type='sortingReward2'):
 
 		self.p_fail = p_fail
 		self.isSolving = False
 		self.traj_states = []
 		self.recd_convertedstates = [] 
-		self.sortingMDP = sortingModel(p_fail)
+		# self.sortingMDP = sortingModel(p_fail)
+		self.sortingMDP = sortingModelbyPSuresh2(p_fail) 
 		sortingReward = None
+		initial = util.classes.NumMap()
+
 		if reward_type == 'sortingReward2':
 			sortingReward = sortingReward2(8) 
 			params_pickinspect = [1,-1,-1,1,-0.2,1,-1.5,-1.0] 
 			params = params_pickinspect
 			params_rolling = [1,-0.5,-0.75,1.3,-0.2,0,1.88,-1.0] 
 			params = params_rolling
+			for s in self.sortingMDP.S():
+				initial[s] = 1.0
 
-			norm_params = [float(i)/sum(np.absolute(params)) for i in params]
-			sortingReward.params=norm_params
-			self.sortingMDP.reward_function = sortingReward 
-			self.sortingMDP.gamma = 0.998 
-		
-		initial = util.classes.NumMap()
-		for s in self.sortingMDP.S():
+		if reward_type == 'sortingReward7':
+			sortingReward = sortingReward7(11) 
+			params_pickinspect = [2, 1, 2, 1, 0.2, 1, 0, 4, 0, 0, 4] 
+			params = params_pickinspect
+			params_rolling = [0, 4, 0, 4, 0.2, 0, 8, 0, 8, 4, 0] 
+			params = params_rolling
+			s = sortingState(0,2,0,0)	
 			initial[s] = 1.0
+		
+		norm_params = [float(i)/sum(np.absolute(params)) for i in params]
+		sortingReward.params=norm_params
+		self.sortingMDP.reward_function = sortingReward 
+		self.sortingMDP.gamma = 0.998 
 		initial = initial.normalize()
 
 		args = [get_home() + "/catkin_ws/devel/bin/solveSortingMDP", ] 
@@ -2002,6 +2012,7 @@ class WrapperSortingForwardRL():
 		# example mdppatrolctrl.py 
 
 		conv_traj = mdp.simulation.simulate(self.sortingMDP,self.policy,initial,30)
+		print("\nsimuated mdp traj ")
 		print_traj_sortingMDP(conv_traj)
 
 		# for s in self.sortingMDP.S():
@@ -2031,19 +2042,33 @@ class WrapperSortingForwardRL():
 		# 		el = 'Inbin'
 		# 	else:
 		# 		el = 'Picked/AtHomePose'
-		# 	print str((ol,pr,el))
-		# 	print '\tpi({}) = {}'.format(s, self.policy._policy[s])
+		# 	print str((ol,pr,el)) 
+		# 	print '\tpi({}) = {}'.format(s, self.policy._policy[s]) 
 
-		self.startState = sortingState(-1,-1,-1,-1) #(0,2,3) conv, unknown, home
-		self.currentState = self.startState
-		self.currentAction = impl_GoHome() 
+		# self.startState = sortingState(-1,-1,-1,-1) #(0,2,3) conv, unknown, home
 
-	def update_current_state(self):
+		impl_GoHome() 
+		try: 
+			print "making location EE 0 by going to conveyor center" 
+			resp = handle_move_sawyer_service("conveyorCenter",index_chosen_onion) 
+			time.sleep(1.0)
+		except rospy.ServiceException, e: 
+			print "Service call failed: %s"%e 
+			return False
+
+		self.startState = sortingState(0,2,0,0) 
+		self.currentState = self.startState 
+		# self.currentAction = self.next_optimal_action() 
+
+	def update_current_state(self): 
+
 		global location_claimed_onion, prediction_chosen_onion, location_EE, ListStatus,\
 		last_location_claimed_onion
 
-		if last_location_claimed_onion != 0 and location_claimed_onion == 0:
-			self.currentState = sortingState(4, prediction_chosen_onion, 0, ListStatus)				
+		if last_location_claimed_onion != 0 and location_claimed_onion == 0 and (self.currentState != self.startState):
+			# self.currentState = sortingState(4, prediction_chosen_onion, 0, ListStatus)				
+			# with psuresh's cahnges in mdp
+			self.currentState = sortingState(4, 2, 0, 2)				
 		else:
 			self.currentState = sortingState(location_claimed_onion, prediction_chosen_onion, location_EE, ListStatus)
 
@@ -2520,30 +2545,41 @@ def callback_poses(cylinder_poses_msg):
 		print str((target_location_x,target_location_y,target_location_z))
 		print "location_claimed_onion:" + str(str_loc)
 
-	# if objects are deleted, make list empty
+	# if objects are deleted and nothing is grasped, make list empty
 	ind_location_x = None
 	ind_location_y = None
 	ind_location_z = None
+	all_deleted = True 
 	for ind in ListIndices: 
 		if ind < len(current_cylinder_x) and ind != -1:
 			ind_location_x = current_cylinder_x[ind]
 			ind_location_y = current_cylinder_y[ind]
 			ind_location_z = current_cylinder_z[ind]
 
-			if ind_location_x == -100: # if objects have disappeared, make lists empty
-				print "objects have disappeared, make lists empty"
-				ListPoses = []
-				ListIndices = []
-				ListStatus = 0
-			else: # else add pose to list
+			if ind_location_x != -100:
+				all_deleted = False
 				if (ind_location_x,ind_location_y,ind_location_z) not in ListPoses:
 					ListPoses.append((ind_location_x,ind_location_y,ind_location_z))
 
-		else:# if an object index is in list but not in poses, there is a synchronization issue
+		else:
+		# if an object index is in list but not in current_cylinder_x, there is a synchronization issue
 		# between pose publisher and spawner. restart.
 			ListPoses = None
 			ListIndices = None
 			ListStatus = 2
+
+	if all_deleted: 
+		# ind_location_x == -100: 
+		# if all objects (including grasped) have disappeared, make lists empty
+		print "objects have disappeared, make lists empty"
+		ListPoses = []
+		ListIndices = []
+		ListStatus = 0
+		
+	# else: # else add pose to list
+	# 	if (ind_location_x,ind_location_y,ind_location_z) not in ListPoses:
+	# 		ListPoses.append((ind_location_x,ind_location_y,ind_location_z))
+
 
 	return 
 
@@ -2687,6 +2723,8 @@ def execute_policy():
 	location_claimed_onion, location_EE, last_argument
 	result = None
 
+	print("execut epolicy location_EE, ListStatus = ",(location_EE, ListStatus))
+
 	print "last action executed. location_claimed_onion,location_EE:"\
 	+str((location_claimed_onion,location_EE))
 
@@ -2705,7 +2743,9 @@ def execute_policy():
  	else:
  		# onion deleted? 
  		print "onion deleted - prediction_chosen_onion = 2,ListStatus = 2"
-		impl_ClaimNewOnion()
+ 		# global prediction_chosen_onion, ListStatus
+ 		# prediction_chosen_onion, ListStatus = 2, 2
+ 		impl_ClaimNewOnion()
 		update_pose_chosen_index()
 		if location_claimed_onion == -1:
 			print "onion deleted - location not changing by claiming random onion" 
@@ -2715,11 +2755,18 @@ def execute_policy():
 
 		global prediction_chosen_onion, ListStatus
  		prediction_chosen_onion = 2
- 		ListStatus = 2
+ 		
+ 		# ListStatus = 2
+ 		# psuresh mdp, both behaviors start over if onions deleted 
+ 		ListStatus = 0
 
 	try:
 		resp = handle_update_state_EE() 
 		location_EE = resp.locations[1] 
+		# if WrapperObjectRL.currentState ==  WrapperObjectRL.startState:
+		# 	print ("current state is start state, adjusting ee location and ListStatus")
+		# 	location_EE, ListStatus = 0, 0
+
 		print "UPDATE_STATE srv. location_claimed_onion,location_EE:"\
 		+str((location_claimed_onion,location_EE))
 	except rospy.ServiceException, e: 
@@ -2775,6 +2822,7 @@ def impl_InspectAfterPicking():
 	except rospy.ServiceException, e: 
 		print "Service call failed: %s"%e 
 		return False
+
 	try: 
 		# print "lookNrotate" 
 		resp = handle_move_sawyer_service("lookNrotate",index_chosen_onion) 
@@ -2785,6 +2833,11 @@ def impl_InspectAfterPicking():
 	except rospy.ServiceException, e: 
 		print "Service call failed: %s"%e 
 		return False
+
+	# psuresh mdp 
+	global ListStatus 
+	ListStatus = 2 
+
 	return True
 
 def impl_InspectWithoutPicking():
@@ -2795,6 +2848,7 @@ def impl_InspectWithoutPicking():
 	except rospy.ServiceException, e: 
 		print "Service call failed: %s"%e 
 		return False
+
 	try: 
 		resp = handle_move_sawyer_service("roll",index_chosen_onion) 
 	except rospy.ServiceException, e: 
@@ -2812,7 +2866,7 @@ def impl_InspectWithoutPicking():
 
 	print "ListIndices:"+str(ListIndices)
 
-	# if list is non-empty, make first index claimed onion
+	# if list is non-empty, make first index claimed onion 
 	global ListPoses, ListStatus, prediction_chosen_onion
 	if ListIndices == []:
 		ListStatus = 0
@@ -2824,7 +2878,7 @@ def impl_InspectWithoutPicking():
 		ListPoses = ListPoses[1:] 
 		prediction_chosen_onion = 0
 
-	print "ListStatus:"+str(ListStatus)
+	print "prediction_chosen_onion:"+str(prediction_chosen_onion)+" ListStatus:"+str(ListStatus)
 
 	return True
 
@@ -2832,6 +2886,7 @@ attempt = 0
 
 def impl_Pick():
 	global handle_move_sawyer_service, index_chosen_onion, location_claimed_onion
+
 	print "Pick"
 	try: 
 		print "hover" 
@@ -2861,7 +2916,7 @@ def impl_Pick():
 		attempt = 0
 		global index_chosen_onion
 		if attempt == 0:
-			# print "perturbing startBin loc"
+			print "perturbing startBin loc"
 			print "hover returned false attempt 0, give intermediate waypoint"
 			try: 
 				resp = handle_move_sawyer_service("perturbStartBin",index_chosen_onion) 
@@ -2997,6 +3052,8 @@ def impl_Pick():
 
 	notgrasped = detach_notgrasped() 
 	print "notgrasped:"+str(notgrasped)
+	global location_EE
+	print "impl_Pick. location_EE:"+str(location_EE)
 
 	return True
 
@@ -3052,15 +3109,32 @@ def impl_PlaceInBin():
 		print "couldn't go to bin"
 		return False
 	else:
+
+		# for psuresh mdp
+		global ListIndices, ListStatus, prediction_chosen_onion, ListPoses
+		print "ListIndices:"+str(ListIndices)	
+		# print "PlaceInBin pre processing ListStatus:"+str(ListStatus)	
+
+		if ListStatus == 1:
+			# roll behavior
+			if len(ListIndices) == 0:
+				ListStatus = 0
+			else:
+				ListStatus = 1
+
+		prediction_chosen_onion = 2
+		print "PlaceInBin post processing ListStatus:"+str(ListStatus)+" prediction_chosen_onion:"+str(prediction_chosen_onion)	
+
 		return True
 		# detach should happen after updating state
-		
+	
+
 	return True
 
 def detach_forBin():
 	global index_chosen_onion
 	try: 
-		# print "detach object" 
+		print "detach object" 
 		call_success = False
 		resp = handle_move_sawyer_service("detach",index_chosen_onion) 
 		time.sleep(1.0)
@@ -3115,10 +3189,13 @@ def impl_ClaimNewOnion():
 def impl_ClaimNextInList(): 
 	global ListIndices, index_chosen_onion, ListStatus, ListPoses, prediction_chosen_onion
 	print "impl_ClaimNextInList"
+	print("pre ListStatus:",ListStatus)
 
 	if ListIndices == []: 
 		ListPoses = []
-		ListStatus = 2
+		# ListStatus = 2
+		# psuresh mdp
+		ListStatus = 0
 		impl_ClaimNewOnion() 
 		update_pose_chosen_index() 
 		if location_claimed_onion == -1:
@@ -3140,7 +3217,9 @@ def impl_ClaimNextInList():
 			update_pose_chosen_index() 
 
 		ListStatus = 1
-		prediction_chosen_onion = 0
+		# prediction_chosen_onion = 0
+		# psuresh mdp
+		prediction_chosen_onion = 2
 		return True
 
 def detach_notgrasped():
@@ -3311,7 +3390,8 @@ if __name__ == "__main__":
 
 	# impl_ClaimNewOnion()
 	print "WrapperObjectRL"
-	WrapperObjectRL = WrapperSortingForwardRL(p_fail=0.1,reward_type='sortingReward2')
+	# WrapperObjectRL = WrapperSortingForwardRL(p_fail=0.05,reward_type='sortingReward2')
+	WrapperObjectRL = WrapperSortingForwardRL(p_fail=0.05,reward_type='sortingReward7')
 
 	r = rospy.Rate(20) # 10hz 30	
 	global location_claimed_onion, location_EE, ground_truths_all_onions, ListIndices, \
