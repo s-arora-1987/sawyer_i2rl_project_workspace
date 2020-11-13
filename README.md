@@ -1,51 +1,22 @@
-# sawyer_i2rl_project_workspace
+# ROS Workspace for Incremental IRL and Multi Task IRL
 
-Install ros-kinetic-moveit
+The code is built upon the version of IRL code developed in Thinc lab at UGA, by Kenneth Bogert before the original code got modified and got uploaded in github. [https://github.com/kbogert/libirl]
 
-clone catkin_simple from https://github.com/catkin/catkin_simple
+# Incremental IRL or I2RL
+Python frontend and D-code backend have MDP models and MDP solvers for two domains
 
-git clone --branch release-5.2.0 https://github.com/RethinkRobotics/intera_sdk.git
+- ground navigation (patrol) domain in paper [http://www.ifaamas.org/Proceedings/aamas2019/pdfs/p1170.pdf], src/navigation_irl/patrol/* and src/irld/src/boydmdp.d
 
-git clone --branch release-5.2.0 https://github.com/RethinkRobotics/intera_common.git
+- vegetable sorting domain in paper [https://arxiv.org/abs/2004.12873], src/navigation_irl/sortingMDP/*, src/irld/src/solveSortingMDP.d, and src/irld/src/sortingMDP.d
 
-git clone https://github.com/s-arora-1987/two_scara_collaboration.git
+Python frontend in src/navigation_irl/ros_ctrl.py calls the backend src/irld/src/boydirl.d in backend, which forwards call to chosen IRL solver. 
 
-cd into catkin_ws and do a catkin_make. 
+Some of the IRL solver classes in src/irld/src/irl.d are modified to work in online / incremental fashion in which learner updates the weights learned in preivous sessions and generate new weights and feature expectations as outputs. 
 
-git clone https://github.com/prasuchit/roboticsgroup_gazebo_plugins-1
+Bogert's version of UncontrainedAdaptiveGradientDescent has been modified in terms of stopping criterion. Current descent stops when the standard deviation in moving window of diff-feature-expectation is lower than a threshold. 
 
-git clone --branch release-5.2.0 https://github.com/thinclab/sawyer_robot.git
+#  Multi Task IRL
 
-git clone https://github.com/prasuchit/gazebo_ros_link_attacher
+Python frontend in src/navigation_irl/test_singleTaskIRL*.py can be used to verify if single task IRL is working as expected both domains. 
 
-git clone https://github.com/prasuchit/kinect_v2_udrf
-
-
-git clone --branch release-5.2.0 https://github.com/s-arora-1987/sawyer_simulator.git
-
-git clone --branch release-5.2.0 https://github.com/s-arora-1987/sawyer_moveit.git
-
-git clone --branch kinetic-devel https://github.com/s-arora-1987/robotiq.git
-
-sudo apt-get update && sudo apt-get upgrade && sudo apt-get dist-upgrade
-
-cd into catkin_ws and install all dependencies for these packages:
-
- (For kinetic: rosdep install --from-paths src --ignore-src --rosdistro=kinetic -y -i --verbose)
- 
- Try following in different tabs:
- 
- roslaunch sawyer_irl_project i2rl_movingOnions_Sorting.launch
- 
- roslaunch sawyer_irl_project spawn_move_claim_onion.launch
- 
- roslaunch sawyer_irl_project test_pnp.launch
- 
- If last one gives import error for pyassimp, then it requires pyassimp 3.3, while apt-get installed by default is 3.2. Try:
- 
- sudo apt-get remove python-pyassimp
- 
- pip install pyassimp=3.3
- 
- There will be a warning but package should run fine. 
- 
+src/navigation_irl/sortingMDP/simulating_behaviors_callingDcode.py generates simulated mix of demonstration from two types of sorting methods, and calls multi-task IRL solver src/irld/src/multitaskIRL.d in backend. multitaskIRL.d implements Me-MTIRL method in  [https://arxiv.org/abs/2004.12873]
