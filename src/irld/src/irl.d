@@ -789,7 +789,7 @@ class MaxEntIrlZiebartApprox : MaxEntIrlZiebartExact {
     	//writeln("mu_E: ", mu_E);
         //computing new target mu_E specific to current iteration
         foreach (int i, double val; mu_E)
-           mu_E[i] = (val+mu_Eprev[i]*num_Trajsofard)/(num_Trajsofard+1);//val;
+           mu_E[i] = (val*true_samples.length+mu_Eprev[i]*num_Trajsofard)/(num_Trajsofard+true_samples.length);
            //updating muE doesn't give better learning curve
         debug {
         	writeln("mu_E after update: ", mu_E);
@@ -1295,6 +1295,141 @@ class MaxEntIrlZiebartApprox : MaxEntIrlZiebartExact {
 
 	    return sqrt(var);         
 	}
+
+}
+
+
+class MaxEntIrlZiebartApproxI2RL : MaxEntIrlZiebartApprox {
+	/*
+	No occlusion yet.
+	Computing FE for agent by sampling trajectories rather than 
+	computing partition function.
+	Using FE of single agent (without stacking weights of other agent)
+	to do gradient descent using MaxEntIrlZiebartExact.
+	exponentiatedGradient(double [] w, double c, double err, size_t max_sample_length)
+
+	*/
+
+	public this(int max_iter, MDPSolver solver, State [] observableStates, int n_samples=500, 
+		double error=0.1, double solverError =0.1) {
+		super(max_iter, solver, observableStates, n_samples, error, solverError);
+	}
+
+	public Agent solve(Model model, double[State] initial, sar[][] true_samples,
+	size_t sample_length, double [] init_weights, out double opt_value, 
+	out double [] opt_weights, ref double [] featureExpecExpert, int num_Trajsofar,
+	double Ephi_thresh, double step_size, int descent_dur_thresh_secs, double [] trueWeights) {
+
+        this.model = model;
+        this.initial = initial;
+        this.true_samples = true_samples;
+    	this.sample_length = cast(int)sample_length;
+        
+    	LinearReward r = cast(LinearReward)model.getReward();			
+    	mu_E.length = r.dim();
+        
+        double num_Trajsofard = cast(double)num_Trajsofar;
+        double [] mu_Eprev = new double[mu_E.length];
+
+        foreach(i2, t; featureExpecExpert)
+            mu_Eprev[i2] = t;
+
+        debug {
+        	//writeln("init_weights: ",init_weights);
+        	//writeln("mu_Eprev: ",mu_Eprev);
+        }
+
+        double lastQValue = -double.max;
+        bool hasConverged;
+        double [] temp_opt_weights;
+	    double [] last_temp_opt_weights = init_weights.dup;
+        size_t max_sample_length = cast(int)sample_length;
+
+        feature_expectations_per_trajectory = calc_feature_expectations_per_trajectory(model, true_samples);
+        debug {
+        	writeln("FE's ", feature_expectations_per_trajectory);
+        }	
+
+        mu_E[] = 0;        
+        foreach(traj_fe; feature_expectations_per_trajectory) {
+        	//mu_E[] += traj_fe[];// 
+        	mu_E[] += traj_fe[]/ true_samples.length;
+        } 
+
+        debug {
+        	writeln("mu_E: ", mu_E);
+        	//exit(0);
+        }
+    	//writeln("mu_E: ", mu_E);
+        //computing new target mu_E specific to current iteration
+        foreach (int i, double val; mu_E)
+           mu_E[i] = (val+mu_Eprev[i]*num_Trajsofard)/(num_Trajsofard+1);//val;
+           //updating muE doesn't give better learning curve
+        debug {
+        	writeln("mu_E after update: ", mu_E);
+        }
+
+        
+        opt_value=-double.max;
+        double opt_value_grad_val = double.max;
+        opt_weights.length = init_weights.length;
+
+        int iterations=0;
+        double grad_val;
+         //multiple restarts and pick the answer with best likelihood
+        do {
+        	temp_opt_weights = init_weights.dup;
+	        //temp_opt_weights = SingleAgentExponentiatedGradient(temp_opt_weights.dup, step_size, 
+	        //	error, max_sample_length,Ephi_thresh, grad_val, descent_dur_thresh_secs);
+
+	        temp_opt_weights = singleTaskUnconstrainedAdaptiveExponentiatedStochasticGradientDescent(temp_opt_weights.dup, 0.25, 
+	        	error, max_sample_length, Ephi_thresh, trueWeights, true, 1);
+
+			//double [] singleTaskUnconstrainedAdaptiveExponentiatedStochasticGradientDescent(double [] w,
+			//	double nu, double err, size_t max_iter, double Ephi_thresh,
+			//	bool usePathLengthBounds = true, size_t moving_average_length = 5) {
+
+			    //compare final gradients
+			//	if (grad_val < opt_value_grad_val && false) {
+			//		opt_value = grad_val;
+			      //  auto i=0;
+			      //  foreach(j, ref o2; opt_weights) {
+			    		//o2 = temp_opt_weights[i++];     	
+			      //  }
+			      //  debug {
+			      //  	writeln("grad val (", iterations, ") = ", grad_val, " for weights: ", temp_opt_weights);		        	
+			      //  }
+			//	}
+
+        	// calculate Q value
+        	double newQValue = SingleAgentcalcQ(temp_opt_weights,Ephi_thresh);
+        	if ((newQValue > opt_value) ) {
+        		opt_value = newQValue;
+		        auto i=0;
+		        foreach(j, ref o2; opt_weights) {
+		    		o2 = temp_opt_weights[i++];     	
+		        }
+		        debug {
+		        	writeln("Q(", iterations, ") = ", newQValue, " for weights: ", temp_opt_weights);		        	
+		        }
+        	}
+
+	        iterations ++;
+	    } while (iterations < max_iter);
+        
+	    
+     	Agent returnval;
+        r.setParams(opt_weights);        
+        returnval = solver.createPolicy(model, solver.solve(model, solverError));
+
+        auto i = 0;
+        mu_E[] /= max_sample_length;
+        foreach(j, ref o2; featureExpecExpert) {
+        	o2 = mu_E[i++];
+        }
+        //featureExpecExpertfull = featureExpecExpert.dup;
+        return returnval;
+	}	
 
 }
 

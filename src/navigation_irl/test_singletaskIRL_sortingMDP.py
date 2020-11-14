@@ -28,6 +28,7 @@ from mdp.solvers import *
 import mdp.agent
 from mdp.simulation import *
 # from ros_ctrl import printTs, printTrajectories, parsePolicies
+import re
 
 home = os.environ['HOME']
 def get_home():
@@ -186,9 +187,8 @@ def parse_sorting_policy(buf):
 	from mdp.agent import MapAgent
 	return MapAgent(p)
 
-def parsePolicies(stdout, equilibrium, lineFoundWeights, lineFeatureExpec, \
-	learned_weights, num_Trajsofar, \
-	BatchIRLflag, wt_data, normedRelDiff):
+def parsePolicies(stdout, lineFoundWeights, lineFeatureExpec, \
+	learned_weights, num_Trajsofar, BatchIRLflag):
 
 	if stdout is None:
 		print("no stdout in parse policies")
@@ -197,15 +197,11 @@ def parsePolicies(stdout, equilibrium, lineFoundWeights, lineFeatureExpec, \
 	#print("\n parse Policies from contents:")
 	#print(stateactions)
 	counter = 0
-	pmaps = []	
 	p = {}
 	for stateaction in stateactions:
 		counter += 1		
 		if stateaction == "ENDPOLICY":
-			pmaps.append(p)
-			p = {}
-			if len(pmaps) == 2: # change this if we ever support more than two patrollers
-				break		
+			break		
 		temp = stateaction.split(" = ")
 		if len(temp) < 2: continue
 		state = temp[0]
@@ -214,7 +210,7 @@ def parsePolicies(stdout, equilibrium, lineFoundWeights, lineFeatureExpec, \
 		state = state[1 : len(state) - 1]
 		pieces = state.split(",")	
 		ss = sortingState(int(pieces[0]), int(pieces[1]), int(pieces[2]), int(pieces[3]))
-		print((state,pieces,ss))
+		# print((state,pieces,ss))
 
 		if action == "InspectAfterPicking":
 			act = InspectAfterPicking()
@@ -238,60 +234,40 @@ def parsePolicies(stdout, equilibrium, lineFoundWeights, lineFeatureExpec, \
 			
 		p[ss] = act
 
-	if (len(pmaps) < 2):
-		returnval = [mdp.agent.MapAgent(p), mdp.agent.MapAgent(p)]
-	else:
-		returnval = [mdp.agent.MapAgent(pmaps[0]), mdp.agent.MapAgent(pmaps[1])]
+	returnval = [mdp.agent.MapAgent(p)]
 
-		
-	if len(stateactions[counter:])>0: #and BatchIRLflag==False:
+	sessionFinish = True
+	if len(stateactions[counter:])>0 and BatchIRLflag==False:
 		# this change is not reflected in updatewithalg 
+
 		sessionFinish = True
-		#print("\n sessionFinish = True")#results after i2rl session at time: "+str(rospy.Time.now().to_sec()))
-		#file = open("/home/saurabh/patrolstudy/i2rl_troubleshooting/I2RLOPread_rosctrl.txt","r")
+		# print("\n sessionFinish = True")#results after i2rl session at time: "+str(rospy.Time.now().to_sec()))
+		# file = open("/home/saurabh/patrolstudy/i2rl_troubleshooting/I2RLOPread_rosctrl.txt","r")
 		lineFoundWeights = stateactions[counter]
 		counter += 1
 		global reward_dim
-		found_weights = [[0.0]*reward_dim,[0.0]*reward_dim]
 
-		print(lineFoundWeights)
+		print(lineFoundWeights[1:-1].split(", "))
+		stripped_weights = lineFoundWeights[1:-1].split(", ")
 
-		found_weights = [[float(x) for x in \
-		lineFoundWeights.split("\n")[0]. \
-		strip("[]").split("], [")[0].split(", ")], \
-		[float(x) for x in \
-		lineFoundWeights.split("\n")[0]. \
-		strip("[]").split("], [")[1].split(", ")]]
+		learned_weights = [float(x) for x in stripped_weights]
 		
-		learned_weights = found_weights
-		
-		#print("lineFoundWeights:"+lineFoundWeights)
+		# print("lineFoundWeights:"+lineFoundWeights) 
 		lineFeatureExpec = stateactions[counter]
 		counter += 1
 		
 		num_Trajsofar = int(stateactions[counter].split("\n")[0])
 		counter += 1
 		
-		#print("num_Trajsofar:"+str(num_Trajsofar))
-
-		lastQ = stateactions[counter].split("\n")[0]
-		counter += 1
-		
-		lineFeatureExpecfull = stateactions[counter]
-		counter += 1
-		
 	elif len(stateactions[counter:])==0:
 		lineFoundWeights = lineFoundWeights 
 		lineFeatureExpec = lineFeatureExpec 
 		num_Trajsofar = num_Trajsofar
-		lastQ = ""
-		lineFeatureExpecfull = ""
 		sessionFinish = False
-		print("\n no results from irl session")
+		print("\n no results from i2rl session")
 	
 	return (returnval, lineFoundWeights, lineFeatureExpec, \
-		learned_weights, num_Trajsofar, \
-		sessionFinish, wt_data, normedRelDiff, lastQ, lineFeatureExpecfull)
+		learned_weights, num_Trajsofar, sessionFinish)
 
 
 def computeLBA(fileTruePolicy,model,mapAgentLrndPolicy):
@@ -367,180 +343,7 @@ def computeLBA(fileTruePolicy,model,mapAgentLrndPolicy):
 	return lba
 
 
-##############################################################
-###############################################################
-
-
-if __name__ == "__main__": 
-
-
-	# D code for single task IRL uses 0.95 success rate of transitions
-	p_fail = 0.05
-	m = "sorting"
-	# model = sortingModel(p_fail) 
-	# model = sortingModel2(p_fail) 
-	# model = sortingModelbyPSuresh(p_fail)
-	# model = sortingModelbyPSuresh2(p_fail)
-	# model = sortingModelbyPSuresh3(p_fail) 
-	# model = sortingModelbyPSuresh4(p_fail) 
-	model = sortingModelbyPSuresh2WOPlaced(p_fail)
-	# model = sortingModelbyPSuresh3multipleInit(p_fail) 
-
-	# print(sortingModelbyPSuresh._p_fail) 
-
-	model.gamma = 0.99
-	# sortingReward = sortingReward2(8) 
-	# sortingReward = sortingReward3(10) 
-	# sortingReward = sortingReward4(10) 
-	# sortingReward = sortingReward5(8) 
-	# sortingReward = sortingReward6(11) 
-	# sortingReward = sortingReward7WPlaced(11) 
-	sortingReward = sortingReward7(11) 
-
-	reward_dim = sortingReward._dim
-	print("reward_dim ",reward_dim)
-
-	model.reward_function = sortingReward 
-
-	params_manualTuning_rolling_reward3 = [0.15, -0.08, -0.11, 0.3, -0.3, -0.15, 0.6, -0.15, 0.6, -0.2]
-	params_manualTuning_rolling_reward4 = [0.0, 0.6, 0.0, 0.95, 0.8, 0.0, 0.9, 0.15, 0.9, 0.4]
-
-	params_manualTuning_pickinspectplace_reward3 = [ 0.10, 0.0, 0.0, 0.22, -0.12, 0.44, 0.0, -0.12, 0.0, -0.2]
-	params_manualTuning_pickinspectplace_reward4 = [ 0.10, 0.0, 0.0, 0.22, 0.12, 0.44, 0.0, 0.12, 0.0, 0.2]
-	'''
-	reward 4
-	// good placed on belt
-	// not placing bad on belt
-	// not placing good in bin
-	// bad placed in bin
-	// not staying still
-	// classify after picking
-	// create the list 
-	// not picking a placed one
-	// classify without picking
-	// not placing uninspected in bin
-
-	'''
-	# params_manualTuning_pickinspectplace_reward5 =[1,-1,-1,1,-0.2,1,0,1]
-	params_rolling_reward5 =[0,4,0,4,0.2,0,8,0]
-	params_pickinspectplace_reward5 =[2,1,2,1,0.2,1,0,4]
-	params_rolling_reward6 =[0,4,0,4,0.2,0,8,0,8,4,0]
-	params_pickinspectplace_reward6 =[2,1,2,1,0.2,1,0,4,0,0,4]
-	params_staystill_reward6 = [ 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  0.0, 0.0, 0.0] 
-	params_pickinspectplace_reward7woplacedmixedinit =[2,1,2,1,0.2,0.1,0,4,0,0,4]
-
-	#############################################################
-	# Needed for synchornizing BIRL input data
-	#############################################################
-
-	List_TrueWeights = []
-	# index 0 for pick-inspect-place 
-	# params = params_pickinspectplace_reward6
-	# for psuresh4 model
-	# params_pickinspectplace_reward7_psurmodel4 = [0,7,0,9,0.2,1,0,4,0,0,4]
-	# params = params_pickinspectplace_reward7_psurmodel4
-	# params = params_pip_reward7_psurmodel4
-	params = params_pickinspectplace_reward7woplacedmixedinit
-	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
-	List_TrueWeights.append(norm_params)
-	# index 1 for stay-still 
-	params = params_staystill_reward6
-	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
-	List_TrueWeights.append(norm_params)
-	# index 2 for roll-pick-place 
-	params = params_rolling_reward6
-	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
-	List_TrueWeights.append(norm_params)
-	# index 3 for placeallonconvyor (specific to psuresh4 mdp model)
-	params_placeallonconvyor_reward7_psurmodel4 = [2,0,2,0,0.2,1,0,4,0,0,4]
-	params = params_placeallonconvyor_reward7_psurmodel4
-	# index 3 for placeallinbin (specific to psuresh4 mdp model)
-	# params_placeallinbin_reward7_psurmodel4 = [-5,1,0,1,0.2,1,0,4,0,0,4]
-	# params = params_placeallinbin_reward7_psurmodel4
-	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
-	List_TrueWeights.append(norm_params)
-
-	#############################################################
-	# demonstration had two runs with one trajectory for each run 
-	true_assignments = [0,1,2]
-	# true_assignments = [0,1,2,3]
-
-	# pick-inspect-place
-	# params = List_TrueWeights[true_assignments[0]]
-	# roll-pick-place kwAYGSH963e 
-	# params = List_TrueWeights[true_assignments[0]]
-
-	params = List_TrueWeights[true_assignments[0]]
-
-	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
-
-	initial = util.classes.NumMap()
-	
-	# ALWAYS START FROM 0,2,0,2 
-	# pick-inspect-place 
-	# s = sortingState(0,2,0,2)	
-	# roll-pick-place 
-	# s = sortingState(0,2,0,0)	
-	# initial[s] = 1.0 
-
-	# for multiple starting states 
-	count = 0
-	for s in model.S(): 
-		if s._onion_location == 0 and s._prediction == 2 and s._listIDs_status == 0: 
-			initial[s] = 1.0
-			count+=1
-	print("number of initial states ", count)
-	initial = initial.normalize()
-
-	#############################################################
-	
-	#############################################################
-
-	# norm_params = [float(i)/sum(np.absolute(params)) for i in params]
-	args = [get_home() + "/catkin_ws/devel/bin/solveSortingMDP", ]
-	p = subprocess.Popen(args, stdin	=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	stdin = str(norm_params) 
-	print("input to solveSortingMDP ",stdin)
-	(stdout, stderr) = p.communicate(stdin) 
-	# print("output to solveSortingMDP ",stdout)
-	policy = parse_sorting_policy(stdout) 
-	p.stdin.close()
-	p.stdout.close()
-	p.stderr.close()
-	
-	n_samples = 2
-
-	# for each of two runs of irl, t_max will be divided into length_subtrajectory long trajs
-	# t_max = 200
-	# t_max = 300
-	# t_max = 400
-	# t_max = 2500
-	length_subtrajectory = 50
-	# length_subtrajectory = 2
-	# length_subtrajectory = 4
-	# length_subtrajectory = 8
-	# length_subtrajectory = 10
-	# length_subtrajectory = 15
-	# length_subtrajectory = 25
-	# length_subtrajectory = 50
-
-	# t_max = length_subtrajectory*1
-	t_max = length_subtrajectory*4
-
-	traj = [[], []]
-
-	print( "demonstration")
-	for i in range(n_samples): 
-		# traj_list = simulate(model, policy, initial, t_max)
-		traj_list = sample_traj(model, t_max, initial, policy) 
-		traj[i] = traj_list
-		# for (s,a,s_p) in traj_list:
-			# print((s,a))
-		#print("\n")
-
-	print(printTrajectories(traj))
-
-	# exit(0)
+def saveDataForBaseline():
 
 	#############################################################
 	# BIRL input data for checking if problem is method
@@ -626,118 +429,253 @@ if __name__ == "__main__":
 	#############################################################
 	#############################################################
 
-	outtraj = None
-	args = ["boydirl", ]
-	p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)				
-	outtraj = ""
-	outtraj += "sorting" + "\n"
+##############################################################
+###############################################################
 
-	add_delay = False 
-	if add_delay:
-		outtraj += "true\n"
-	else:
-		outtraj += "false\n"
 
-	algorithm = "MAXENTZAPPROX" 
-	outtraj += algorithm+"\n"
+if __name__ == "__main__": 
 
-	NE = "cs" 
-	if NE == "cc":
-		equilibriumCode = 0
-	elif NE == "sc":
-		equilibriumCode = 1
-	elif NE == "cs":
-		equilibriumCode = 2
-	elif NE == "tc":
-		equilibriumCode = 3
-	elif NE == "ct":
-		equilibriumCode = 4
-	outtraj += str(equilibriumCode)	+"\n"
-	equilibriumKnown = False
-	if equilibriumKnown:
-		outtraj += "true\n"
-	else:
-		outtraj += "false\n"
 
-	interactionLength, visibleStatesNum = 3, 1.0
-	outtraj += str(interactionLength)+"\n"
-	outtraj += str(visibleStatesNum / 14.0)	+"\n"
-	outtraj += "ENDT\n"	
-	outtraj += "ENDT\n"	
-	useRegions = 0
-	outtraj += str(useRegions)+"\n"
+	# D code for single task IRL uses 0.95 success rate of transitions
+	p_fail = 0.05
+	m = "sorting"
+	# model = sortingModel(p_fail) 
+	# model = sortingModel2(p_fail) 
+	# model = sortingModelbyPSuresh(p_fail)
+	# model = sortingModelbyPSuresh2(p_fail)
+	# model = sortingModelbyPSuresh3(p_fail) 
+	# model = sortingModelbyPSuresh4(p_fail) 
+	# model = sortingModelbyPSuresh2WOPlaced(p_fail)
+	model = sortingModelbyPSuresh3multipleInit(p_fail) 
 
-	outtraj += printTrajectories(traj)
+	# print(sortingModelbyPSuresh._p_fail) 
+
+	model.gamma = 0.99
+	# sortingReward = sortingReward2(8) 
+	# sortingReward = sortingReward3(10) 
+	# sortingReward = sortingReward4(10) 
+	# sortingReward = sortingReward5(8) 
+	# sortingReward = sortingReward6(11) 
+	# sortingReward = sortingReward7WPlaced(11) 
+	sortingReward = sortingReward7(11) 
+
+	reward_dim = sortingReward._dim
+	print("reward_dim ",reward_dim)
+
+	model.reward_function = sortingReward 
+
+	params_manualTuning_rolling_reward3 = [0.15, -0.08, -0.11, 0.3, -0.3, -0.15, 0.6, -0.15, 0.6, -0.2]
+	params_manualTuning_rolling_reward4 = [0.0, 0.6, 0.0, 0.95, 0.8, 0.0, 0.9, 0.15, 0.9, 0.4]
+
+	params_manualTuning_pickinspectplace_reward3 = [ 0.10, 0.0, 0.0, 0.22, -0.12, 0.44, 0.0, -0.12, 0.0, -0.2]
+	params_manualTuning_pickinspectplace_reward4 = [ 0.10, 0.0, 0.0, 0.22, 0.12, 0.44, 0.0, 0.12, 0.0, 0.2]
+	'''
+	reward 4
+	// good placed on belt
+	// not placing bad on belt
+	// not placing good in bin
+	// bad placed in bin
+	// not staying still
+	// classify after picking
+	// create the list 
+	// not picking a placed one
+	// classify without picking
+	// not placing uninspected in bin
+
+	'''
+	# params_manualTuning_pickinspectplace_reward5 =[1,-1,-1,1,-0.2,1,0,1]
+	params_rolling_reward5 =[0,4,0,4,0.2,0,8,0]
+	params_pickinspectplace_reward5 =[2,1,2,1,0.2,1,0,4]
+	params_rolling_reward6 =[0,4,0,4,0.2,0,8,0,8,4,0]
+	params_pickinspectplace_reward6 =[2,1,2,1,0.2,1,0,4,0,0,4]
+	params_staystill_reward6 = [ 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  0.0, 0.0, 0.0] 
+	params_pickinspectplace_reward7woplacedmixedinit =[2,1,2,1,0.2,0.1,0,4,0,0,4]
+
+	#############################################################
+	# Needed for synchornizing BIRL input data
+	#############################################################
+
+	List_TrueWeights = []
+	# index 0 for pick-inspect-place 
+	params = params_pickinspectplace_reward7woplacedmixedinit
+	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
+	List_TrueWeights.append(norm_params)
+	# index 1 for roll-pick-place 
+	params = params_rolling_reward6
+	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
+	List_TrueWeights.append(norm_params)
+	# index 2 for stay-still 
+	params = params_staystill_reward6
+	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
+	List_TrueWeights.append(norm_params)
+
+	#############################################################
+	# demonstration had two runs with one trajectory for each run 
+	true_assignments = [0,1,2]
+
+	# pick-inspect-place
+	params = List_TrueWeights[true_assignments[0]]
+	# roll-pick-place 
+	# params = List_TrueWeights[true_assignments[1]]
+
+	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
+
+	initial = util.classes.NumMap()
 	
-	num_Trajsofar = 0
-	learned_mu_E=[[0.0]*reward_dim,[0.0]*reward_dim] 
-	learned_weights=[[0.0]*reward_dim,[0.0]*reward_dim] # needed for compute reldiff
-	wt_data=numpy.empty([2, reward_dim], dtype=float)
-	if num_Trajsofar == 0:
-		
-		for i in range(2):
-			for j in range(reward_dim):
-				learned_weights[i][j] = random.uniform(-.99,.99)
-		
-		wt_data = numpy.array([learned_weights])
-		
-		lineFoundWeights = str(learned_weights)+"\n"
-		# create initial feature expectations
-		for i in range(2):
-			for j in range(reward_dim):
-				learned_mu_E[i][j]=0.0
-		
-		lineFeatureExpec = str(learned_mu_E)+"\n"
-	if not not lineFoundWeights and lineFoundWeights[-1] != '\n':
-		lineFoundWeights = lineFoundWeights + "\n" 
-	if not not lineFeatureExpec and lineFeatureExpec[-1] != '\n': 
-		lineFeatureExpec = lineFeatureExpec + "\n" 
-	# outtraj += lineFoundWeights+lineFeatureExpec+ str(num_Trajsofar)+"\n"  
+	# ALWAYS START FROM 0,2,0,2 
+	# pick-inspect-place 
+	# s = sortingState(0,2,0,2)	
+	# roll-pick-place 
+	# s = sortingState(0,2,0,0)	
+	# initial[s] = 1.0 
 
-	# specific to sorting mdp 
-	outtraj += str(norm_params)+"\n"
-	outtraj += str(length_subtrajectory)+"\n"
-	# second time needed
-	outtraj += printTrajectories(traj)
+	# for multiple starting states 
+	count = 0
+	for s in model.S(): 
+		# if s._onion_location == 0 and s._prediction == 2 and s._listIDs_status == 0: 
+		if s._onion_location == 0 and s._listIDs_status == 0:
+			initial[s] = 1.0
+			count+=1
+	print("number of initial states ", count)
+	initial = initial.normalize()
 
-	print("input to boydirl \n")
-	f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_Dcode_BoydIRL_sorting.log", "w")
-	f_input_IRL.write("")
-	f_input_IRL.close()
-	f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_Dcode_BoydIRL_sorting.log", "a")
-	f_input_IRL.write(outtraj)
-	f_input_IRL.close()
+	#############################################################
+	
+	#############################################################
 
-	# print(outtraj)
-	# exit(0)
-
-	(stdout, stderr) = p.communicate(outtraj)
-
-	print("output of boydirl ")
-	print(stdout)
-	exit(0)
-
+	# norm_params = [float(i)/sum(np.absolute(params)) for i in params]
+	args = [get_home() + "/catkin_ws/devel/bin/solveSortingMDP", ]
+	p = subprocess.Popen(args, stdin	=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	stdin = str(norm_params) 
+	print("input to solveSortingMDP ",stdin)
+	(stdout, stderr) = p.communicate(stdin) 
+	# print("output to solveSortingMDP ",stdout)
+	policy = parse_sorting_policy(stdout) 
 	p.stdin.close()
 	p.stdout.close()
 	p.stderr.close()
+	
+	n_samples = 1
 
-	BatchIRLflag = True
-	normedRelDiff = sys.maxint*1.0 
+	# for each of two runs of irl, t_max will be divided into length_subtrajectory long trajs
+	# t_max = 200
+	# t_max = 300
+	# t_max = 400
+	# t_max = 2500
+	# length_subtrajectory = 50
+	# length_subtrajectory = 2
+	# length_subtrajectory = 4
+	length_subtrajectory = 8
+	# length_subtrajectory = 10
+	# length_subtrajectory = 15
+	# length_subtrajectory = 25
+	# length_subtrajectory = 50
 
-	import re
-	stringPols = re.findall('BEGPARSING\n(.[\s\S]+?)ENDPARSING', stdout)[0]
+	# t_max = length_subtrajectory*1
+	t_max = length_subtrajectory*4
 
-	(policies, lineFoundWeights, lineFeatureExpec, learned_weights, \
-	num_Trajsofar, \
-	sessionFinish, wt_data, normedRelDiff, lastQ, lineFeatureExpecfull)\
-	= parsePolicies(stringPols, None, lineFoundWeights, lineFeatureExpec, learned_weights, \
-	num_Trajsofar, \
-	BatchIRLflag, wt_data, normedRelDiff)
+	num_sessions = 10
+	#for I2RL
+	num_Trajsofar = 0
+	learned_mu_E=[0.0]*reward_dim
+	learned_weights=[0.0]*reward_dim
+
+	for sess in range(num_sessions):
+
+		traj = []
+		print( "demonstration") 
+		for i in range(n_samples): 
+			# traj_list = simulate(model, policy, initial, t_max) 
+			traj_list = sample_traj(model, t_max, initial, policy) 
+			traj.append(traj_list) 
+			# for (s,a,s_p) in traj_list:
+				# print((s,a))
+			# print("\n")
+
+		# print(printTrajectories(traj))
+		# exit(0)
+
+		outtraj = None
+		args = ["meirl", ]
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)				
+		outtraj = ""
+		outtraj += "sorting" + "\n"
+
+		# algorithm = "MAXENTZAPPROX" 
+		algorithm = "MAXENTZAPPROXI2RL" 
+		outtraj += algorithm+"\n"
+
+		outtraj += printTrajectories(traj)
+
+		# specific to sorting mdp 
+		outtraj += str(norm_params)+"\n"
+		outtraj += str(length_subtrajectory)+"\n"
+
+
+		if num_Trajsofar == 0:
+			
+			for j in range(reward_dim):
+				learned_weights[j] = random.uniform(0.0,.99)
+			
+			lineFoundWeights = str(learned_weights)+"\n"
+			# create initial feature expectations
+			for j in range(reward_dim):
+				learned_mu_E[j]=0.0
+			
+			lineFeatureExpec = str(learned_mu_E)+"\n"
+
+		if not not lineFoundWeights and lineFoundWeights[-1] != '\n':
+			lineFoundWeights = lineFoundWeights + "\n" 
+
+		if not not lineFeatureExpec and lineFeatureExpec[-1] != '\n': 
+			lineFeatureExpec = lineFeatureExpec + "\n" 
+
+		outtraj += lineFoundWeights+lineFeatureExpec+ str(num_Trajsofar)+"\n"  
+
+		print("input to meirl \n")
+		f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRL_sorting.log", "w")
+		f_input_IRL.write("")
+		f_input_IRL.close()
+		f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRL_sorting.log", "a")
+		f_input_IRL.write(outtraj)
+		f_input_IRL.close()
+
+		# print(outtraj)
+		# exit(0)
+
+		(stdout, stderr) = p.communicate(outtraj)
+
+		print("output of meirl ") 
+		# print(stdout)
+		# exit(0)
+		
+		print("session {} finished".format(sess))
+
+		p.stdin.close()
+		p.stdout.close()
+		p.stderr.close()
+
+		print("parsing policies ")
+		stringPols = re.findall('BEGPARSING\n(.[\s\S]+?)ENDPARSING', stdout)[0]
+		print(stringPols)
+
+		BatchIRLflag = False
+		normedRelDiff = 0
+		(policies, lineFoundWeights, lineFeatureExpec, learned_weights, \
+		num_Trajsofar, sessionFinish)\
+		= parsePolicies(stringPols, lineFoundWeights, lineFeatureExpec, learned_weights, \
+		num_Trajsofar, BatchIRLflag)
+
+		num_Trajsofar += t_max/length_subtrajectory
+		print("num_Trajsofar, learned_weights ",(num_Trajsofar, learned_weights))
+
+
+	################################ Simulating learned policy #################################
 
 	policies = policies[0:2]
 	print("number of policies learned ",len(policies))
 
-	# exit(0)
+	exit(0)
 	n_samples = 2 
 	t_max = 80
 	for i in range(len(policies)): 
@@ -749,8 +687,3 @@ if __name__ == "__main__":
 			for (s,a,s_p) in traj_list:
 				print((s,a))
 			print("\n")
-
-
-	exit(0)
-
-

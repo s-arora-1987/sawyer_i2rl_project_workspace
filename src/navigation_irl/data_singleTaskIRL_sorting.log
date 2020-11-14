@@ -1,0 +1,40 @@
+sorting
+MAXENTZAPPROXI2RL
+[ 0, 2, 0, 0]:Pick:1;
+[ 3, 2, 3, 0]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 0, 2, 2, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 0, 2, 2, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 0, 2, 2, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 1, 1, 2]:PlaceOnConveyor:1;
+[ 0, 2, 0, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 1, 1, 2]:PlaceOnConveyor:1;
+[ 0, 2, 0, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 0, 2, 2, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 0, 2, 2, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 0, 2, 2, 2]:Pick:1;
+ENDTRAJ
+[0.13986013986013987, 0.069930069930069935, 0.13986013986013987, 0.069930069930069935, 0.013986013986013988, 0.0069930069930069939, 0.0, 0.27972027972027974, 0.0, 0.0, 0.27972027972027974]
+8
+[0.0900657, 0.0844372, 0.0901232, 0.0877565, 0.0806091, 0.0894071, 0.0877434, 0.0894515, 0.0874947, 0.0892189, 0.0911522]
+[0.0198599, 0.0193393, 0.0233949, 0.0193393, 0.126984, 0.0391924, 0, 0.0322422, 0, 0, 0.0326752]
+36
