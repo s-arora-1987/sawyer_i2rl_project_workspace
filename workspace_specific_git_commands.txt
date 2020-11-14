@@ -1,0 +1,9 @@
+git add --all .
+
+git rm -r --cached devel
+git rm -r --cached build
+git status to verify devel and build are not tracked
+
+git commit -m "XX"
+git pull
+git push
