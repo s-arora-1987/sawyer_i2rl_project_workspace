@@ -6,7 +6,7 @@ Python frontend and D-code backend have MDP models and MDP solvers for two domai
 
 - ground navigation (patrol) domain in paper [http://www.ifaamas.org/Proceedings/aamas2019/pdfs/p1170.pdf], src/navigation_irl/patrol/* and src/irld/src/boydmdp.d
 
-- vegetable sorting domain in paper [https://arxiv.org/abs/2004.12873], src/navigation_irl/sortingMDP/*, src/irld/src/solveSortingMDP.d, and src/irld/src/sortingMDP.d
+- vegetable sorting domain in paper [https://arxiv.org/abs/2004.12873], src/navigation_irl/sortingMDP/*, src/irld/src/solveSortingMDP.d, and src/irld/src/sortingMDP.d Instructions for launching simulation of second domain can be found in [https://github.com/s-arora-1987/sawyer_irl_project]
 
 Python frontend in src/navigation_irl/ros_ctrl.py calls the backend src/irld/src/boydirl.d in backend, which forwards call to chosen IRL solver. 
 
