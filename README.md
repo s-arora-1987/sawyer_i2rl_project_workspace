@@ -1,7 +1,8 @@
 
 ## Demo: Maximum Entropy Multi Task Imitation (Inverse Reinforcement) Learning for Two Sorting Methods
 
-[![Watch the video](https://i.imgur.com/vKb2F1B.png)](https://drive.google.com/file/d/1UpOqgZ8_5tVPlQXkEea2jRDkeKOBU0wB/view?usp=sharing)
+![Learning of Pick-Inspect-Place Task](https://github.com/s-arora-1987/sawyer_i2rl_project_workspace/blob/master/sorting_task_1.gif)]
+
 
 # ROS Workspace for Incremental IRL and Multi Task IRL
 
