@@ -7,7 +7,7 @@ Learning of Pick-Inspect-Place Task
 
 Learning of Roll-Pick-Place Task
 
-![Learning of Roll-Pick-Place Task](https://github.com/s-arora-1987/sawyer_i2rl_project_workspace/blob/master/sorting_task_1.gif)
+![Learning of Roll-Pick-Place Task](https://github.com/s-arora-1987/sawyer_i2rl_project_workspace/blob/master/sorting_task_2.gif)
 
 
 
