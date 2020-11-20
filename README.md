@@ -20,6 +20,8 @@ Bogert's version of UncontrainedAdaptiveGradientDescent has been modified in ter
 
 #  Multi Task IRL
 
+Video of multi task IRL using human demonstration [https://drive.google.com/file/d/1UpOqgZ8_5tVPlQXkEea2jRDkeKOBU0wB/view?usp=sharing]
+
 Note: The choice of sortingMDP model in frontend python code (test_singleTaskIRL*.py, ros_ctrl.py) should match with backend D-code (solveSortingMDP.d, singleTaskIRL.d, multiTaskIRL.d). 
 
 Python frontend in src/navigation_irl/test_singleTaskIRL*.py can be used to verify if single task IRL is working as expected both domains. 
