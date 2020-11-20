@@ -1,3 +1,8 @@
+
+## Demo: Maximum Entropy Multi Task Imitation (Inverse Reinforcement) Learning for Two Sorting Methods
+
+[![Watch the video](https://i.imgur.com/vKb2F1B.png)](https://drive.google.com/file/d/1UpOqgZ8_5tVPlQXkEea2jRDkeKOBU0wB/view?usp=sharing)
+
 # ROS Workspace for Incremental IRL and Multi Task IRL
 
 The code is built upon the version of IRL code developed in Thinc lab at UGA, by Kenneth Bogert before the original code got modified and got uploaded in github. [https://github.com/kbogert/libirl]
@@ -20,7 +25,7 @@ Bogert's version of UncontrainedAdaptiveGradientDescent has been modified in ter
 
 #  Multi Task IRL
 
-Video of multi task IRL using human demonstration [https://drive.google.com/file/d/1UpOqgZ8_5tVPlQXkEea2jRDkeKOBU0wB/view?usp=sharing]
+[https://drive.google.com/file/d/1UpOqgZ8_5tVPlQXkEea2jRDkeKOBU0wB/view?usp=sharing]
 
 Note: The choice of sortingMDP model in frontend python code (test_singleTaskIRL*.py, ros_ctrl.py) should match with backend D-code (solveSortingMDP.d, singleTaskIRL.d, multiTaskIRL.d). 
 
