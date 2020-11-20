@@ -1,7 +1,14 @@
 
 ## Demo: Maximum Entropy Multi Task Imitation (Inverse Reinforcement) Learning for Two Sorting Methods
 
-![Learning of Pick-Inspect-Place Task](https://github.com/s-arora-1987/sawyer_i2rl_project_workspace/blob/master/sorting_task_1.gif)]
+Learning of Pick-Inspect-Place Task
+
+![Learning of Pick-Inspect-Place Task](https://github.com/s-arora-1987/sawyer_i2rl_project_workspace/blob/master/sorting_task_1.gif)
+
+Learning of Roll-Pick-Place Task
+
+![Learning of Roll-Pick-Place Task](https://github.com/s-arora-1987/sawyer_i2rl_project_workspace/blob/master/sorting_task_1.gif)
+
 
 
 # ROS Workspace for Incremental IRL and Multi Task IRL
