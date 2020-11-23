@@ -13,11 +13,11 @@
 
 ## Motivation 
 
-# For Latent Maximum Entropy Incremental IRL
+### For Latent Maximum Entropy Incremental IRL
 
 Most of IRL (Inverse Reinforcement Learning) methods in literature are not appliable to time series datastream in real-time applications because they are off-line. Same holds for IRL under missing data. My research team instantiated a method for online IRL under missing data  [PaperI2RL](http://www.ifaamas.org/Proceedings/aamas2019/pdfs/p1170.pdf).
 
-# For Maximum Entropy Multi Task IRL
+### For Maximum Entropy Multi Task IRL
 
 Existing multi-taask IRL methods like EM-MLIRL and DPM-BIRL suffer from either local minima or label bias issues [PaperMaxEntIRL](https://www.aaai.org/Papers/AAAI/2008/AAAI08-227.pdf). To address this problem, we introduced a non-parametric multi-task IRL method without label bias [PaperME-MTIRL](https://arxiv.org/abs/2004.12873). It solves a joint optimization problem of learning clusters corresponding to multiple tasks in training data, but keeping number of learned clsuters minimal.
 
@@ -30,7 +30,7 @@ We used following libraries / tools for this project
 - Cmake for D language [repo-Cmake-D](https://github.com/dcarp/cmake-d)
 - PyBrain (git://github.com/pybrain/pybrain.git)
 
-# Instructions for Setup
+### Instructions for Setup
 - Install ROS
 - Clone and build cmake-D
 - Clone and build PyBrain
@@ -40,7 +40,7 @@ We used following libraries / tools for this project
 
 The code is partially built upon the version of IRL code developed in Thinc lab at UGA, by Kenneth Bogert before the original code got modified and got uploaded in github. [librirl-by-kbogert](https://github.com/kbogert/libirl)
 
-# Domains 
+### Domains 
 The Python frontend and D-code backend have MDP models and MDP solvers for two domains
 
 - ground navigation (patrol) domain in paper [PaperI2RL](http://www.ifaamas.org/Proceedings/aamas2019/pdfs/p1170.pdf), coded in files src/navigation_irl/patrol/*.py and src/irld/src/boydmdp.d
@@ -51,16 +51,16 @@ The instructions for launching a Gazebo simulation of second domain can be found
 
 Python frontend in src/navigation_irl/ros_ctrl.py calls the backend src/irld/src/boydirl.d in backend, which forwards call to chosen IRL solver. Note: There are many mdp classes defined for each of the two domains. Therefore, while running the code, the choice of MDP model in frontend should match with backend. 
 
-# Solvers
+### Solvers
 Some of the IRL solver classes in src/irld/src/irl.d are modified to work in online / incremental fashion in which learner updates the weights learned in preivous sessions and generate new weights and feature expectations as outputs. Bogert's version of UncontrainedAdaptiveGradientDescent has been modified in terms of stopping criterion. Current descent stops when the standard deviation in moving window of diff-feature-expectation is lower than a threshold. 
 
 ## Summary of Results
 
-# Demo: Online Imitation (Inverse Reinforcement) Learning under Missing Training Data
+### Demo: Online Imitation (Inverse Reinforcement) Learning under Missing Training Data
 
 ![I2RL Navigation Task](https://github.com/s-arora-1987/sawyer_i2rl_project_workspace/blob/master/navigation_task.gif)
 
-# Demo: Maximum Entropy Multi Task Imitation (Inverse Reinforcement) Learning for Two Sorting Methods
+### Demo: Maximum Entropy Multi Task Imitation (Inverse Reinforcement) Learning for Two Sorting Methods
 
 Learning of Pick-Inspect-Place Task
 
