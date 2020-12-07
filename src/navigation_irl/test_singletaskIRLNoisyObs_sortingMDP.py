@@ -246,7 +246,7 @@ def parsePolicies(stdout, lineFoundWeights, lineFeatureExpec, \
 		counter += 1
 		global reward_dim
 
-		print(lineFoundWeights[1:-1].split(", "))
+		# print(lineFoundWeights[1:-1].split(", "))
 		stripped_weights = lineFoundWeights[1:-1].split(", ")
 
 		learned_weights = [float(x) for x in stripped_weights]
@@ -590,6 +590,7 @@ if __name__ == "__main__":
 	# by Shervin 
 	# 0.025 not giving expected trend
 	conv_threshold_gibbs = 0.015
+	# conv_threshold_gibbs = 0.01
 
 	# which kind of sampling method is being used?
 	use_ImpSampling = 0
@@ -611,11 +612,16 @@ if __name__ == "__main__":
 	range_pred_scores2 = [0.90,0.99]
 	range_pred_scores3 = [0.80,0.90]
 	range_pred_scores4 = [0.70,0.80]
+	range_pred_scores5 = [0.60,0.70]
 
-	ranges_pred_scores = [range_pred_scores1, range_pred_scores2, range_pred_scores3, range_pred_scores4]
+	ranges_pred_scores = [range_pred_scores1, range_pred_scores2, range_pred_scores3, range_pred_scores4, range_pred_scores5]
 
-	print("writing result of calls to noisyObsRobustSamplingMeirl to file Downloads/noisyObsRobustSamplingMeirl_LBA_data.txt") 
-	f_rec = open(get_home()+'/Downloads/noisyObsRobustSamplingMeirl_LBA_data.txt','a') 
+	print("writing result of calls to noisyObsRobustSamplingMeirl to file Downloads/noisyObsRobustSamplingMeirl_LBA_data.csv") 
+	# output LBA to file
+	f_input_IRL = open(get_home() +'/Downloads/noisyObsRobustSamplingMeirl_LBA_data.csv', "w")
+	f_input_IRL.write("")
+	f_input_IRL.close()
+	f_rec = open(get_home()+'/Downloads/noisyObsRobustSamplingMeirl_LBA_data.csv','a') 
 	csvstring = "\n" 
 
 	for range_sc in ranges_pred_scores: 
@@ -672,7 +678,7 @@ if __name__ == "__main__":
 
 			outtraj += lineFoundWeights+lineFeatureExpec+ str(num_Trajsofar)+"\n"  
 
-			# print("input to meirl \n")
+			# input data to file
 			f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRLNoisyObs_sorting.log", "w")
 			f_input_IRL.write("")
 			f_input_IRL.close()
@@ -707,17 +713,17 @@ if __name__ == "__main__":
 			num_Trajsofar, BatchIRLflag) 
 
 			num_Trajsofar += t_max/length_subtrajectory
-			print("num_Trajsofar, learned_weights ",(num_Trajsofar, learned_weights))
+			# print("num_Trajsofar, learned_weights ",(num_Trajsofar, learned_weights))
 
 		# LBA should be read after last session 
-		print("re.findall('LBA(.[\s\S]+?)ENDLBA', stdout) ",re.findall('LBA(.[\s\S]+?)ENDLBA', stdout))
+		# print("re.findall('LBA(.[\s\S]+?)ENDLBA', stdout) ",re.findall('LBA(.[\s\S]+?)ENDLBA', stdout))
 		LBA = re.findall('LBA(.[\s\S]+?)ENDLBA', stdout)[0]
 		print("LBA:",LBA) 
 
 		################################ Simulating learned policy #################################
 
 		policies = policies[0:2]
-		print("number of policies learned ",len(policies))
+		# print("number of policies learned ",len(policies))
 
 		# exit(0)
 		if sample_learnedPolicy == 1:		
@@ -725,7 +731,7 @@ if __name__ == "__main__":
 			t_max = 10
 			for i in range(len(policies)): 
 				policy = policies[i] 
-				print("trajs from policy learned for ",i)
+				print("trajs from learned policy number ",i)
 				print("\n")
 				for j in range(n_samples): 
 					traj_list = sample_traj(model, t_max, initial, policy) 
