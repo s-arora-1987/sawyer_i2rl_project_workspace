@@ -27,7 +27,6 @@ sortingReward6,sortingReward7,sortingReward7WPlaced
 from mdp.solvers import *
 import mdp.agent
 from mdp.simulation import *
-# from ros_ctrl import printTs, printTrajectories, parsePolicies
 import re
 
 home = os.environ['HOME']
@@ -51,7 +50,7 @@ f_ac_BIRLcode.close()
 f_st_BIRLcode = open(get_home() + "/BIRL_MLIRL_data/traj_states.log", "a")
 f_ac_BIRLcode = open(get_home() + "/BIRL_MLIRL_data/traj_actions.log", "a")
 
-def printTrajectories(trajs):
+def printTrajectoriesWPredScores(trajs,range_scores):
 	outtraj = ""
 	for patroller in trajs:
 
@@ -89,14 +88,14 @@ def printTrajectories(trajs):
 
 				else:
 					act_str = "ActionInvalid"
-
+					
 				outtraj += act_str
-
+				
 			else:
 				outtraj += "None"
-
-			outtraj += ":1;\n"
-
+				
+			outtraj += ":"+str(random.uniform(range_scores[0],range_scores[1]))+";\n"
+			
 		outtraj += "ENDTRAJ\n"
 
 	return outtraj
@@ -269,7 +268,6 @@ def parsePolicies(stdout, lineFoundWeights, lineFeatureExpec, \
 	return (returnval, lineFoundWeights, lineFeatureExpec, \
 		learned_weights, num_Trajsofar, sessionFinish)
 
-
 def computeLBA(fileTruePolicy,model,mapAgentLrndPolicy):
 	# read and compare policies using dictionaries 
 	f = open(fileTruePolicy,"r")
@@ -341,7 +339,6 @@ def computeLBA(fileTruePolicy,model,mapAgentLrndPolicy):
 	lba=float(totalsuccess) / float(totalstates)
 
 	return lba
-
 
 def saveDataForBaseline():
 
@@ -533,8 +530,8 @@ if __name__ == "__main__":
 	count = 0
 	for s in model.S(): 
 		# initial[s] = 1.0
-		if s._onion_location == 0 and s._prediction == 2 and s._listIDs_status == 0: 
-		# if s._onion_location == 0 and s._listIDs_status == 0:
+		# if s._onion_location == 0 and s._prediction == 2 and s._listIDs_status == 0: 
+		if s._onion_location == 0 and s._listIDs_status == 0:
 			initial[s] = 1.0
 		# 	count+=1
 	print("number of initial states ", count)
@@ -563,130 +560,180 @@ if __name__ == "__main__":
 	# t_max = 300
 	# t_max = 400
 	# t_max = 2500
-	# length_subtrajectory = 50
 	# length_subtrajectory = 2
 	# length_subtrajectory = 4
 	# length_subtrajectory = 8
 	# length_subtrajectory = 10
 	# length_subtrajectory = 15
-	length_subtrajectory = 25
+	# length_subtrajectory = 25
+	# length_subtrajectory = 30
+	# length_subtrajectory = 35
+	length_subtrajectory = 40
 	# length_subtrajectory = 50
+	# length_subtrajectory = 80
 
 	# t_max = length_subtrajectory*1
-	t_max = length_subtrajectory*2
+	t_max = length_subtrajectory*3
+	sample_learnedPolicy = 0
 
-	num_sessions = 3
 	#for I2RL
+	num_sessions = 1
 	num_Trajsofar = 0
 	learned_mu_E=[0.0]*reward_dim
 	learned_weights=[0.0]*reward_dim
 
-	for sess in range(num_sessions):
+	# parameters for solver
+	restart_attempts = 3
+	moving_window_length_muE = 3
 
-		traj = []
-		print( "demonstration") 
-		for i in range(n_samples): 
-			# traj_list = simulate(model, policy, initial, t_max) 
-			traj_list = sample_traj(model, t_max, initial, policy) 
-			traj.append(traj_list) 
-			# for (s,a,s_p) in traj_list:
-				# print((s,a))
-			# print("\n")
+	# threshold for convergence of gibbs sampling for robust-irl 
+	# by Shervin 
+	# 0.025 not giving expected trend
+	conv_threshold_gibbs = 0.015
 
-		# print(printTrajectories(traj))
-		# exit(0)
-
-		outtraj = None
-		args = [get_home() +"/catkin_ws/devel/bin/"+"meirl", ]
-		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)				
-		outtraj = ""
-		outtraj += "sorting" + "\n"
-
-		# algorithm = "MAXENTZAPPROX" 
-		algorithm = "MAXENTZAPPROXI2RL" 
-		outtraj += algorithm+"\n"
-
-		outtraj += printTrajectories(traj)
-
-		# specific to sorting mdp 
-		outtraj += str(norm_params)+"\n"
-		outtraj += str(length_subtrajectory)+"\n"
+	# which kind of sampling method is being used?
+	use_ImpSampling = 0
+	if (use_ImpSampling == 1):
+		# imp sampling, for prediciton score 0.85-0.99  and only PIP
+		conv_threshold_stddev_diff_moving_wdw = 0.0005 
+	else:
+		# gibbs sampling, for prediciton score 0.85-0.99  and only PIP
+		# which value shows LBA monotonically decreasing with
+		# confidence? 
+		# 0.01 No trend 
+		# 0.005 No trend
+		# However, changing conv_threshold_gibbs made a difference
+		conv_threshold_stddev_diff_moving_wdw = 0.005 
 
 
-		if num_Trajsofar == 0:
+	# ranges of noise in observations 
+	range_pred_scores1 = [1.0,1.0]
+	range_pred_scores2 = [0.90,0.99]
+	range_pred_scores3 = [0.80,0.90]
+	range_pred_scores4 = [0.70,0.80]
+
+	ranges_pred_scores = [range_pred_scores1, range_pred_scores2, range_pred_scores3, range_pred_scores4]
+
+	print("writing result of calls to noisyObsRobustSamplingMeirl to file Downloads/noisyObsRobustSamplingMeirl_LBA_data.txt") 
+	f_rec = open(get_home()+'/Downloads/noisyObsRobustSamplingMeirl_LBA_data.txt','a') 
+	csvstring = "\n" 
+
+	for range_sc in ranges_pred_scores: 
+		for sess in range(num_sessions):
+
+			traj = []
+			print( "demonstration") 
+			for i in range(n_samples): 
+				# traj_list = simulate(model, policy, initial, t_max) 
+				traj_list = sample_traj(model, t_max, initial, policy) 
+				traj.append(traj_list) 
+				# for (s,a,s_p) in traj_list:
+					# print((s,a))
+				# print("\n")
+
+			outtraj = None
+			args = [get_home() +"/catkin_ws/devel/bin/"+ "noisyObsRobustSamplingMeirl", ]
+			p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)				
+			outtraj = ""
+			outtraj += "sorting" + "\n"
+
+			# algorithm = "MAXENTZAPPROX" 
+			algorithm = "MAXENTZAPPROXNOISYOBS" 
+			outtraj += algorithm+"\n"
+
+			# add prediction scores
+			outtraj += printTrajectoriesWPredScores(traj,range_sc)
+
+			# specific to sorting mdp 
+			outtraj += str(norm_params)+"\n"
+			outtraj += str(length_subtrajectory)+"\n"
+			outtraj += str(conv_threshold_stddev_diff_moving_wdw)+"\n"\
+			+str(restart_attempts)+"\n"+str(moving_window_length_muE)+"\n"\
+			+str(use_ImpSampling)+"\n"+str(conv_threshold_gibbs)+"\n"
+
+
+			if num_Trajsofar == 0:
+				
+				for j in range(reward_dim):
+					learned_weights[j] = random.uniform(0.0,.99)
+				
+				lineFoundWeights = str(learned_weights) #+"\n"
+				# create initial feature expectations
+				for j in range(reward_dim):
+					learned_mu_E[j]=0.0
+				
+				lineFeatureExpec = str(learned_mu_E) #+"\n"
+
+			if not not lineFoundWeights and lineFoundWeights[-1] != '\n':
+				lineFoundWeights = lineFoundWeights + "\n" 
+
+			if not not lineFeatureExpec and lineFeatureExpec[-1] != '\n': 
+				lineFeatureExpec = lineFeatureExpec + "\n" 
+
+			outtraj += lineFoundWeights+lineFeatureExpec+ str(num_Trajsofar)+"\n"  
+
+			# print("input to meirl \n")
+			f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRLNoisyObs_sorting.log", "w")
+			f_input_IRL.write("")
+			f_input_IRL.close()
+			f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRLNoisyObs_sorting.log", "a")
+			f_input_IRL.write(outtraj)
+			f_input_IRL.close()
+
+			# print(outtraj)
+			# exit(0)
+
+			(stdout, stderr) = p.communicate(outtraj)
+
+			print("output of meirl ") 
+			# print(stdout)
+
+			# exit(0)
 			
-			for j in range(reward_dim):
-				learned_weights[j] = random.uniform(0.0,.99)
-			
-			lineFoundWeights = str(learned_weights)+"\n"
-			# create initial feature expectations
-			for j in range(reward_dim):
-				learned_mu_E[j]=0.0
-			
-			lineFeatureExpec = str(learned_mu_E)+"\n"
+			print("session {} finished".format(sess))
+			p.stdin.close()
+			p.stdout.close()
+			p.stderr.close()
 
-		if not not lineFoundWeights and lineFoundWeights[-1] != '\n':
-			lineFoundWeights = lineFoundWeights + "\n" 
+			# print("parsing policies ")
+			emphasizedOutput = re.findall('BEGPARSING\n(.[\s\S]+?)ENDPARSING', stdout)[0] 
+			# print(emphasizedOutput)
 
-		if not not lineFeatureExpec and lineFeatureExpec[-1] != '\n': 
-			lineFeatureExpec = lineFeatureExpec + "\n" 
+			BatchIRLflag = False 
+			normedRelDiff = 0 
+			(policies, lineFoundWeights, lineFeatureExpec, learned_weights, \
+			num_Trajsofar, sessionFinish) \
+			= parsePolicies(emphasizedOutput, lineFoundWeights, lineFeatureExpec, learned_weights, \
+			num_Trajsofar, BatchIRLflag) 
 
-		outtraj += lineFoundWeights+lineFeatureExpec+ str(num_Trajsofar)+"\n" 
-		print("weights sent ") 
-		print(lineFoundWeights)
+			num_Trajsofar += t_max/length_subtrajectory
+			print("num_Trajsofar, learned_weights ",(num_Trajsofar, learned_weights))
 
-		# print("input to meirl \n")
-		f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRL_sorting.log", "w")
-		f_input_IRL.write("")
-		f_input_IRL.close()
-		f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRL_sorting.log", "a")
-		f_input_IRL.write(outtraj)
-		f_input_IRL.close()
+		# LBA should be read after last session 
+		print("re.findall('LBA(.[\s\S]+?)ENDLBA', stdout) ",re.findall('LBA(.[\s\S]+?)ENDLBA', stdout))
+		LBA = re.findall('LBA(.[\s\S]+?)ENDLBA', stdout)[0]
+		print("LBA:",LBA) 
 
-		# print(outtraj)
+		################################ Simulating learned policy #################################
+
+		policies = policies[0:2]
+		print("number of policies learned ",len(policies))
+
 		# exit(0)
+		if sample_learnedPolicy == 1:		
+			n_samples = 4 
+			t_max = 10
+			for i in range(len(policies)): 
+				policy = policies[i] 
+				print("trajs from policy learned for ",i)
+				print("\n")
+				for j in range(n_samples): 
+					traj_list = sample_traj(model, t_max, initial, policy) 
+					for (s,a,s_p) in traj_list:
+						print((s,a))
+					print("\n")
 
-		(stdout, stderr) = p.communicate(outtraj)
+		csvstring += str(LBA)+"," 
 
-		print("output of meirl ") 
-		print(stdout)
-		# exit(0)
-		
-		print("session {} finished".format(sess))
-
-		p.stdin.close()
-		p.stdout.close()
-		p.stderr.close()
-
-		# print("parsing policies ")
-		stringPols = re.findall('BEGPARSING\n(.[\s\S]+?)ENDPARSING', stdout)[0]
-		print(stringPols)
-
-		BatchIRLflag = False
-		normedRelDiff = 0
-		(policies, lineFoundWeights, lineFeatureExpec, learned_weights, \
-		num_Trajsofar, sessionFinish)\
-		= parsePolicies(stringPols, lineFoundWeights, lineFeatureExpec, learned_weights, \
-		num_Trajsofar, BatchIRLflag)
-
-		num_Trajsofar += t_max/length_subtrajectory
-		print("num_Trajsofar, learned_weights ",(num_Trajsofar, learned_weights))
-
-
-	################################ Simulating learned policy #################################
-
-	policies = policies[0:2]
-	print("number of policies learned ",len(policies))
-
-	# exit(0)
-	n_samples = 2 
-	t_max = 80
-	for i in range(len(policies)): 
-		policy = policies[i] 
-		print("trajs from policy learned for ",i)
-		print("\n")
-		for j in range(n_samples): 
-			traj_list = sample_traj(model, t_max, initial, policy) 
-			for (s,a,s_p) in traj_list:
-				print((s,a))
-			print("\n")
+	f_rec.write(csvstring)
+	f_rec.close()

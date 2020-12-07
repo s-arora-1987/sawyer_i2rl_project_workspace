@@ -57,8 +57,6 @@ def printTrajectories(trajs):
 		outtraj += "ENDTRAJ\n"
 	return outtraj
 	
-
-	
 def printTs(T):
 	outtraj = ""
 	for t1 in T:
@@ -473,7 +471,7 @@ if __name__ == "__main__":
 		
 		for i in range(2):
 			for j in range(reward_dim):
-				learned_weights[i][j] = random.uniform(-.99,.99)
+				learned_weights[i][j] = random.uniform(0.0,.99)
 		
 		wt_data = numpy.array([learned_weights])
 		
