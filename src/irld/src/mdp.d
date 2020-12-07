@@ -1812,3 +1812,19 @@ double[StateAction] calcStateActionFreqExact(Agent policy, double[State] initial
 	return returnval;
 
 } 
+
+
+public struct sac {
+	// state, action, prediction score/ observation model confidence for s-a pair
+	
+	public this(State s1, Action a1, double c1) {
+		s = s1;
+		a = a1;
+		c = c1;
+	}
+	
+	State s;
+	Action a;
+	double c;
+	
+}

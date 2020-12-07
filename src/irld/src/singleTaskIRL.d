@@ -1,6 +1,6 @@
 import mdp;
 import boydmdp;
-import irl;
+import irlWithoutLBFGS;
 import std.stdio;
 import std.format;
 import std.string;
@@ -57,12 +57,9 @@ int main() {
 		//models ~= new sortingModelbyPSuresh3(0.05,null);
 		//models ~= new sortingModelbyPSuresh3(0.05,null);
 		//models ~= new sortingModelbyPSuresh4(0.05,null);
-		//models ~= new sortingModelbyPSuresh4(0.05,null);
-		//models ~= new sortingModelbyPSuresh2WOPlaced(0.05,null);
-		//models ~= new sortingModelbyPSuresh2WOPlaced(0.05,null);
-		//models ~= new sortingModelbyPSuresh3multipleInit(0.05,null);
-		//models ~= new sortingModelbyPSuresh3multipleInit(0.05,null);
-		model = new sortingModelbyPSuresh3multipleInit(0.05,null);
+		//model = new sortingModelbyPSuresh4(0.05,null);
+		model = new sortingModelbyPSuresh2WOPlaced(0.05,null);
+		//model = new sortingModelbyPSuresh3multipleInit(0.05,null);
 		
 	} 
 
@@ -215,6 +212,16 @@ int main() {
         formattedRead(buf, "%s", &num_Trajsofar);
 
     } 
+
+	double [] lastWeights = lastWeightsI2RL.dup; //new double[reward_weights.length];
+	//for (int i = 0; i < lastWeights.length; i ++) {
+	//	lastWeights[i] = uniform(-0.99, 0.99);
+	//	if (mapToUse == "sorting") lastWeights[i] = uniform(0.01, 0.99);
+	//}
+
+	debug {
+        writeln("initialized Weights -- ",lastWeights);
+    }
     debug {
     	writeln("num_Trajsofar ");
         writeln(num_Trajsofar);
@@ -229,8 +236,8 @@ int main() {
 	    //initial[iss] = 1.0;
 		foreach (s; model.S()) {
 			sortingState ss = cast(sortingState)s;
-			//if (ss._onion_location == 0 && ss._prediction == 2 && ss._listIDs_status == 0) initial[ss] = 1.0;
-			if (ss._onion_location == 0 && ss._listIDs_status == 0) initial[ss] = 1.0;
+			if (ss._onion_location == 0 && ss._prediction == 2 && ss._listIDs_status == 0) initial[ss] = 1.0;
+			//if (ss._onion_location == 0 && ss._listIDs_status == 0) initial[ss] = 1.0;
 		}
 		writeln("numebr of initial states ",initial.length);
 		Distr!State.normalize(initial); 
@@ -245,16 +252,6 @@ int main() {
 	sar [][] samples = SAR;
     
 	Agent policy = new RandomAgent(model.A(null));
-
-	double [] lastWeights = new double[reward_weights.length];
-	for (int i = 0; i < lastWeights.length; i ++) {
-		lastWeights[i] = uniform(-0.99, 0.99);
-		if (mapToUse == "sorting") lastWeights[i] = uniform(0.01, 0.99);
-	}
-
-	debug {
-        writeln("initialized lastWeights -- ",lastWeights);
-    }
 	
 	sar [][] trajectoriesg;
 	

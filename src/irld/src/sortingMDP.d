@@ -929,12 +929,12 @@ public class InspectAfterPicking : Action {
 	        auto pred = dice(pp, 1-pp);
 	        return new sortingState( [1, cast(int)pred, 1, 2 ]);
 		} else return new sortingState( 
-	[1, (cast(sortingState)state)._prediction, 1, 
-	(cast(sortingState)state)._listIDs_status ]); 
-	//	} else return new sortingState( 
-	//[(cast(sortingState)state)._onion_location, 
-	//(cast(sortingState)state)._prediction, 1, 
-	//(cast(sortingState)state)._listIDs_status ]);
+		[1, (cast(sortingState)state)._prediction, 1, 
+		(cast(sortingState)state)._listIDs_status ]); 
+		//	} else return new sortingState( 
+		//[(cast(sortingState)state)._onion_location, 
+		//(cast(sortingState)state)._prediction, 1, 
+		//(cast(sortingState)state)._listIDs_status ]);
 
 	}
 	

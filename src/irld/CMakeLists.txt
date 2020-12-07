@@ -58,12 +58,13 @@ target_link_libraries(boydirl
 )
 add_dependencies(boydirl liblbfgs)
 
+add_executable(meirl src/mdp.d src/boydmdp.d src/irlWithoutLBFGS.d src/singleTaskIRL.d src/sortingMDP.d)
+#target_link_libraries(meirl
+#   asa047 lbfgs
+#)
+#add_dependencies(meirl liblbfgs)
 
-add_executable(meirl src/mdp.d src/boydmdp.d src/irl.d src/singleTaskIRL.d src/irlgraveyard.d src/sortingMDP.d)
-target_link_libraries(meirl
-   asa047 lbfgs
-)
-add_dependencies(meirl liblbfgs)
+add_executable(noisyObsRobustSamplingMeirl src/mdp.d src/boydmdp.d src/irlWithoutLBFGS.d src/singleTaskIRLNoisyObs.d src/sortingMDP.d)
 
 #add_executable(testdeb src/testdebug.d)
 
@@ -109,16 +110,18 @@ add_executable(boydsimple_t src/mdp.d src/boydmdp.d src/BoydSimpleT.d)
 
 add_executable(solveSortingMDP src/sortingMDP.d src/mdp.d src/solveSortingMDP.d)
 
-add_executable(dpmMEIRL src/multitaskIRL.d src/sortingMDP.d src/mdp.d src/irl.d src/irlgraveyard.d src/boydmdp.d)
-target_link_libraries(dpmMEIRL
-   asa047 lbfgs
-)
-add_dependencies(dpmMEIRL liblbfgs)
+add_executable(dpmMEIRL src/multitaskIRL.d src/sortingMDP.d src/mdp.d src/irlWithoutLBFGS.d src/boydmdp.d)
+#target_link_libraries(dpmMEIRL
+#   asa047 lbfgs
+#)
+#add_dependencies(dpmMEIRL liblbfgs)
 
 add_executable(sortingMDPILE src/ileSortingMDP.d src/mdp.d src/sortingMDP.d) 
+
+add_executable(code_test src/code_test.d) 
 
 # set_target_properties(boydpatroller boydattacker boydirl boyd_t boydsimple_t gridworld boyd_em_t boydt toytest boydemirl waterloorun boydlmeirl sortingMDP PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
 # set_target_properties(boydpatroller boydattacker boydirl boydsimple_t boydile PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
 # set_target_properties(boydpatroller boydattacker boydsimple_t boydile sortingMDP PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
 #set_target_properties(boydirl boydpatroller boydattacker dpmMEIRL boydsimple_t boydile solveSortingMDP sortingMDPILE solveboydpatroller PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
-set_target_properties(boydirl meirl boydpatroller boydattacker dpmMEIRL boydsimple_t boydile solveSortingMDP sortingMDPILE solveboydpatroller PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
+set_target_properties(boydirl meirl noisyObsRobustSamplingMeirl boydpatroller boydattacker dpmMEIRL boydsimple_t boydile solveSortingMDP sortingMDPILE solveboydpatroller code_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
