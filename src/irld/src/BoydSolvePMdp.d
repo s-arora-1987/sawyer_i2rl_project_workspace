@@ -186,6 +186,7 @@ int main() {
 		}
 	}
 	
+    writeln("BEGPARSING");
 	foreach (State s; model.S()) {
 		foreach (Action act, double chance; a.actions(s)) {
 		    if (mapToUse == "largeGridPatrol" || mapToUse == "reducedGridPatrol") {
@@ -206,6 +207,7 @@ int main() {
 		}
 	}
 	
+    writeln("ENDPARSING");
 	 
 	return 0;	
 	

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-sys.path.append('/home/saurabharora/catkin_ws/src/navigation_irl')
+sys.path.append('/home/saurabharora/catkin_ws/src/sorting_patrol_MDP_irl')
 
 from mdp.model import *
 from util.classes import NumMap

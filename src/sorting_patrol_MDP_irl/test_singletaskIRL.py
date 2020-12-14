@@ -414,8 +414,7 @@ if __name__ == "__main__":
 			# print((s,a))
 		#print("\n")
 
-	# print(printTrajectories(traj))
-	# exit(0)
+	#print(printTrajectories(traj))
 
 	outtraj = None
 	args = ["boydirl", ]

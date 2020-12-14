@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('navigation_irl')
+# import roslib; roslib.load_manifest('navigation_irl')
 import time
 import rospy
 import std_msgs.msg
@@ -456,7 +456,7 @@ def init():
 	stdin += "1.0\n"
 	
 	(transitionfunc, stderr) = p.communicate(stdin)
-	
+	# print("\noutput of call to boydsimple_t \n",transitionfunc)
 	
 	
 	args = ["boydpatroller", ]
@@ -474,6 +474,8 @@ def init():
 	
 	(stdout, stderr) = p.communicate(stdin)
 	print("\n computed patroller's policy")
+	import re
+	stdout = re.findall('BEGPARSING\n(.[\s\S]+?)ENDPARSING', stdout)[0]
 
 	if m == "largeGridPatrol":
 		correctpolicy = home + "/patrolstudy/largeGridpolicy_mdppatrol"
@@ -494,6 +496,8 @@ def init():
 	outtraj = ""
 	p = {}
 	stateactions = stdout.split("\n")
+	print("\noutput of call to boydpatroller \n",stateactions)
+
 	for stateaction in stateactions:
 		temp = stateaction.split(" = ")
 		if len(temp) < 2: continue

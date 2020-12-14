@@ -576,32 +576,27 @@ class PatrolModel(Model):
         
         print "\n total number of states: "+str(len(result))+"\n"
 
+
+    
     def T(self,state,action):
         """Returns a function state -> [0,1] for probability of next state
         given currently in state performing action"""
         result = NumMap()
-        valid_actions = self.A(state)
-        s_p = action.apply(state)
-        if action not in valid_actions or not self.is_legal(s_p) or s_p.__eq__(state):
-            result[state] = 1
-        else:
-            result[state] = self._p_fail
-            result[s_p] = 1-self._p_fail
-
-        # totalP = 0
-        # for a in actions:
-        #     p = 0
-        #     if a == action:
-        #         p = 1 - self._p_fail
-        #     else:
-        #         p = self._p_fail / ( len(actions)-1 )
-        #     s_p = a.apply(state)
-        #     if not self.is_legal(s_p):
-        #         result[state] += p
-        #     else:
-        #         result[s_p] += p  
-        #     totalP += p
-        # result[state] += 1.0 - totalP
+        actions = self.A(state)
+        totalP = 0
+        for a in actions:
+            p = 0
+            if a == action:
+                p = 1 - self._p_fail
+            else:
+                p = self._p_fail / ( len(actions)-1 )
+            s_p = a.apply(state)
+            if not self.is_legal(s_p):
+                result[state] += p
+            else:
+                result[s_p] += p  
+            totalP += p
+        result[state] += 1.0 - totalP
         return result 
         
     def S(self):

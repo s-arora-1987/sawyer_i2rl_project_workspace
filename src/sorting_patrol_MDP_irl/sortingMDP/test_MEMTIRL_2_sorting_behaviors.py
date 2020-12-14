@@ -525,7 +525,7 @@ if __name__ == "__main__":
 	############### COMMENTED PART USED FOR TUNING VI TO GET GOOD TRUE POLICIES ####################
 	################################## 
 
-	f_pickinspectplace = get_home() + "/catkin_ws/src/navigation_irl/sortingMDP/policy_pickinspectplace.log"
+	f_pickinspectplace = get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/sortingMDP/policy_pickinspectplace.log"
 	f = open(f_pickinspectplace, "w")
 	# print("pickinspectplace trajs")
 	params_manualTuning_pickinspectplace = [ 0.10, 0.0, 0.0, 0.22, -0.12, 0.44, 0.0, -0.12]
@@ -562,7 +562,7 @@ if __name__ == "__main__":
 	##################################
 
 	# print("rollpickplace trajs")
-	f_rolling = get_home() + "/catkin_ws/src/navigation_irl/sortingMDP/policy_rolling.log"
+	f_rolling = get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/sortingMDP/policy_rolling.log"
 	f = open(f_rolling, "w")
 	params_manualTuning_rolling = [0.15, -0.07, -0.11, 0.2, -0.03, 0.0, 0.45, -0.15]
 	params_manualTuning_rolling_reward4 = [0.0, 0.6, 0.0, 0.95, 0.8, 0.0, 0.9, 0.15, 0.9, 0.4]
@@ -596,7 +596,7 @@ if __name__ == "__main__":
 	##################################
 
 	# staying still behavior makes it claim, because claim action has high chance of not changing state
-	f_stayStill = get_home() + "/catkin_ws/src/navigation_irl/sortingMDP/policy_stayStill.log"
+	f_stayStill = get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/sortingMDP/policy_stayStill.log"
 	f = open(f_stayStill, "w")
 	params_stayStill = [ 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0] 
 	# params_cyclePickPlace = [ 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0] 
@@ -628,7 +628,7 @@ if __name__ == "__main__":
 	##################################
 
 	# print("pick place pick trajs")
-	# f_pickPlacePick = get_home() + "/catkin_ws/src/navigation_irl/sortingMDP/policy_pickPlacePick.log"
+	# f_pickPlacePick = get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/sortingMDP/policy_pickPlacePick.log"
 	# f = open(f_pickPlacePick, "w")
 
 	# incentivize placing features and incentivize picking-placed feature
@@ -851,8 +851,8 @@ if __name__ == "__main__":
 		for i in range(0, len(List_TrueWeights)):
 			input_dpmMEIRL += str(List_TrueWeights[i])+"\n"
 		
-		f = open(get_home() + "/catkin_ws/src/navigation_irl/data_MEMTIRL.log", "w")
-		# f = open(get_home() + "/catkin_ws/src/navigation_irl/sortingMDP/MTIRL_data_test.log", "w")
+		f = open(get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/data_MEMTIRL.log", "w")
+		# f = open(get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/sortingMDP/MTIRL_data_test.log", "w")
 		# UNCOMMENT
 		f.write(input_dpmMEIRL)
 		f.close()

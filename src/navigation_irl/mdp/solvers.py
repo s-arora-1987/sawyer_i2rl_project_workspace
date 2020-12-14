@@ -13,8 +13,6 @@ import numpy.linalg
 import numpy.random
 import random
 import util.classes
-from sortingMDP.model import sortingState
-
 
 class MDPSolver(object):
     def solve(self, model):
@@ -326,8 +324,6 @@ class IRLApprximateSolver(object):
             result += initial[s]*mu[:,j]
         return result
         
-import sys
-
 class ValueIteration(MDPSolver):
     '''
     Solve a model by repeated applications of the Bellman Operator
@@ -341,14 +337,9 @@ class ValueIteration(MDPSolver):
         while True:
             (V, delta) = self.iter(model, V, 'max')
             i += 1
-            # print 'Value Iteration, Iter#{}, delta {}'.format(i, delta)
-            if delta < self._error or i > 1000:
+#            print 'Value Iteration, Iter#{}, delta {}'.format(i, delta)
+            if delta < self._error:
                 break
-        print "state values at terminal states"
-        for s in model.S():
-            if model.is_terminal(s):
-                print s
-                print V[s]        
         return mdp.agent.MapAgent(self.iter(model, V, 'argmax')[0])
         
     @classmethod
@@ -364,20 +355,9 @@ class ValueIteration(MDPSolver):
         for s in model.S():
             if model.is_terminal(s):
                 if max_or_argmax == 'max':
-                    max_R = -sys.float_info.max
-                    for a in model.A(s):
-                        if model.R(s, a) > max_R:
-                            max_R = model.R(s,a)
-                    V_next[s] = max_R
+                    V_next[s] = model.R(s, None)
                     delta = max(delta, abs(V[s] - V_next[s])) 
                     
-                if max_or_argmax == 'argmax':
-                    act_max_R=None
-                    max_R = -sys.float_info.max
-                    for a in model.A(s):
-                        if model.R(s, a) > max_R:
-                            act_max_R = a
-                    V_next[s] = act_max_R
                 continue
             q = util.classes.NumMap()    # Q-states for state s
             for a in model.A(s):
@@ -390,14 +370,6 @@ class ValueIteration(MDPSolver):
                 delta = max(delta, abs(V[s] - V_next[s]))                
             else:
                 V_next[s] = q.argmax()
-                qsame = q[V_next[s]]
-                for key,value in q.iteritems():
-                    if value == qsame and not key.__eq__(V_next[s]):
-                        # print "same q values at state:"+str(s)
-                        # print "q(s): "+str(q)
-                        break
-                # print s
-                # print "q(s): "+str(q)
         return (V_next, delta)
 
 class ValueIteration2(MDPSolver):
@@ -414,11 +386,11 @@ class ValueIteration2(MDPSolver):
         while True:
             (V, delta) = self.iter(model, V, 'max')
             i += 1
-            # print 'Value Iteration, Iter#{}, delta {}'.format(i, delta)
-            if delta < self._error or i > 1000:
+#            print 'Value Iteration, Iter#{}, delta {}'.format(i, delta)
+            if delta < self._error:
                 break
-        final = (mdp.agent.MapAgent(self.iter(model, V, 'argmax')[0]), V)
-        return final[0] 
+	final = (mdp.agent.MapAgent(self.iter(model, V, 'argmax')[0]), V)
+        return final
         
     @classmethod
     def iter(cls, model, V, max_or_argmax='max'):
@@ -448,14 +420,6 @@ class ValueIteration2(MDPSolver):
                 delta = max(delta, abs(V[s] - V_next[s]))
             else:
                 V_next[s] = q.argmax()
-                qsame = q[V_next[s]]
-                for key,value in q.iteritems():
-                    if value == qsame and not key.__eq__(V_next[s]):
-                        print "same q values at state:"+str(s)
-                        print "q(s): "+str(q)
-                        break
-                print s
-                print "q(s): "+str(q)
         return (V_next, delta)
 
 class QValueIteration(MDPSolver):
