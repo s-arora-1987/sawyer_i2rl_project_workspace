@@ -1,4 +1,4 @@
-import roslib; roslib.load_manifest('navigation_irl')
+# import roslib; roslib.load_manifest('navigation_irl')
 
 import rospy
 import rosbag

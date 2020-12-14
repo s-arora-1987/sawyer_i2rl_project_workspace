@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('navigation_irl')
+# import roslib; roslib.load_manifest('navigation_irl')
 
 import rospy
-from std_msgs.msg import String, Int8MultiArray, Int64
+from std_msgs.msg import String
+from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Point, Quaternion
 import tf
 import patrol.model
@@ -20,15 +21,6 @@ import operator
 from patrol.time import *
 import time
 
-from gazebo_ros_link_attacher.srv import Attach, AttachRequest, AttachResponse
-from two_scara_collaboration.srv import *
-from two_scara_collaboration.msg import cylinder_blocks_poses,StringArray
-from robotiq_2f_gripper_control.srv import *
-
-from sortingMDP.model import *
-from sortingMDP.reward import *
-from mdp.solvers import *
-
 home = os.environ['HOME']
 def get_home():
 	global home
@@ -41,20 +33,71 @@ def get_time():
 	return rospy.get_time() - startat
 
 
+# ros publications
+pub = None
+goal = None
+state = "w"
+
+# mdp Settings
+startState = None
+
+# mdp States
+lastPatroller0State = None
+lastPatroller1State = None
+
 # class for holding the MDP and utils
 mdpWrapper = None
 
-global BatchIRLflag, lastQ, min_IncIRL_InputLen, irlfinish_time, patrtraj_len, \
-	min_BatchIRL_InputLen, desiredRecordingLen, useRecordedTraj, recordConvTraj, \
-	learned_mu_E, sessionNumber, learned_weights, num_Trajsofar, \
+# actual Map positions
+cur_waypoint = [0,0]
+lastPositionBelief = None
+lastActualPosition = None
+
+lastPatroller0Position1 = None
+lastPatroller0Position2 = None
+lastPatroller1Position1 = None
+lastPatroller1Position2 = None
+
+
+maxsightdistance = 6
+
+patroller0GroundTruth = None
+patroller1GroundTruth = None
+
+mapToUse = None
+patroller = None
+
+obstime = 900
+
+interactionLength = 1
+
+patrollersuccessrate = None
+usesimplefeatures = False
+
+use_em = 0
+
+patrollerOGMap = None
+attackerOGMap = None
+
+equilibriumKnown = False
+
+global minGapBwDemos, patroller0LastSeenAt, patroller1LastSeenAt, \
+	BatchIRLflag, lastQ, min_IncIRL_InputLen, irlfinish_time, \
+	patrtraj_len, min_BatchIRL_InputLen, startat, glbltrajstarttime, \
+	startat_attpolicyI2RL, cum_learntime, \
+	desiredRecordingLen, useRecordedTraj, recordConvTraj, learned_mu_E, \
+	sessionNumber, learned_weights, num_Trajsofar, normedRelDiff, \
 	stopI2RLThresh, sessionStart, sessionFinish, lineFoundWeights, \
 	lineFeatureExpec, lineLastBeta, lineLastZS, lineLastZcount, lastQ, \
-	wt_data, print_once, useRecordedTraj, recordConvTraj, boydpolicy, analyzeAttack
+	wt_data, print_once, useRecordedTraj, recordConvTraj, boydpolicy,\
+	learned_mu_E
 	
 #I2RL
 BatchIRLflag=False
 recordConvTraj=0
+startat=0
 sessionNumber=1
+glbltrajstarttime=0
 num_Trajsofar=0
 normedRelDiff=sys.maxint*1.0 # start with a high value to call update()
 stopI2RLThresh=0.0095 #tried 0.0001, didn't go below 0.025 0.04 
@@ -69,11 +112,719 @@ lineLastZcount=""
 lastQ="" #final likelihood value achieved
 print_once=0
 
-# flags for choosing to use recorded trajectories, and to execute only learning or full attack 
+#flags for choosing to use recorded trajectories, and to execute only learning or full attack 
 useRecordedTraj = 0
 recordConvTraj = 0
 analyzeAttack = 0
 boydpolicy = {}
+
+#print("initialized global variables")
+
+class FakeModel():
+
+	def T(self, state, action):
+
+		return {0 : 1}
+
+	def A(self):
+		return [0, ]
+
+
+
+
+# a strategy that waits a random amount of time and then goes, ignores all percepts
+class WrapperRandom():
+
+	def __init__(self, mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance):
+
+		global obstime, start_forGoTime, timeoutThresh
+		self.goTime = random.randint(0, timeoutThresh) #obstime, obstime+600)
+
+		self.policy = None
+		self.patPolicies = None
+		print("The Go time is at: " + str(self.goTime))
+		self.predictTime = 30
+
+		self.map = mapToUse	
+		self.observableStateLow = 0
+		self.observableStateHigh = 0
+
+		global attackerOGMap
+		
+		p_fail = 0.05
+		
+		## Create Model
+		self.goalStates = [self.getStateFor(goalPos), ]
+		self.goalState = self.goalStates[0]
+
+		model = patrol.model.AttackerModel(p_fail, attackerOGMap.theMap(), self.predictTime, self.goalStates[0])
+		model.gamma = 0.99
+
+		self.model = model
+		self.startState = self.getStateFor(startPos)
+					
+		import threading
+
+		t = threading.Thread(target=self.solve)
+		self.thread = t
+		self.thread.start()
+
+	def solve(self):
+		
+		global patroller0GroundTruth
+		global patroller1GroundTruth
+		
+		while(patroller0GroundTruth is None or patroller1GroundTruth is None):
+			time.sleep(1)
+		
+		
+		print("Starting MDP Solver")
+		
+		lastPatroller0State = getGroundTruthStateFor(0)
+		lastPatroller1State = getGroundTruthStateFor(1)
+	
+		patrollerStartStates = [lastPatroller0State, lastPatroller1State]
+		patrollerTimes = [0,0]
+	
+	
+		print("PatrollerStartStates", patrollerStartStates)
+		print("PatrollerTimes", patrollerTimes, "curRospy", get_time())
+	
+		args = ["boydattacker", ]
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+		
+		# build trajectories
+		outtraj = self.map + "\n"
+		outtraj += "false\n"
+		
+		for stateS in patrollerStartStates:
+			outtraj += "["
+			outtraj += str(int(stateS.location[0]))
+			outtraj += ", "
+			outtraj += str(int(stateS.location[1]))
+			outtraj += ", "
+			outtraj += str(int(stateS.location[1]))
+			outtraj += "];"		
+		
+		outtraj += "\n"
+		
+		for startTime in patrollerTimes:
+			outtraj += str(startTime)
+			outtraj += ";"
+		outtraj += "\n"
+	
+		outtraj += str(1)
+		outtraj += "\n"
+		outtraj += str(30)
+		outtraj += "\n"
+	
+		outtraj += str(0)	
+		outtraj += "\n"
+		outtraj += str(10)	
+		outtraj += "\n"
+		outtraj += str(0)	
+		outtraj += "\n"
+		outtraj += str(1)	
+		outtraj += "\n"
+				
+
+		f = open(get_home() + "/patrolstudy/toupload/patpolicy.log", "w")
+		f.write(outtraj)
+		f.close()		
+		
+		(stdout, stderr) = p.communicate(outtraj)
+
+		# stdout now needs to be parsed into a hash of state => action, which is then sent to mapagent
+		pols = []
+		vs = []
+		p = {}
+		v = {}
+		stateactions = stdout.split("\n")
+		for stateaction in stateactions:
+	
+			if (stateaction == "ENDPROBS"):
+				continue
+			
+			if len(stateaction) < 2:
+				# we've found where the marker between two policies
+				pols.append(p)
+				vs.append(v)
+				p = {}
+				v = {}
+				continue
+			temp = stateaction.split(" = ")
+			if len(temp) < 2: continue
+			state = temp[0]
+			value = temp[1]
+			action = temp[2]
+	
+			
+			state = state[2 : len(state) - 1]
+			pieces = state.split(",")	
+			
+			ps = patrol.model.AttackerState(np.array([int(pieces[0]), int(pieces[1][0 : len(pieces[1]) - 1])]) , int(pieces[2]), int(pieces[3]))
+		
+			if action.strip() == "null":
+				p[ps] = None
+			else:	
+				if action.strip() == "AttackerMoveForward":
+					a = patrol.model.AttackerMoveForward()
+				elif action.strip() == "AttackerTurnLeft":
+					a = patrol.model.AttackerTurnLeft()
+				else:
+					a = patrol.model.AttackerTurnRight()
+	
+				p[ps] = a
+			v[ps] = float(value)
+	
+	
+		policies = []
+		for q in pols:
+			policies.append(mdp.agent.MapAgent(q))			
+		self.patPolicies = policies
+
+		# choose randomly between available goals
+		# print(policies)
+		whichone = random.randint(0,len(policies) - 1)
+		self.policy = policies[whichone]
+		self.goalState = self.goalStates[whichone]
+				
+		print("Finished MDP Solving")
+		
+
+	def getStateFor(self, position):
+		global attackerOGMap
+		
+		return attackerOGMap.toState(position, True)
+
+	def getPositionFor(self, mdpState):
+		global attackerOGMap
+		
+		return attackerOGMap.toPos(mdpState)
+
+
+	def latestPolicy(self):
+		return self.policy
+
+	def goNow(self):
+		return fromRospyTime(get_time()) >= fromRospyTime(self.goTime)
+
+	def getPatrollerStateActionFor(self, curPos, lastPos, lastPos2, lastTime):
+		return (0, 1)
+
+	def patrollerModel(self):
+		return FakeModel()
+
+	def addPercept(self, patroller, state, time):
+		pass
+
+	def addStates(self):
+		pass
+
+	def addPerceptFull(self, patroller, state, time):
+		pass
+
+	def getStartState(self):
+		return self.startState
+
+	def getGoalState(self):
+		return self.goalState
+
+	def update(self):
+		pass
+
+	def getModel(self):
+		return self.model
+
+
+def classifyAction(outputVec):
+	global mapToUse
+	
+	vecs = []
+	if (mapToUse == "boyd2"):
+		vecs.append(numpy.array([0.10471529247895256,	0.27178226770618075,	0.33862569390802433,	0.375])) # moveforward
+		vecs.append(numpy.array([0.5,	0.5,	0.9841229182759271,	0.375])) # turnleft
+		vecs.append(numpy.array([0.5,	0.5,	0.5,	1.0])) # turnright
+		vecs.append(numpy.array([0.5,	0.9564354645876385,	0.33862569390802433,	0.375])) # turnaround
+		vecs.append(numpy.array([0.8952847075210475,	0.27178226770618075,	0.33862569390802433,	0.375])) # stop
+	else:
+		# these need to be redone when a NN for boydright is built
+		vecs.append(numpy.array([0.10471529247895256,	0.27178226770618075,	0.33862569390802433,	0.375])) # moveforward
+		vecs.append(numpy.array([0.5,	0.5,	0.9841229182759271,	0.375])) # turnleft
+		vecs.append(numpy.array([0.5,	0.5,	0.5,	1.0])) # turnright
+		vecs.append(numpy.array([0.5,	0.9564354645876385,	0.33862569390802433,	0.375])) # turnaround
+		vecs.append(numpy.array([0.8952847075210475,	0.27178226770618075,	0.33862569390802433,	0.375])) # stop
+		
+	closest = -1
+	closestVal = sys.float_info.max
+	
+	for i, v in enumerate(vecs):
+		dist = numpy.linalg.norm(outputVec - v)
+		if (dist < closestVal):
+			closest = i
+			closestVal = dist
+	
+	if (closest == 0):
+		return PatrolActionMoveForward()
+	if (closest == 1):
+		return PatrolActionTurnLeft()
+	if (closest == 2):
+		return PatrolActionTurnRight()
+	if (closest == 3):
+		return PatrolActionTurnAround()
+	if (closest == 4):
+		return PatrolActionStop()
+	
+	return None
+
+
+def mean_and_variance(data):
+	n	= 0
+	sum1 = 0
+	sum2 = 0
+
+	for x in data:
+		n	= n + 1
+		sum1 = sum1 + x
+
+	mean = sum1/n
+
+	for x in data:
+		sum2 = sum2 + (x - mean)*(x - mean)
+
+	variance = sum2/(n - 1)
+	return (mean, variance)
+
+actionNN = None
+
+def getPatrollerActionNN(readings):
+	from pybrain.tools.shortcuts import buildNetwork
+	from pybrain.structure import TanhLayer
+
+	if (len(readings) <= 2):
+		return None
+	
+	global actionNN
+	if (actionNN is None):
+	
+		global mapTouse
+		
+		if (mapToUse == "boyd2"):
+			nnWeights = numpy.array([-0.3304985698,-2.0350233909,1.4252249243,0.2963310102,4.9266064369,-0.1472800993,0.061455457,0.223676191,0.0025171819,-0.517450847,2.543845079,0.2942835103,-0.0823201426,0.3745702746,-0.0281529442,0.2206690533,-0.0985171095,0.0054585868,-36.1536614237,0.0980005071,-10.0402714801,4107.922303848,1.1756230206,-11.173458288,-78.4043090397,1.4706464857,545.5495422035,83336.9157690647,222.1574064718,5.3629004192,-11354.3282550292,482.0961046906,3.627796326,18485.1522666649,3.8994555386,-2.0162859479,-711.4848036675,-0.095789549,-5.1913028932,12165.1412947653,0.9587726743,0.4053123806,20.7827205806,0.3963309953,953.7460206174,41254.089509375,13.8877636884,-55.7693899285,107854.5579788469,-115.024748763,-161.8372335656,-229.7124016302,5.2355727181,-21.1921433795,6814.8934279982,11.8144628413,-1516.9409075926,-178436.1615841909,45.4057518591,-1116.6717947839,-1231.3555799918,26.5367868278,0.2946896214,1107.3431771647,0.0970529269,15.9504145508,1435.8551242887,-0.4690070429,-0.0752631963,-0.7997826301,0.3840072903,0.6206706334,1621.9304807605,-0.1605863922,20.9367198862,5351.8031245516,-0.9362696644,3.1561242116,195.9966687042,-0.1201570823,-4.9454580981,184.8361757175,0.160018912,-33.0211667279,-18176.7060075939,0.871384414,3.5221200995,240.7632822965,-0.2080971545,-1.0405001885,-856.4937261407,0.1298636107,0.5177587901,3069.1714221005,-0.3756751408,-3.9467678449,-33.7275333761,0.040441488,0.132976886,724.3911891873,0.218647283,24.8460698888,2181.8699154502,-0.9915000002,-3.3831296597,10.2921621295,0.7589195007,572.6591220021,32336.6540817552,11.444372836,165.7540263761,-41587.6179129253,-7.3935572673,21.5767608761,-4238.8100528394,36.9535371488,-0.1774941572,1115.1030922934,-0.0162510915,-17.6029184258,2815.2262040795,0.6461238176,1.6241572646,21.2920354298,0.0356162823,0.197993219,-1393.7550083931,0.188329235,10.5948853241,-3788.7678184607,0.2442199395,5.9897149839,-154.4688647851,0.3610844208,-0.0618358173,-0.7957428078,0.3269138991,0.3342662757,-0.2142045179,-0.7582433437,-0.2780321189,0.1074139583,0.0390365181,0.37232585,-0.1611990394,1.1381611431,-0.0017546681,-0.9970171851,-0.0387787452,0.1102100351,0.1756448881,-0.1405135597,-3.407333392,0.2331252469,-0.3326675975,-1.5063271236,2.1723786962,-0.031489985,2.3384290129,1.1644199035,1.0954118938,-0.1759323485,0.2932166683,0.4798292085,-0.4851544844,1.4122326915,-1.2010908245,0.5232572567,1.4147323864,-1.1501400115,-0.1435034775,0.0709863455,-1.6319298998,-0.0440954912,-0.0462593535,0.9498094825,0.0793733352,-0.0069429358,1.6773864397,0.1632380311,0.2338671661,0.6668889845,-0.8915792212,-0.480782618,-0.6649133478,0.0568622766])
+		else:
+			# this is totally wrong, but the NN is worse than the manual method so whatever for now 
+			nnWeights = numpy.array([-0.3304985698,-2.0350233909,1.4252249243,0.2963310102,4.9266064369,-0.1472800993,0.061455457,0.223676191,0.0025171819,-0.517450847,2.543845079,0.2942835103,-0.0823201426,0.3745702746,-0.0281529442,0.2206690533,-0.0985171095,0.0054585868,-36.1536614237,0.0980005071,-10.0402714801,4107.922303848,1.1756230206,-11.173458288,-78.4043090397,1.4706464857,545.5495422035,83336.9157690647,222.1574064718,5.3629004192,-11354.3282550292,482.0961046906,3.627796326,18485.1522666649,3.8994555386,-2.0162859479,-711.4848036675,-0.095789549,-5.1913028932,12165.1412947653,0.9587726743,0.4053123806,20.7827205806,0.3963309953,953.7460206174,41254.089509375,13.8877636884,-55.7693899285,107854.5579788469,-115.024748763,-161.8372335656,-229.7124016302,5.2355727181,-21.1921433795,6814.8934279982,11.8144628413,-1516.9409075926,-178436.1615841909,45.4057518591,-1116.6717947839,-1231.3555799918,26.5367868278,0.2946896214,1107.3431771647,0.0970529269,15.9504145508,1435.8551242887,-0.4690070429,-0.0752631963,-0.7997826301,0.3840072903,0.6206706334,1621.9304807605,-0.1605863922,20.9367198862,5351.8031245516,-0.9362696644,3.1561242116,195.9966687042,-0.1201570823,-4.9454580981,184.8361757175,0.160018912,-33.0211667279,-18176.7060075939,0.871384414,3.5221200995,240.7632822965,-0.2080971545,-1.0405001885,-856.4937261407,0.1298636107,0.5177587901,3069.1714221005,-0.3756751408,-3.9467678449,-33.7275333761,0.040441488,0.132976886,724.3911891873,0.218647283,24.8460698888,2181.8699154502,-0.9915000002,-3.3831296597,10.2921621295,0.7589195007,572.6591220021,32336.6540817552,11.444372836,165.7540263761,-41587.6179129253,-7.3935572673,21.5767608761,-4238.8100528394,36.9535371488,-0.1774941572,1115.1030922934,-0.0162510915,-17.6029184258,2815.2262040795,0.6461238176,1.6241572646,21.2920354298,0.0356162823,0.197993219,-1393.7550083931,0.188329235,10.5948853241,-3788.7678184607,0.2442199395,5.9897149839,-154.4688647851,0.3610844208,-0.0618358173,-0.7957428078,0.3269138991,0.3342662757,-0.2142045179,-0.7582433437,-0.2780321189,0.1074139583,0.0390365181,0.37232585,-0.1611990394,1.1381611431,-0.0017546681,-0.9970171851,-0.0387787452,0.1102100351,0.1756448881,-0.1405135597,-3.407333392,0.2331252469,-0.3326675975,-1.5063271236,2.1723786962,-0.031489985,2.3384290129,1.1644199035,1.0954118938,-0.1759323485,0.2932166683,0.4798292085,-0.4851544844,1.4122326915,-1.2010908245,0.5232572567,1.4147323864,-1.1501400115,-0.1435034775,0.0709863455,-1.6319298998,-0.0440954912,-0.0462593535,0.9498094825,0.0793733352,-0.0069429358,1.6773864397,0.1632380311,0.2338671661,0.6668889845,-0.8915792212,-0.480782618,-0.6649133478,0.0568622766])
+
+		#build neural net
+		
+		actionNN = buildNetwork(9, 13, 4, hiddenclass = TanhLayer, outclass = TanhLayer, bias = True)
+		actionNN._setParameters(nnWeights)
+
+	# calculate inputs
+	
+	deltaxs = []
+	lastx = None
+	deltays = []
+	lasty = None
+	deltathetas = []
+	lasttheta = None
+	
+	for r in readings:
+				
+		if (lasttheta is not None):
+			test = r[2] - lasttheta
+			while (test < -math.pi): test += 2*math.pi;
+			while (test > math.pi): test -= 2*math.pi;
+			
+			deltathetas.append(test)
+			
+		lasttheta = r[2]
+					
+		if (lastx is not None):
+			x = math.cos(lasttheta) * (r[0] - lastx) + math.sin(lasttheta)* (r[1] - lasty) 
+#				print("x", msg.pose.pose.position.x, lastx, x, firsttheta)
+			deltaxs.append(x)
+		
+		lastx = r[0]
+
+		if (lasty is not None):
+			y = math.sin(lasttheta) * (r[0] - lastx) + math.cos(lasttheta) * (r[1] - lasty) 
+#				print("y", msg.pose.pose.position.y, lasty, y, firsttheta)				
+			deltays.append(y)
+		
+		lasty = r[1]
+			
+			
+	sumx = reduce(operator.add, deltaxs, 0)
+	(meanx, variancex) = mean_and_variance(deltaxs)
+	sumy = reduce(operator.add, deltays, 0)
+	(meany, variancey) = mean_and_variance(deltays)
+	sumtheta = reduce(operator.add, deltathetas, 0)
+	(meantheta, variancetheta) = mean_and_variance(deltathetas)
+	
+	
+	return classifyAction(actionNN.activate((meanx, variancex, sumx, meany, variancey, sumy, meantheta, variancetheta, sumtheta)))
+	
+
+def getPatrollerActionForStates(states):
+	# returns the action that was performed at states[0] to get to states[1] and states[2 - 3] (if given)
+		
+	if (len(states) <= 1 or states[1] is None):
+
+		return PatrolActionMoveForward()
+
+
+	if states[0].location[0] == states[1].location[0] and states[0].location[1] == states[1].location[1]:
+		# position is the same, have we turned or just stopped?       
+
+		# check if we've turned
+		if not (states[0].location[2] == states[1].location[2]):
+#			if (abs(states[0].location[2] - states[1].location[2]) == 2):
+#				return PatrolActionTurnAround()
+			
+			if (states[0].location[2] == 0) and (states[1].location[2] == 3):
+				return PatrolActionTurnRight()
+					
+			if (states[0].location[2] == 3) and (states[1].location[2] == 0):
+				return PatrolActionTurnLeft()
+				
+			if states[0].location[2] > states[1].location[2]:
+				return PatrolActionTurnRight()
+			
+			return PatrolActionTurnLeft()
+		
+		
+		# nope we're the same, we must've stopped
+		return PatrolActionStop()
+		
+		
+	else:
+		# position is different, check if we moved forward by looking at the orientation
+		
+		if states[0].location[2] == 0 and (states[0].location[0] == states[1].location[0]) and (states[0].location[1] == states[1].location[1] - 1):
+			return PatrolActionMoveForward()
+
+		if states[0].location[2] == 2 and (states[0].location[0] == states[1].location[0]) and (states[0].location[1] - 1 == states[1].location[1]):
+			return PatrolActionMoveForward()
+		
+		if states[0].location[2] == 1 and (states[0].location[0] -1 == states[1].location[0]) and (states[0].location[1] == states[1].location[1]):
+			return PatrolActionMoveForward()
+
+		if states[0].location[2] == 3 and (states[0].location[0] == states[1].location[0] - 1) and (states[0].location[1] == states[1].location[1]):
+			return PatrolActionMoveForward()
+		
+		# donno ?
+		return None			
+	
+	
+def getPatrollerSubActions(readingsWithinTimestep, state1, state2 ):
+
+	actionCount = [0, 0, 0, 0]
+	
+	for i in range(len(readingsWithinTimestep) - 1):
+	
+		# calculate angle to turn for point 1 to face point 2
+		# calculate distance travelled
+		# calculate angle to turn to final orientation
+
+		# calculate the angle between the points
+		# calculate the amount turned between the current orientation and the intermediate angle
+		# calculate the amount turned from the intermediate angle to the final one
+		
+		distance = math.sqrt((readingsWithinTimestep[i][0]-readingsWithinTimestep[i + 1][0])*(readingsWithinTimestep[i][0]-readingsWithinTimestep[i + 1][0]) + (readingsWithinTimestep[i][1]-readingsWithinTimestep[i + 1][1])*(readingsWithinTimestep[i][1]-readingsWithinTimestep[i + 1][1]))		
+		
+		if (distance > 0.0):
+			diff = math.atan2(readingsWithinTimestep[i + 1][1] - readingsWithinTimestep[i][1], readingsWithinTimestep[i + 1][0] - readingsWithinTimestep[i][0])
+		else:
+			diff = 0
+		if (diff < 0):
+			diff += 2 * math.pi
+
+		angle1 = diff - readingsWithinTimestep[i][2] 
+		while (angle1 < -math.pi/2): angle1 += math.pi;
+		while (angle1 > math.pi/2): angle1 -= math.pi;
+		
+		angle2 = readingsWithinTimestep[i + 1][2] - diff
+		while (angle2 < -math.pi/2): angle2 += math.pi;
+		while (angle2 > math.pi/2): angle2 -= math.pi;
+		
+		angle = angle1 + angle2
+		
+#		angle = readingsWithinTimestep[i + 1][2] - readingsWithinTimestep[i][2] 
+#		while (angle < -3.1415/2): angle += 3.1415;
+#		while (angle > 3.1415/2): angle -= 3.1415;
+
+#		print(str(readingsWithinTimestep[i]) + ", " + str(readingsWithinTimestep[i+1]) + " => " + str(angle) + " " + str(distance))
+		# classify this action:
+		# a forward will have good forward movement (duh)
+		# A stop will have very little forward or angular movement
+		# A turn will have very little forward movement, but good angular
+		
+		if (distance < .005) and abs(angle) < 0.03:
+			actionCount[1] += 1 # stop
+		elif abs(angle) >= 0.02:  
+			if angle > 0:
+				actionCount[2] += 1 # leftTurn
+			else:
+				actionCount[3] += 1 # rightTurn
+		else: # .15 meters a second for a tenth of a second
+			actionCount[0] += 1 # moveforward
+	
+	return actionCount
+
+
+def getPatrollerAction(readingsWithinTimestep, state1, state2 ):
+
+	
+	states = []
+	states.append(state1)
+	states.append(state2)	
+	discreteAction = getPatrollerActionForStates(states)
+
+	actionCount = getPatrollerSubActions(readingsWithinTimestep, state1, state2)	
+	
+	# now decide whether to use the discrete-states-calulated action or the substates one		
+	# need to decide if the substates dictate a strong action or not, this really should be done probabilistically, or with a NN, but
+	# conference paper limits being what they are, we're going to go with something quickly explainable. YAY SCIENCE!
+	
+	highest = 0
+	for i in range(len(actionCount)):
+			
+		if (len(readingsWithinTimestep) > 0):
+			actionCount[i] /= float(len(readingsWithinTimestep))
+
+		if actionCount[i] > actionCount[highest]:
+			highest = i
+			
+	
+	
+#	if (len(readingsWithinTimestep) >= (getTimeConv() / 2 / 0.1)) and ((actionCount[2] > 0.7 * len(readingsWithinTimestep) - 1) or (actionCount[3] > 0.7 * len(readingsWithinTimestep) - 1)):
+#		return PatrolActionTurnAround()
+	
+	# detect a quick turn left or right by comparing the start and end orientations
+	# if change >= 90 degrees, it's definitely a turn
+	
+	if len(readingsWithinTimestep) > 0 and not PatrolActionTurnAround().__eq__(discreteAction):
+		orientationNet = readingsWithinTimestep[len(readingsWithinTimestep) - 1][2] - readingsWithinTimestep[0][2]
+		while (orientationNet < -math.pi): orientationNet += math.pi * 2;
+		while (orientationNet > math.pi): orientationNet -= math.pi * 2;
+		
+#		if abs(orientationNet) > math.pi / 1.2:
+#			return PatrolActionTurnAround()
+		
+		if abs(orientationNet) > math.pi/2.2:
+			# force a left or right turn
+						
+			if (orientationNet > 0):
+				return PatrolActionTurnLeft()
+			else:
+				return PatrolActionTurnRight()
+	
+	
+#	if (actionCount[1]) > 0.5 * len(readingsWithinTimestep) - 1:
+#		return PatrolActionStop()
+	
+#	if (actionCount[2] >= 0.25 * len(readingsWithinTimestep) - 1) or (actionCount[3] > 0.25 * len(readingsWithinTimestep) - 1):
+		# we have a turn
+		
+#		if actionCount[2] > actionCount[3]:
+#			return PatrolActionTurnLeft()
+#		return PatrolActionTurnRight()
+
+	if (highest == 0 and (discreteAction is None or (actionCount[highest] > 0.5 and len(readingsWithinTimestep) > 4))):	
+		return PatrolActionMoveForward()
+	
+	if (highest == 1 and (discreteAction is None or (actionCount[highest] > 0.75 and len(readingsWithinTimestep) > 4))):	
+		return PatrolActionStop()
+
+	if (highest == 2 and (discreteAction is None or (actionCount[highest] > 0.75 and len(readingsWithinTimestep) > 4))):	
+		return PatrolActionTurnLeft()
+
+	if (highest == 3 and (discreteAction is None or (actionCount[highest] > 0.75 and len(readingsWithinTimestep) > 4))):
+		return PatrolActionTurnRight()
+	
+	return discreteAction
+
+def convertObsToDiscreteStates(obsin, traj_begintime):
+	# convert raw position observations to states
+	
+	obs = obsin[:]
+	global patrollerOGMap
+	discreteStates = []
+	flag = 0
+	# print "DiscreteStates len(obs) before adjustment:" + str(len(obs))
+	while (len(obs) > 0 and obs[0][1] < traj_begintime*getTimeConv()):
+		obs.pop(0)
+	# print "DiscreteStates len(obs) after adjustment:" + str(len(obs))
+
+	for i in range(traj_begintime, fromRospyTime(get_time())): #(fromRospyTime(get_time())):
+		
+		flag=1
+		timeLowerRange = i * getTimeConv()
+		timeUpperRange = (i + 1) * getTimeConv()
+		
+		if (len(obs) > 0):
+			sumObsInTimeStep = [0, 0, 0, 0]
+
+		countObsInTimeStep = 0
+	
+
+		while (len(obs) > 0 and obs[0][1] >= timeLowerRange and obs[0][1] < timeUpperRange):
+#			for j in range(len(obsInTimestep) - 1, max(len(obsInTimestep) - numOfReadings - 1, -1), -1):
+#			for j in range(0, min(len(obsInTimestep), numOfReadings)):
+#			for j in range(0, len(obsInTimestep)):
+			curObs =  obs.pop(0)[0]
+			
+			if countObsInTimeStep < 3:
+		
+				sumObsInTimeStep[0] += curObs[0]
+				sumObsInTimeStep[1] += curObs[1]
+				sumObsInTimeStep[2] += math.cos(curObs[2])
+				sumObsInTimeStep[3] += math.sin(curObs[2])
+				
+				countObsInTimeStep += 1
+
+		if countObsInTimeStep > 0:
+			avg = [sumObsInTimeStep[0] / countObsInTimeStep, sumObsInTimeStep[1] / countObsInTimeStep, math.atan2(sumObsInTimeStep[3], sumObsInTimeStep[2]) ]
+			
+			if avg[2] < 0:
+				avg[2] += 2 * math.pi
+			s = patrollerOGMap.toState(avg, False)
+			discreteStates.append(s)
+
+			# print "DiscreteStates length after discreteStates.append"+str(len(discreteStates))
+
+		else:
+			# print "DiscreteStates countObsInTimeStep < 0"
+			discreteStates.append(None)
+		
+	
+	discreteStates.append(None)
+	
+# 	if discreteStates==[None] and not not obs:
+# 		print("\n convertObsToDiscreteStates [None] results begin and end times of obsin: "+str(obs[0][1]))
+# 		print(str(obs[len(obs)-1][1]))
+#  		print("\n traj_begintime, fromRospyTime(get_time()): "+str(traj_begintime)+" "+str(fromRospyTime(get_time())))
+#  		print("\n loop enter flag: ", flag)
+
+	return discreteStates
+
+def convertObsToTrajectoryWPolicy(obsin, policy, glbltrajstarttime_attpolicyI2RL):
+	
+ 	# print("glbltrajstarttime_attpolicyI2RL in convertObsToTrajectoryWPolicy :", glbltrajstarttime_attpolicyI2RL)
+	discreteStates = convertObsToDiscreteStates(obsin, glbltrajstarttime_attpolicyI2RL)
+
+	#print("output convertObsToDiscreteStates(obsin, glbltrajstarttime): "+str(discreteStates) )
+	traj = []
+	for ds in discreteStates:
+		if (ds is None):
+			traj.append(None)
+		else:
+			a = policy.actions(ds).keys()[0]
+			traj.append((ds, a))
+	
+	return traj
+		
+		
+def convertObsToTrajectory(obsin, traj_begintime):
+	
+	discreteStates = convertObsToDiscreteStates(obsin, traj_begintime)
+	obs = obsin[:]
+	traj = []
+
+	# print "convertObsToTrajectory inputs "+str(obsin)+"\n"+str(traj_begintime)
+
+	# print "convertObsToTrajectory len(obs) before adjustment:" + str(len(obs))
+	while (len(obs) > 0 and obs[0][1] < traj_begintime * getTimeConv()):
+		obs.pop(0)
+
+	# print "convertObsToTrajectory len(obs) after adjustment:" + str(len(obs))
+
+	for i in range(traj_begintime, fromRospyTime(get_time())): #(fromRospyTime(get_time())):
+		timeLowerRange = i * getTimeConv()
+		timeUpperRange = (i + 1) * getTimeConv()
+		
+		obsInTimestep = []
+
+		while (len(obs) > 0 and obs[0][1] >= timeLowerRange and obs[0][1] < timeUpperRange):
+			obsInTimestep.append(obs.pop(0)[0])
+
+		if len(obsInTimestep) > 0:
+
+			a = getPatrollerAction(obsInTimestep, discreteStates[len(traj)], discreteStates[len(traj) + 1])
+			
+			traj.append((discreteStates[len(traj)], a))
+			# print "convertObsToTrajectory length after traj.append"+str(len(traj))
+		else:
+			traj.append(None)
+		
+	# print "convertObsToTrajectory return traj \n" + str(traj)
+	return traj
+
+def convertObsToTrajectoryUncertainActions(obsin):
+	
+	discreteStates = convertObsToDiscreteStates(obsin)
+	
+	obs = obsin[:]
+	
+	traj = []
+	
+	
+	for i in range(fromRospyTime(get_time())):
+		timeLowerRange = i * getTimeConv()
+		timeUpperRange = (i + 1) * getTimeConv()
+		
+		obsInTimestep = []
+	
+		while (len(obs) > 0 and obs[0][1] >= timeLowerRange and obs[0][1] < timeUpperRange):
+			obsInTimestep.append(obs.pop(0)[0])
+
+
+		if len(obsInTimestep) > 0:
+			
+			a = getPatrollerSubActions(obsInTimestep, discreteStates[len(traj)], discreteStates[len(traj) + 1])
+			
+			traj.append((discreteStates[len(traj)], a))
+		else:
+			traj.append(None)
+		
+	
+	return traj	
+
+
+
+def filter_traj_for_t_solver(traj1, traj2):
+	
+	# remove entries that correspond to interaction states
+	
+	# remove unmodellable entries by inserting a blank space between them
+	a = PatrolActionMoveForward()
+	returnval1 = []
+	returnval2 = []
+	
+	for i in range(len(traj1)):
+		if (i <= 1):
+			returnval1.append(None)
+			returnval2.append(None)
+			continue
+			
+		
+		if (traj1[i] is not None and traj2[i] is not None):
+			t1 = a.apply(traj1[i][0])
+			t2 = a.apply(traj2[i][0])
+			
+			if (traj1[i][0].conflicts(traj2[i][0])) or (traj1[i][0].conflicts(t2)) or (traj2[i][0].conflicts(t1)):
+				returnval1.append(None)
+				returnval2.append(None)
+			else:
+				returnval1.append(traj1[i])
+				returnval2.append(traj2[i])
+		else:
+			returnval1.append(traj1[i])
+			returnval2.append(traj2[i])				
+	
+	return (returnval1, returnval2)
+	
 
 def printTrajectories(trajs):
 	outtraj = ""
@@ -209,6 +960,206 @@ def printTs(T):
 			
 		outtraj += "ENDT\n"	
 	return outtraj
+
+
+def printStochasticPolicies(pmodel, obs):
+	
+	# need to convert the observed subactions into distributions over actions for each state, with unseen states being uniform
+	outtraj = ""
+	
+	for o in obs:
+		traj = convertObsToTrajectoryUncertainActions(o)
+		
+		states = pmodel.S()
+		
+		action_counts = {}
+		for s in states:
+			action_counts[s] = [0, 0, 0, 0]
+		
+		for entry in traj:
+			if entry is not None:
+				for (i, count) in enumerate(entry[1]):
+					action_counts[entry[0]][i] += count
+					
+		
+		for (state, counts) in action_counts.iteritems():
+			total = sum(counts)
+			
+			if total == 0:
+				counts = [1 for i in range(len(counts))]
+				total = len(counts)
+				
+			for (i, count) in enumerate(counts):
+				if count > 0:
+					outtraj += "["
+					outtraj += str(int(state.location[0]))
+					outtraj += ", "
+					outtraj += str(int(state.location[1]))
+					outtraj += ", "
+					outtraj += str(int(state.location[2]))
+					outtraj += "]:"
+	
+					if i == 0:
+						outtraj += "MoveForwardAction"
+					elif i == 1:
+						outtraj += "StopAction"
+					elif i == 2:
+						outtraj += "TurnLeftAction"
+					else:
+						outtraj += "TurnRightAction"
+				
+					outtraj += ":"
+					
+					outtraj += str(float(count) / float(total))
+					outtraj += "\n"
+					
+		
+		outtraj += "ENDPOLICY\n"					
+
+	return outtraj
+
+def printUniformNEPriors():
+	
+	numNEs = 5
+		
+	outtraj = ""
+	
+	outtraj += "MoveForwardAction:MoveForwardAction:"
+	outtraj += str(1.0 / numNEs)
+	outtraj += "\n"
+	
+	outtraj += "StopAction:MoveForwardAction:"
+	outtraj += str(1.0 / numNEs)
+	outtraj += "\n"
+	
+	outtraj += "MoveForwardAction:StopAction:"
+	outtraj += str(1.0 / numNEs)
+	outtraj += "\n"
+
+	outtraj += "TurnLeftAction:MoveForwardAction:"
+	outtraj += str(1.0 / numNEs)
+	outtraj += "\n"
+
+	outtraj += "MoveForwardAction:TurnLeftAction:"
+	outtraj += str(1.0 / numNEs)
+	outtraj += "\n"
+	
+	return outtraj	
+	
+def parsePolicies_idealirlsolve(stdout, equilibrium):
+
+	if stdout is None:
+		print("no stdout in parse policies")
+	
+	stateactions = stdout.split("\n")
+	#print("\n parse Policies from contents:")
+	#print(stateactions)
+	counter = 0
+	pmaps = []	
+	p = {}
+	for stateaction in stateactions:
+		counter += 1		
+		if stateaction == "ENDPOLICY":
+			pmaps.append(p)
+			p = {}
+			if len(pmaps) == 2: # change this if we ever support more than two patrollers
+				break		
+		temp = stateaction.split(" = ")
+		if len(temp) < 2: continue
+		state = temp[0]
+		action = temp[1]
+
+
+		state = state[1 : len(state) - 1]
+		pieces = state.split(",")	
+		ps = patrol.model.PatrolState(np.array([int(pieces[0]), int(pieces[1]), int(pieces[2])]))
+	
+		if action == "MoveForwardAction":
+			a = patrol.model.PatrolActionMoveForward()
+		elif action == "TurnLeftAction":
+			a = patrol.model.PatrolActionTurnLeft()
+		elif action == "TurnRightAction":
+			a = patrol.model.PatrolActionTurnRight()
+		elif action == "TurnAroundAction":
+			a = patrol.model.PatrolActionTurnAround()
+		else:
+			a = patrol.model.PatrolActionStop()
+			
+		p[ps] = a
+
+	if (len(pmaps) < 2):
+		#print("(len(pmaps) < 2)") # no results from i2rl
+		#print("stateactions:"+str(stateactions)+"\n \n")		
+		returnval = [mdp.agent.MapAgent(p), mdp.agent.MapAgent(p)]
+	else:
+		#print("(len(pmaps) > 2)")
+		returnval = [mdp.agent.MapAgent(pmaps[0]), mdp.agent.MapAgent(pmaps[1])]
+		
+	pat = 0
+	if (equilibrium is None):
+		# now parse the equilibria
+		p = {}
+		for stateaction in stateactions[counter :]:
+			counter += 1
+			if stateaction == "ENDE":
+				returnval.append(p)
+				p = {}
+				pat += 1
+				if pat == 2: # change this if we ever support more than two patrollers
+					#print("at 2nd ende")
+					#print(stateactions[counter :])
+					break		
+			temp = stateaction.split(" = ")
+			if len(temp) < 2: continue
+			action = temp[0]
+			percent = temp[1]
+	
+	
+			if action == "MoveForwardAction":
+				a = patrol.model.PatrolActionMoveForward()
+			elif action == "TurnLeftAction":
+				a = patrol.model.PatrolActionTurnLeft()
+			elif action == "TurnRightAction":
+				a = patrol.model.PatrolActionTurnRight()
+			elif action == "TurnAroundAction":
+				a = patrol.model.PatrolActionTurnAround()
+			else:
+				a = patrol.model.PatrolActionStop()
+	
+			p[a] = float(percent)		
+	
+	else:
+		global patroller
+			
+		if patroller == "ideal":
+			p = {}
+			p[patrol.model.PatrolActionMoveForward()] = 1.0
+			returnval.append(p)
+	
+			p = {}
+			p[patrol.model.PatrolActionMoveForward()] = 1.0
+			returnval.append(p)
+			
+		else:
+			p = {}
+			if equilibrium[0] == "c":
+				p[patrol.model.PatrolActionMoveForward()] = 1.0
+			elif equilibrium[0] == "s":
+				p[patrol.model.PatrolActionStop()] = 1.0
+			else:
+				p[patrol.model.PatrolActionTurnAround()] = 1.0
+			returnval.append(p)
+	
+			p = {}
+			if equilibrium[1] == "c":
+				p[patrol.model.PatrolActionMoveForward()] = 1.0
+			elif equilibrium[1] == "s":
+				p[patrol.model.PatrolActionStop()] = 1.0
+			else:
+				p[patrol.model.PatrolActionTurnAround()] = 1.0
+			returnval.append(p)
+	
+	return returnval
 
 
 def parsePolicies(stdout, equilibrium, lineFoundWeights, lineFeatureExpec, \
@@ -379,6 +1330,884 @@ def parsePolicies(stdout, equilibrium, lineFoundWeights, lineFeatureExpec, \
 	return (returnval, lineFoundWeights, lineFeatureExpec, \
 		learned_weights, num_Trajsofar, \
 		sessionFinish, wt_data, normedRelDiff, lastQ, lineFeatureExpecfull)
+
+rdiffSpikeTh=0.9
+
+def computeRelDiff(weights2, wt_data, normedRelDiff):
+	
+	#global wt_data, normedRelDiff, num_Trajsofar
+	
+	#print("wt_data")
+	wt_data=numpy.append(wt_data, [weights2], axis=0)
+	# print(wt_data)
+	
+	for i in range(len(wt_data)-1):
+		temp1=wt_data[i][0]/numpy.linalg.norm(wt_data[i][0],ord=2)
+		temp2=wt_data[i+1][0]/numpy.linalg.norm(wt_data[i+1][0],ord=2)
+		rel_diff1=numpy.linalg.norm(numpy.subtract(temp2,temp1),ord=2)/numpy.linalg.norm(temp1,ord=2)	
+		temp3=wt_data[i][1]/numpy.linalg.norm(wt_data[i][1],ord=2)
+		temp4=wt_data[i+1][1]/numpy.linalg.norm(wt_data[i+1][1],ord=2)
+		rel_diff2=numpy.linalg.norm(numpy.subtract(temp4,temp3),ord=2)/numpy.linalg.norm(temp3,ord=2)
+		
+		if (rel_diff1 < 0.0001) and (rel_diff2 > 0.0001):
+			# one of weights unchanged 
+			rel_diff1 = rel_diff2 
+		elif (rel_diff2 < 0.0001) and (rel_diff1 > 0.0001):
+			rel_diff2 = rel_diff1
+		elif (rel_diff1 < 0.0001) and (rel_diff2 < 0.0001):
+			#both unchanged
+			#print(str(rel_diff1)+" "+str(rel_diff2)+" "+str("continue"))
+			continue
+		
+		if (rel_diff1 < rdiffSpikeTh) and (i > 0):
+			# no spike comparison needed for first session
+			if (rel_diff2 < rdiffSpikeTh):
+				#global normedRelDiff
+				normedRelDiff=max(rel_diff1,rel_diff2)#
+			else:
+				#global normedRelDiff
+				normedRelDiff=rel_diff1
+		elif (rel_diff2 < rdiffSpikeTh) and (i > 0):
+			#global normedRelDiff
+			normedRelDiff=rel_diff2
+		elif (i == 0):
+			#global normedRelDiff
+			normedRelDiff=max(rel_diff1,rel_diff2)
+		else:
+			print("\n both differences for current session are spikes")
+		
+		#print("\n rel differences for session "+str(i+1)+", normedRelDiff :")
+		#print(str(rel_diff1)+" "+str(rel_diff2)+" "+str(normedRelDiff))
+
+	return (wt_data, normedRelDiff)
+
+def compareTrajectories(lastTrajectory, newTrajectory, prevcorrectentries = 0):
+	cutoffpercent = 0.95
+	cutoffchangeamount = 0.02
+	correctentries = 0
+	totalentries = 0
+	
+	for i, t in enumerate(lastTrajectory):
+		for k, entry in enumerate(t):
+			
+			if entry is None:
+				pass
+			else:
+				totalentries += 1
+				if entry[1] == newTrajectory[i][k][1]:
+					correctentries += 1
+			
+	print("Traj compare: " + str(correctentries) + " : " + str(totalentries))
+	return ( ((float(correctentries) / totalentries ) > cutoffpercent or (abs(correctentries - prevcorrectentries)) < cutoffchangeamount * totalentries) , correctentries)
+
+def idealirlsolve(q, add_delay, mapToUse, obs, pmodel, visibleStatesNum, equilibrium = "cs"):
+
+	global patrollersuccessrate
+	global usesimplefeatures
+
+	traj = []
+	traj.append(convertObsToTrajectory(obs[0]))
+	traj.append(convertObsToTrajectory(obs[1]))
+
+	f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "w")
+	f.write("")
+	f.close()
+
+	lasttrajchangeamount = 0
+	returnval = None
+
+	if patrollersuccessrate >= 0:
+
+	
+		args = [ 'boydsimple_t', ]
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+		outtraj = ""
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(patrollersuccessrate)
+		
+	else:
+
+		t2 = traj[:]
+		outtraj = ""
+	
+		if patrollersuccessrate == -2:
+			args = [ 'boyd_em_t', ]	
+			outtraj += str(visibleStatesNum / 14.0)	
+			outtraj += "\n"
+		else:
+			args = [ 'boyd_t', ]
+			t2 = filter_traj_for_t_solver(t2[0], t2[1])
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(usesimplefeatures) + "\n"
+		
+		outtraj += printTrajectories(t2)
+	
+		f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "a")
+		f.write(outtraj)
+		f.write("ITERATE\n")
+		f.close()			
+	(stdout, stderr) = p.communicate(outtraj)
+
+
+	(T, weights) = parseTs(stdout)
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+	
+	f = open(get_home() + "/patrolstudy/toupload/t_weights.log", "w")
+	for weight in weights:
+		f.write(weight)
+		f.write("\n")
+	f.close()
+	
+	
+	args = ["boydpatroller", ]
+	p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+	outtraj = mapToUse + "\n"
+	
+	outtraj += printTs(T)
+	
+	T = None
+	(stdout, stderr) = p.communicate(outtraj)
+	import re
+	stdout = re.findall('BEGPARSING\n(.[\s\S]+?)ENDPARSING', stdout)[0]
+	
+	returnval = parsePolicies_idealirlsolve(stdout, equilibrium)
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+	
+
+	if patrollersuccessrate >= 0:
+
+	
+		args = [ 'boydsimple_t', ]
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+		outtraj = ""
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(patrollersuccessrate)
+		
+	else:
+
+		t2 = traj[:]
+		outtraj = ""
+	
+		if patrollersuccessrate == -2:
+			args = [ 'boyd_em_t', ]	
+			outtraj += str(visibleStatesNum / 14.0)	
+			outtraj += "\n"
+		else:
+			args = [ 'boyd_t', ]
+			t2 = filter_traj_for_t_solver(t2[0], t2[1])
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(usesimplefeatures) + "\n"
+		
+		outtraj += printTrajectories(t2)
+	
+		f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "a")
+		f.write(outtraj)
+		f.write("ITERATE\n")
+		f.close()			
+	(stdout, stderr) = p.communicate(outtraj)
+
+
+	(T, weights) = parseTs(stdout)
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+	
+	f = open(get_home() + "/patrolstudy/toupload/t_weights.log", "w")
+	for weight in weights:
+		f.write(weight)
+		f.write("\n")
+	f.close()
+	
+	returnval.append(T)
+	q.put(returnval)
+	
+	q.close()
+	q.join_thread()
+	
+	return
+
+def idealirlsolve_recdstates(q, add_delay, mapToUse, traj, pmodel, visibleStatesNum, equilibrium = "cs"):
+
+	global patrollersuccessrate
+	global usesimplefeatures
+	
+	#print("\n sizes of complete trajectories for session "+str(sessionNumber)+": "+\
+	#	str(len(traj[0]))+", "+str(len(traj[1]))+"\n contents"+str(traj[0])+", "+str(traj[1])+"\n")
+	
+	f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "w")
+	f.write("")
+	f.close()
+
+	lasttrajchangeamount = 0
+	returnval = None
+
+	if patrollersuccessrate >= 0:
+
+	
+		args = [ 'boydsimple_t', ]
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+		outtraj = ""
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(patrollersuccessrate)
+		
+	else:
+
+		t2 = traj[:]
+		outtraj = ""
+	
+		if patrollersuccessrate == -2:
+			args = [ 'boyd_em_t', ]	
+			outtraj += str(visibleStatesNum / 14.0)	
+			outtraj += "\n"
+		else:
+			args = [ 'boyd_t', ]
+			t2 = filter_traj_for_t_solver(t2[0], t2[1])
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(usesimplefeatures) + "\n"
+		
+		outtraj += printTrajectories(t2)
+	
+		f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "a")
+		f.write(outtraj)
+		f.write("ITERATE\n")
+		f.close()	
+				
+	(stdout, stderr) = p.communicate(outtraj)
+
+
+	(T, weights) = parseTs(stdout)
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+	
+	f = open(get_home() + "/patrolstudy/toupload/t_weights.log", "w")
+	for weight in weights:
+		f.write(weight)
+		f.write("\n")
+	f.close()
+	
+	
+	args = ["boydpatroller", ]
+	p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+	outtraj = mapToUse + "\n"
+	
+	outtraj += printTs(T)
+	
+	T = None
+	(stdout, stderr) = p.communicate(outtraj)
+	import re
+	stdout = re.findall('BEGPARSING\n(.[\s\S]+?)ENDPARSING', stdout)[0]
+	#print "stdout: "+str(stdout)
+	 
+	returnval = parsePolicies_idealirlsolve(stdout, equilibrium)
+	print "returnval: "+str(returnval)
+	
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+	
+
+	if patrollersuccessrate >= 0:
+
+	
+		args = [ 'boydsimple_t', ]
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+		outtraj = ""
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(patrollersuccessrate)
+		
+	else:
+
+		t2 = traj[:]
+		outtraj = ""
+	
+		if patrollersuccessrate == -2:
+			args = [ 'boyd_em_t', ]	
+			outtraj += str(visibleStatesNum / 14.0)	
+			outtraj += "\n"
+		else:
+			args = [ 'boyd_t', ]
+			t2 = filter_traj_for_t_solver(t2[0], t2[1])
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(usesimplefeatures) + "\n"
+		
+		outtraj += printTrajectories(t2)
+	
+		f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "a")
+		f.write(outtraj)
+		f.write("ITERATE\n")
+		f.close()
+
+	(stdout, stderr) = p.communicate(outtraj)
+
+
+	(T, weights) = parseTs(stdout)
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+	
+	f = open(get_home() + "/patrolstudy/toupload/t_weights.log", "w")
+	for weight in weights:
+		f.write(weight)
+		f.write("\n")
+	f.close()
+	
+	returnval.append(T)
+	q.put(returnval)
+	
+	q.close()
+	q.join_thread()
+	
+	return
+
+def irlsolve(q, obs, add_delay, algorithm, pmodel, mapToUse, NE, visibleStatesNum, \
+			lineFoundWeights, lineFeatureExpec, learned_weights, \
+			num_Trajsofar, lineLastBeta, lineLastZS, lineLastZcount, \
+			BatchIRLflag, wt_data, normedRelDiff, traj_begintime):
+
+	#  create the interpolated trajectory, then give this to the attacker reward and solve,
+	# use the last time we saw both attackers as the starting states
+	#  now search the policy for the best values at the embarking point in time, 
+	# set the go time to go at this time + the last time we saw both attackers
+	# print("Starting MDP Solver")
+
+	# augment the trajectory here
+	## Create transfer reward function
+	# find the patroller starting positions and times, use the latst seen time
+	# execute the external solver
+	
+	#print("converting obs to trajectories")
+	
+	#print("\n received empty traj for i2rl session? "+str((not obs[0] and not obs[1])))
+	
+	traj = []
+	traj.append(convertObsToTrajectory(obs[0], traj_begintime))
+	traj.append(convertObsToTrajectory(obs[1], traj_begintime))
+
+	print("\n trajectories for session " + str(sessionNumber) + ": " + \
+		  +str(traj[0]) + ", " + str(traj[1]) + "\n")
+	#print("\n sizes of complete trajectories for session "+str(sessionNumber)+": "+\
+	#	str(len(traj[0]))+", "+str(len(traj[1])))#+"\n contents"+str(traj[0])+", "+str(traj[1])+"\n")
+
+	f = open("/tmp/timestamps","a")
+	f.write("\n sizes of complete trajectories for session "+str(sessionNumber)+": "+\
+		str(len(traj[0]))+", "+str(len(traj[1])))#+"\n contents"+str(traj[0])+", "+str(traj[1])+"\n")
+	f.close()
+					
+
+	f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "w")
+	f.write("")
+	f.close()
+
+	f = open(get_home() + "/patrolstudy/toupload/traj_irl.log", "w")
+	f.write("")
+	f.close()
+	
+	global patrollersuccessrate
+	global usesimplefeatures
+	lasttrajchangeamount = 0
+	
+	policies = None
+	
+	#print("computing transitions for traj_irl.log")
+		
+	if patrollersuccessrate >= 0:
+
+	
+		args = [ 'boydsimple_t', ]
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+		outtraj = ""
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(patrollersuccessrate)
+		
+
+	else:
+
+
+		t2 = traj[:]
+
+		outtraj = ""
+	
+		if patrollersuccessrate == -2:
+			args = [ 'boyd_em_t', ]	
+			outtraj += str(visibleStatesNum / 14.0)	
+			outtraj += "\n"
+		else:
+			args = [ 'boyd_t', ]
+			t2 = filter_traj_for_t_solver(t2[0], t2[1])
+
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(usesimplefeatures) + "\n"
+	
+		outtraj += printTrajectories(t2)
+
+	f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "a")
+	f.write(outtraj)
+	f.write("ITERATE\n")
+	f.close()
+
+
+
+	(stdout, stderr) = p.communicate(outtraj)
+
+
+	(T, weights) = parseTs(stdout)
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+
+	f = open(get_home() + "/patrolstudy/toupload/t_weights.log", "w")
+	for weight in weights:
+		f.write(weight)
+		f.write("\n")
+	f.close()
+		
+		
+	args = ["boydirl", ]
+	p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	# print("boydirl subprocess.Popen")
+	
+	# build trajectories
+	outtraj = ""
+	
+	outtraj += mapToUse + "\n"
+	
+	if add_delay:
+		outtraj += "true\n"
+	else:
+		outtraj += "false\n"
+
+
+	if NE == "cc":
+		equilibriumCode = 0
+	elif NE == "sc":
+		equilibriumCode = 1
+	elif NE == "cs":
+		equilibriumCode = 2
+	elif NE == "tc":
+		equilibriumCode = 3
+	elif NE == "ct":
+		equilibriumCode = 4
+		
+	outtraj += algorithm
+	outtraj += "\n"
+	outtraj += str(equilibriumCode)	
+	outtraj += "\n"
+	global equilibriumKnown
+	if equilibriumKnown:
+		outtraj += "true\n"
+	else:
+		outtraj += "false\n"
+	global interactionLength
+	outtraj += str(interactionLength)	
+	outtraj += "\n"
+	outtraj += str(visibleStatesNum / 14.0)	
+	outtraj += "\n"
+	# print("visibleStatesNum in traj_irl.log: ", str(visibleStatesNum / 14.0))
+	
+	outtraj += printTs(T)
+
+	T = None
+			
+	outtraj += printTrajectories(traj)
+
+	#global BatchIRLflag
+	
+	#i2rl params returned by boydirl aren't used for 
+	#batch irl
+	if BatchIRLflag == False:
+		if num_Trajsofar == 0:
+			
+			# global wt_data
+			
+			#create initial weights
+			#print("creating initial weights for num_Trajsofar == 0")
+			global reward_dim
+			for i in range(2):
+				for j in range(reward_dim):
+					learned_weights[i][j]=random.uniform(.01,.1)
+			
+			wt_data=numpy.array([learned_weights])
+			
+			lineFoundWeights = str(learned_weights)+"\n"
+			#create initial feature expectations
+			for i in range(2):
+				for j in range(reward_dim):
+					learned_mu_E[i][j]=0.0
+			
+			lineFeatureExpec = str(learned_mu_E)+"\n"
+			#create initial LastBeta
+			temp=[0.0]*12
+			import math
+			
+			for j in range(12):
+				temp[j]=-math.log(12)
+			lineLastBeta = str(temp)+"\n"
+			
+			#create initial LastZS
+			temp=[0.0]*12
+			lineLastZS = str(temp)+"\n"
+			
+			#create initial zcount
+			lineLastZcount = str(0)+"\n"
+	
+		#print("strings being written to traj_irl for boydirl")
+		#print("lineFoundWeights:"+lineFoundWeights+"lineFeatureExpec"+\
+		#	lineFeatureExpec+"num_Trajsofar:"+str(num_Trajsofar)+"\n"\
+		#	+"lineLastBeta: "+ lineLastBeta + "lineLastZS:"+\
+		#	lineLastZS + "lineLastZcount:"+lineLastZcount+"end")
+		#pass previous weights +\n 
+		#pass previous feature expectations
+		#pass number of trajectories already used for training
+		outtraj += lineFoundWeights+lineFeatureExpec+ str(num_Trajsofar)+"\n"
+		
+		#pass previous beta +\n , zs +\n , zcount +\n 
+		outtraj += lineLastBeta + lineLastZS + lineLastZcount
+	
+	
+	f = open(get_home() + "/patrolstudy/toupload/traj_irl.log", "a")
+	f.write(outtraj)
+	f.close()
+ 	
+	#print("calling boydirl at")
+	#print(rospy.Time.now().to_sec())
+				
+	(stdout, stderr) = p.communicate(outtraj)
+	#print("boydirl (stdout, stderr) = p.communicate(outtraj)")
+	
+	(policies, lineFoundWeights, lineFeatureExpec, learned_weights, \
+	num_Trajsofar, lineLastBeta, lineLastZS, lineLastZcount, \
+	sessionFinish, wt_data, normedRelDiff, lastQ, lineFeatureExpecfull)\
+	= parsePolicies(stdout, None, lineFoundWeights, lineFeatureExpec, learned_weights, \
+	num_Trajsofar, lineLastBeta, lineLastZS, lineLastZcount, \
+	BatchIRLflag, wt_data, normedRelDiff)
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+	
+
+	if patrollersuccessrate >= 0:
+
+	
+		args = [ 'boydsimple_t', ]
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+		outtraj = ""
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(patrollersuccessrate)
+		
+
+	else:
+
+
+		t2 = traj[:]
+
+		outtraj = ""
+	
+		if patrollersuccessrate == -2:
+			args = [ 'boyd_em_t', ]	
+			outtraj += str(visibleStatesNum / 14.0)	
+			outtraj += "\n"
+		else:
+			args = [ 'boyd_t', ]
+			t2 = filter_traj_for_t_solver(t2[0], t2[1])
+
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(usesimplefeatures) + "\n"
+	
+		outtraj += printTrajectories(t2)
+
+	f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "a")
+	f.write(outtraj)
+	f.write("ITERATE\n")
+	f.close()
+
+	(stdout, stderr) = p.communicate(outtraj)
+	#print("boydsimple_t (stdout, stderr) = p.communicate(outtraj)")
+
+	(T, weights) = parseTs(stdout)
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+
+	f = open(get_home() + "/patrolstudy/toupload/t_weights.log", "w")
+	for weight in weights:
+		f.write(weight)
+		f.write("\n")
+	f.close()
+	
+	policies.append(T)
+	
+	q.put([lineFoundWeights, lineFeatureExpec, learned_weights, \
+		num_Trajsofar, lineLastBeta, lineLastZS, lineLastZcount, \
+		sessionFinish, wt_data, normedRelDiff, lastQ, policies])
+	
+	#q.put()	
+	#print("q.put(policies)")
+	
+	return
+
+def emirlsolve(q, obs, add_delay, algorithm, pmodel, mapToUse, NE, visibleStatesNum):
+
+	#  create the interpolated trajectory, then give this to the attacker reward and solve, use the last time we saw both attackers as the starting states
+	#  now search the policy for the best values at the embarking point in time, set the go time to go at this time + the last time we saw both attackers
+	print("Starting EMIRL Solver")
+
+	# execute the external solver
+
+	# convert the raw observatiosn to a trajectory
+	traj = []
+	traj.append(convertObsToTrajectory(obs[0]))
+	traj.append(convertObsToTrajectory(obs[1]))
+
+
+	f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "w")
+	f.write("")
+	f.close()
+
+	f = open(get_home() + "/patrolstudy/toupload/traj_irl.log", "w")
+	f.write("")
+	f.close()
+	
+	global patrollersuccessrate
+	global usesimplefeatures
+	lasttrajchangeamount = 0
+	
+	policies = None
+	
+	if patrollersuccessrate >= 0:
+
+	
+		args = [ 'boydsimple_t', ]
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+		outtraj = ""
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(patrollersuccessrate)
+		
+
+	else:
+
+
+		t2 = traj[:]
+
+		outtraj = ""
+	
+		if patrollersuccessrate == -2:
+			args = [ 'boyd_em_t', ]	
+			outtraj += str(visibleStatesNum / 14.0)	
+			outtraj += "\n"
+		else:
+			args = [ 'boyd_t', ]
+			t2 = filter_traj_for_t_solver(t2[0], t2[1])
+
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(usesimplefeatures) + "\n"
+	
+		outtraj += printTrajectories(t2)
+
+	f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "a")
+	f.write(outtraj)
+	f.write("ITERATE\n")
+	f.close()
+
+
+
+	(stdout, stderr) = p.communicate(outtraj)
+
+
+	(T, weights) = parseTs(stdout)
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+
+	f = open(get_home() + "/patrolstudy/toupload/t_weights.log", "w")
+	for weight in weights:
+		f.write(weight)
+		f.write("\n")
+	f.close()
+		
+	args = ["boydemirl", ]
+	p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+	# build trajectories
+	outtraj = ""
+	
+	outtraj += mapToUse + "\n"
+	
+	if add_delay:
+		outtraj += "true\n"
+	else:
+		outtraj += "false\n"
+
+
+	if NE == "cc":
+		equilibriumCode = 0
+	elif NE == "sc":
+		equilibriumCode = 1
+	elif NE == "cs":
+		equilibriumCode = 2
+	elif NE == "tc":
+		equilibriumCode = 3
+	elif NE == "ct":
+		equilibriumCode = 4
+		
+	outtraj += algorithm
+	outtraj += "\n"
+	outtraj += str(equilibriumCode)	
+	outtraj += "\n"
+	global interactionLength
+	outtraj += str(interactionLength)	
+	outtraj += "\n"
+	outtraj += str(visibleStatesNum / 14.0)	
+	outtraj += "\n"
+	
+	outtraj += printTs(T)
+
+	T = None
+			
+	outtraj += printTrajectoriesStatesOnly(traj)
+
+	outtraj += printStochasticPolicies(pmodel, obs)
+	
+	outtraj += printUniformNEPriors()
+	
+	
+	f = open(get_home() + "/patrolstudy/toupload/traj_irl.log", "a")
+	f.write(outtraj)
+	f.close()
+	
+	(stdout, stderr) = p.communicate(outtraj)
+
+	policies = parsePolicies(stdout, None)
+	
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+	
+
+	if patrollersuccessrate >= 0:
+
+	
+		args = [ 'boydsimple_t', ]
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+		outtraj = ""
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(patrollersuccessrate)
+		
+
+	else:
+
+
+		t2 = traj[:]
+
+		outtraj = ""
+	
+		if patrollersuccessrate == -2:
+			args = [ 'boyd_em_t', ]	
+			outtraj += str(visibleStatesNum / 14.0)	
+			outtraj += "\n"
+		else:
+			args = [ 'boyd_t', ]
+			t2 = filter_traj_for_t_solver(t2[0], t2[1])
+
+	
+		p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+		
+		outtraj += mapToUse + "\n"
+		outtraj += str(usesimplefeatures) + "\n"
+	
+		outtraj += printTrajectories(t2)
+
+	f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "a")
+	f.write(outtraj)
+	f.write("ITERATE\n")
+	f.close()
+
+
+
+	(stdout, stderr) = p.communicate(outtraj)
+
+
+	(T, weights) = parseTs(stdout)
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+
+	f = open(get_home() + "/patrolstudy/toupload/t_weights.log", "w")
+	for weight in weights:
+		f.write(weight)
+		f.write("\n")
+	f.close()
+
+	policies.append(T)			
+	q.put(policies)	
+	return
 
 
 def irlsolve_recdStates(q, traj, add_delay, algorithm, pmodel, mapToUse, NE, visibleStatesNum, \
@@ -592,6 +2421,435 @@ def irlsolve_recdStates(q, traj, add_delay, algorithm, pmodel, mapToUse, NE, vis
 		normedRelDiff, lastQ, lineFeatureExpecfull, policies])
 	return
 
+def getattackerpolicy(q, policies, obs, pmodel, goalState, reward, penalty, detectDistance, predictTime, add_delay, pfail, mapToUse, T):
+	
+	#  create the interpolated trajectory, then give this to the attacker reward and solve,\
+	# use the last time we saw both attackers as the starting states
+	#  now search the policy for the best values at the embarking point in time, 
+	#set the go time to go at this time + the last time we saw both attackers
+	print("Starting Policy Solver")
+
+	## Create transfer reward function
+	global patrollersuccessrate
+
+	traj = []
+	global glbltrajstarttime_attpolicyI2RL
+	glbltrajstarttime_attpolicyI2RL = fromRospyTime(obs[0][0][1])
+	traj.append(convertObsToTrajectoryWPolicy(obs[0], policies[0],glbltrajstarttime_attpolicyI2RL))
+	glbltrajstarttime_attpolicyI2RL = fromRospyTime(obs[1][0][1])
+	traj.append(convertObsToTrajectoryWPolicy(obs[1], policies[1],glbltrajstarttime_attpolicyI2RL))
+
+	patrollerStartStates = []
+	patrollerTimes = []
+	
+	#print("\n results convertObsToTrajectoryWPolicy(obs[0], policies[0]):\n:"+str(traj[0]))
+	
+	# As startat is used in process of convertObsToTrajectoryWPolicy,
+	# it should be modified after computing
+	# trajectories
+	global BatchIRLflag
+ 	# if BatchIRLflag == False:
+ 	# 	global startat, startat_attpolicyI2RL
+ 	# startat = startat_attpolicyI2RL
+	
+	global startat
+	print("startat for getattackerpolicy", startat)
+	
+	calcStart = get_time()
+	
+# 	if BatchIRLflag == False:
+# 		global startat_attpolicyI2RL
+# 		calcStart = rospy.get_time() - startat_attpolicyI2RL
+	
+	# align calcStart on a discrete time point	
+	calcStart = (getTimeConv() - (calcStart % getTimeConv())) + calcStart
+
+	# time settings change only for fromRospyTime(calcStart) - n
+	for patroller in traj:
+		for n in range( len(patroller) - 1, -1, -1):
+			timestep = patroller[n]
+			if timestep is not None:
+				patrollerStartStates.append(timestep[0])
+				patrollerTimes.append(fromRospyTime(calcStart) - n)
+				break
+	
+	print("Is fromRospyTime(calcStart) - n too negative? ",(fromRospyTime(calcStart) - n))
+	
+	while (len(patrollerStartStates) < len(traj)):
+		# looks like we haven't observed a patroller or two, add some random stuff ...
+
+		patrollerStartStates.append(PatrolState())
+		patrollerTimes.append(0)
+
+	print("PatrollerStartStates", patrollerStartStates)
+	print("PatrollerTimes ", patrollerTimes, " curRospy ", get_time())
+
+
+	args = ["boydattacker", ]			
+	p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+	# build trajectories
+	outtraj = mapToUse + "\n"
+	if add_delay:
+		outtraj += "true\n"
+	else:
+		outtraj += "false\n"
+	
+	for stateS in patrollerStartStates:
+		outtraj += "["
+		outtraj += str(int(stateS.location[0]))
+		outtraj += ", "
+		outtraj += str(int(stateS.location[1]))
+		outtraj += ", "
+		outtraj += str(int(stateS.location[2]))
+		outtraj += "];"		
+	
+	outtraj += "\n"
+	
+	for startTime in patrollerTimes:
+		outtraj += str(startTime)
+		outtraj += ";"
+	outtraj += "\n"
+
+	outtraj += str(detectDistance)
+	outtraj += "\n"
+	outtraj += str(predictTime)
+	outtraj += "\n"
+	outtraj += str(pfail)	
+	outtraj += "\n"
+	outtraj += str(reward)	
+	outtraj += "\n"
+	outtraj += str(penalty)	
+	outtraj += "\n"
+	global interactionLength
+	outtraj += str(interactionLength)	
+	outtraj += "\n"
+	
+	outtraj += printTs(T)
+		
+	for patroller in policies:
+		if (patroller.__class__.__name__ == "MapAgent"):
+			for state in pmodel.S():
+				action = patroller.actions(state).keys()[0]
+				outtraj += "["
+				outtraj += str(int(state.location[0]))
+				outtraj += ", "
+				outtraj += str(int(state.location[1]))
+				outtraj += ", "
+				outtraj += str(int(state.location[2]))
+				outtraj += "] = "
+				if action.__class__.__name__ == "PatrolActionMoveForward":
+					outtraj += "MoveForwardAction"
+				elif action.__class__.__name__ == "PatrolActionTurnLeft":
+					outtraj += "TurnLeftAction"
+				elif action.__class__.__name__ == "PatrolActionTurnRight":
+					outtraj += "TurnRightAction"
+				elif action.__class__.__name__ == "PatrolActionTurnAround":
+					outtraj += "TurnAroundAction"
+				else:
+					outtraj += "StopAction"
+					
+				outtraj += "\n"
+			outtraj += "ENDPOLICY\n"
+		else:
+			for (action, value) in patroller.iteritems():
+				
+				if action.__class__.__name__ == "PatrolActionMoveForward":
+					outtraj += "MoveForwardAction"
+				elif action.__class__.__name__ == "PatrolActionTurnLeft":
+					outtraj += "TurnLeftAction"
+				elif action.__class__.__name__ == "PatrolActionTurnRight":
+					outtraj += "TurnRightAction"
+				elif action.__class__.__name__ == "PatrolActionTurnAround":
+					outtraj += "TurnAroundAction"
+				else:
+					outtraj += "StopAction"
+					
+				outtraj += " = "
+				outtraj += str(value)
+				outtraj += "\n"
+
+			outtraj += "ENDE\n"
+				
+	
+	f = open(get_home() + "/patrolstudy/toupload/patpolicy.log", "w")
+	f.write(outtraj)
+	f.close()
+	
+	print("patpolicy log written")
+	# exit(0)
+	# abortRun()
+	# rospy.signal_shutdown('')
+
+	(stdout, stderr) = p.communicate(outtraj)
+	
+	splitit = stdout.split("ENDPROBS")
+	
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+	
+	towrite = splitit[0] 
+	if (len(towrite) == 0):
+		exit()
+	
+	print("Writing out predictions")
+	f = open(get_home() + "/patrolstudy/toupload/prediction.log", "w")
+	f.write(towrite)
+	f.close()
+	
+	
+	# stdout now needs to be parsed into a hash of state => action, which is then sent to mapagent
+	pols = []
+	vs = []
+	p = {}
+	v = {}
+	stateactions = splitit[1][1 : len(splitit[1])].split("\n")
+	for stateaction in stateactions:
+
+		if len(stateaction) < 2:
+			# we've found where the marker between two policies
+			pols.append(p)
+			vs.append(v)
+			p = {}
+			v = {}
+			continue
+		temp = stateaction.split(" = ")
+		if len(temp) < 2: continue
+		
+		state = temp[0]
+		value = temp[1]
+		action = temp[2]
+
+		
+		state = state[2 : len(state) - 1]
+		pieces = state.split(",")	
+		
+		ps = patrol.model.AttackerState(np.array([int(pieces[0]), int(pieces[1][0 : len(pieces[1]) - 1])]) , int(pieces[2]), int(pieces[3]))
+	
+		if action.strip() == "null":
+			p[ps] = None
+		else:	
+			if action.strip() == "AttackerMoveForward":
+				a = patrol.model.AttackerMoveForward()
+			elif action.strip() == "AttackerTurnLeft":
+				a = patrol.model.AttackerTurnLeft()
+			else:
+				a = patrol.model.AttackerTurnRight()
+
+			p[ps] = a
+		v[ps] = float(value)
+
+	
+	policiesarr = []
+	for temp2 in pols:
+		policiesarr.append(mdp.agent.MapAgent(temp2))
+
+	print("Finished MDP Solving")
+		
+	q.put([policiesarr, vs, predictTime, calcStart, patrollerStartStates, patrollerTimes])		
+
+	
+
+def perfectgetattackerpolicy(q, policies, obs, pmodel, goalState, reward, penalty, detectDistance, predictTime, add_delay, pfail, mapToUse, T):
+
+	calcStart = get_time()
+	
+	print "size of policies"+str(len(policies))
+	#print (policies[1].__class__.__name__ == "MapAgent")
+	
+	# align calcStart on a discrete time point	
+	calcStart = (getTimeConv() - (calcStart % getTimeConv())) + calcStart
+
+	#  create the interpolated trajectory, then give this to the attacker reward and solve, use the last time we saw both attackers as the starting states
+	#  now search the policy for the best values at the embarking point in time, set the go time to go at this time + the last time we saw both attackers
+	print("Starting Policy Solver")
+
+	## Create transfer reward function
+
+	# find the patroller starting positions and times, use the latst seen time
+
+	lastPatroller0State = getGroundTruthStateFor(0)
+	lastPatroller1State = getGroundTruthStateFor(1)
+
+	patrollerStartStates = [lastPatroller0State, lastPatroller1State]
+	patrollerTimes = [0,0]
+
+
+	print("PatrollerStartStates", patrollerStartStates)
+	print("PatrollerTimes", patrollerTimes, "curRospy", get_time())
+
+
+
+	args = ["boydattacker", ]
+	p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)				
+	
+	# build trajectories
+	outtraj = mapToUse + "\n"
+	if add_delay:
+		outtraj += "true\n"
+	else:
+		outtraj += "false\n"
+	
+	for stateS in patrollerStartStates:
+		outtraj += "["
+		outtraj += str(int(stateS.location[0]))
+		outtraj += ", "
+		outtraj += str(int(stateS.location[1]))
+		outtraj += ", "
+		outtraj += str(int(stateS.location[2]))
+		outtraj += "];"		
+	
+	outtraj += "\n"
+	
+	for startTime in patrollerTimes:
+		outtraj += str(startTime)
+		outtraj += ";"
+	outtraj += "\n"
+
+	outtraj += str(detectDistance)
+	outtraj += "\n"
+	outtraj += str(predictTime)
+	outtraj += "\n"
+
+	outtraj += str(pfail)	
+	outtraj += "\n"
+	outtraj += str(reward)	
+	outtraj += "\n"
+	outtraj += str(penalty)	
+	outtraj += "\n"
+	global interactionLength
+	outtraj += str(interactionLength)	
+	outtraj += "\n"
+	
+	outtraj += printTs(T)
+		
+	for patroller in policies:
+		if (patroller.__class__.__name__ == "MapAgent"):
+			print "reading policies because class name MapAgent"
+			for state in pmodel.S():
+				action = patroller.actions(state).keys()[0]
+				outtraj += "["
+				outtraj += str(int(state.location[0]))
+				outtraj += ", "
+				outtraj += str(int(state.location[1]))
+				outtraj += ", "
+				outtraj += str(int(state.location[2]))
+				outtraj += "] = "
+				if action.__class__.__name__ == "PatrolActionMoveForward":
+					outtraj += "MoveForwardAction"
+				elif action.__class__.__name__ == "PatrolActionTurnLeft":
+					outtraj += "TurnLeftAction"
+				elif action.__class__.__name__ == "PatrolActionTurnRight":
+					outtraj += "TurnRightAction"
+				elif action.__class__.__name__ == "PatrolActionTurnAround":
+					outtraj += "TurnAroundAction"
+				else:
+					outtraj += "StopAction"
+					
+				outtraj += "\n"
+			outtraj += "ENDPOLICY\n"
+		else:
+			print "reading policies because class name not MapAgent"
+			for (action, value) in patroller.iteritems():
+				
+				if action.__class__.__name__ == "PatrolActionMoveForward":
+					outtraj += "MoveForwardAction"
+				elif action.__class__.__name__ == "PatrolActionTurnLeft":
+					outtraj += "TurnLeftAction"					
+				elif action.__class__.__name__ == "PatrolActionTurnRight":
+					outtraj += "TurnRightAction"					
+				elif action.__class__.__name__ == "PatrolActionTurnAround":
+					outtraj += "TurnAroundAction"
+				else:
+					outtraj += "StopAction"
+					
+				outtraj += " = "
+				outtraj += str(value)
+				outtraj += "\n"
+
+			outtraj += "ENDE\n"
+	
+	
+	f = open(get_home() + "/patrolstudy/toupload/patpolicy.log", "w")
+	f.write(outtraj)
+	f.close()
+	
+	(stdout, stderr) = p.communicate(outtraj)	
+	splitit = stdout.split("ENDPROBS")
+	
+	stdout = None
+	stderr = None
+	outtraj = None
+	
+	towrite = splitit[0] 
+	if (len(towrite) == 0):
+		exit()
+	
+	print("Writing out predictions")
+	f = open(get_home() + "/patrolstudy/toupload/prediction.log", "w")
+	f.write(towrite)
+	f.close()
+			
+	# stdout now needs to be parsed into a hash of state => action, which is then sent to mapagent
+	pols = []
+	vs = []
+	p = {}
+	v = {}
+	stateactions = splitit[1][1 : len(splitit[1])].split("\n")
+
+	# stdout now needs to be parsed into a hash of state => action, which is then sent to mapagent
+	pols = []
+	vs = []
+	p = {}
+	v = {}
+	#stateactions = stdout.split("\n")
+	for stateaction in stateactions:
+
+		if len(stateaction) < 2:
+			# we've found where the marker between two policies
+			pols.append(p)
+			vs.append(v)
+			p = {}
+			v = {}
+			continue
+		temp = stateaction.split(" = ")
+		if len(temp) < 2: continue
+		state = temp[0]
+		value = temp[1]
+		action = temp[2]
+
+		
+		state = state[2 : len(state) - 1]
+		pieces = state.split(",")	
+		
+		ps = patrol.model.AttackerState(np.array([int(pieces[0]), int(pieces[1][0 : len(pieces[1]) - 1])]) , int(pieces[2]), int(pieces[3]))
+	
+		if action.strip() == "null":
+			p[ps] = None
+		else:	
+			if action.strip() == "AttackerMoveForward":
+				a = patrol.model.AttackerMoveForward()
+			elif action.strip() == "AttackerTurnLeft":
+				a = patrol.model.AttackerTurnLeft()
+			else:
+				a = patrol.model.AttackerTurnRight()
+
+			p[ps] = a
+		v[ps] = float(value)
+
+
+	policiesarr = []
+	for temp2 in pols:
+		policiesarr.append(mdp.agent.MapAgent(temp2))
+
+	print("Finished MDP Solving")
+		
+	q.put([policiesarr, vs, predictTime, calcStart, patrollerStartStates, patrollerTimes])		
+	
+	
+
 
 class WrapperIRL():
 
@@ -788,8 +3046,8 @@ class WrapperIRL():
 				new_stateactions = convertObsToTrajectory(self.traj[patroller], glbltrajstarttime)
 				# if not not new_stateactions:
 				#print "patroller"+str(patroller)+" - new_stateactions:"+str(new_stateactions)
-				for sa in new_stateactions: 
-					self.traj_states[patroller].append(sa) 
+				for sa in new_stateactions:
+					self.traj_states[patroller].append(sa)
 
 				global patrtraj_len
 				patrtraj_len[patroller] = len(self.traj_states[patroller])
@@ -850,8 +3108,8 @@ class WrapperIRL():
 				for sap in conv_traj: 
 					if (sap is not None): 
 						s = sap[0].location[0:3]
-						#print(s)
-						#print(sap[1].__class__.__name__)
+						# print(s)
+						# print(sap[1].__class__.__name__)
 						outtraj += str(s[0])+","+str(s[1])+","+str(s[2])+","
 						if sap[1].__class__.__name__ == "PatrolActionMoveForward":
 							outtraj += "PatrolActionMoveForward"
@@ -1153,7 +3411,6 @@ class WrapperIRL():
 						outtraj += mapToUse + "\n"
 						outtraj += str(patrollersuccessrate)
 						(transitionfunc, stderr) = p.communicate(outtraj)
-						
 						args = ['boydile', ]
 						p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
 											 stderr=subprocess.PIPE)
@@ -1878,263 +4135,127 @@ class WrapperIdealIRL(WrapperIRL):
 			self.p.start()
 			self.lastSolveAttempt = rospy.get_time()
 
-def print_traj_sortingMDP(conv_traj):
-	outtraj = ""
-	s = None
-	act_str = None
 
-	for sap in conv_traj: 
-		if (sap is not None): 
-			s = sap[0]
-			outtraj += "["+str(s._onion_location)+","\
-			+str(s._prediction)+","+\
-			str(s._EE_location)+","+\
-			str(s._listIDs_status)+"]:"
+# Note, will need to change this for each map
 
-			if sap[1].__class__.__name__ == "InspectAfterPicking":
-				act_str = "InspectAfterPicking"
-				 
-			elif sap[1].__class__.__name__ == "InspectWithoutPicking":
-				act_str = "InspectWithoutPicking"
-				 
-			elif sap[1].__class__.__name__ == "Pick":
-				act_str = "Pick"
-				 
-			elif sap[1].__class__.__name__ == "PlaceOnConveyor":
-				act_str = "PlaceOnConveyor"
-				 
-			elif sap[1].__class__.__name__ == "PlaceInBin":
-				act_str = "PlaceInBin"
-				 
-			elif sap[1].__class__.__name__ == "ClaimNewOnion":
-				act_str = "ClaimNewOnion"
-				 
-			elif sap[1].__class__.__name__ == "ClaimNextInList":
-				act_str = "ClaimNextInList"
-				
-			else:
-				act_str = "ActionInvalid"
 
-			outtraj += act_str
-
-		else:
-			outtraj += "None"
-		outtraj += "\n"
+def getGroundTruthStateFor(pat):
 	
-	print outtraj
+	global patroller0GroundTruth
+	global patroller1GroundTruth
+	
+	if (pat == 0):
+		gt = patroller0GroundTruth
+	else:
+		gt = patroller1GroundTruth
+	
+	
+	a = gt.pose.pose.orientation
+	
+	angles = tf.transformations.euler_from_quaternion([a.x, a.y, a.z, a.w])
 
-	return 
-
-def parse_sorting_policy(buf):
-	# stdout now needs to be parsed into a hash of state => action, which is then sent to mapagent
-	p = {}
-	stateactions = buf.split("\n")
-	for stateaction in stateactions:
-		temp = stateaction.split(" = ")
-		if len(temp) < 2: continue
-		state = temp[0]
-		action = temp[1]
-												
-		state = state[1 : len(state) - 1]
-		pieces = state.split(",")	
+	if (angles[2] < 0):
+		angles = (0,0, 2 * math.pi + angles[2])
+	
+	pos = (gt.pose.pose.position.x, gt.pose.pose.position.y, angles[2])	
+	
+	global patrollerOGMap
+	return patrollerOGMap.toState(pos, False)
 		
-		ss = sortingState(int(pieces[0]), int(pieces[1]), int(pieces[2]), int(pieces[3]))
 
-		if action == "InspectAfterPicking":
-			act = InspectAfterPicking()
-		elif action == "InspectWithoutPicking":
-			act = InspectWithoutPicking()
-		elif action == "Pick":
-			act = Pick()
-		elif action == "PlaceOnConveyor":
-			act = PlaceOnConveyor()
-		elif action == "PlaceInBin":
-			act = PlaceInBin()
-		elif action == "ClaimNewOnion":
-			act = ClaimNewOnion()
-		elif action == "ClaimNextInList":
-			act = ClaimNextInList()
-		else:
-			print("Invalid input policy to parse_sorting_policy")
-			exit(0)
+class WrapperPerfect(WrapperIRL):
+
+
+	def update(self):
+
+		global obstime
 		
-		p[ss] = act
+		if not self.isSolving and self.policy is None:
 
-	from mdp.agent import MapAgent
-	return MapAgent(p)
-
-class WrapperSortingForwardRL():
-
-	def __init__(self, p_fail=0.05, reward_type='sortingReward2'):
-
-		self.p_fail = p_fail
-		self.isSolving = False
-		self.traj_states = []
-		self.recd_convertedstates = [] 
-		# self.sortingMDP = sortingModel(p_fail)
-		self.sortingMDP = sortingModelbyPSuresh2(p_fail) 
-		sortingReward = None
-		initial = util.classes.NumMap()
-
-		if reward_type == 'sortingReward2':
-			sortingReward = sortingReward2(8) 
-			params_pickinspect = [1,-1,-1,1,-0.2,1,-1.5,-1.0] 
-			params = params_pickinspect
-			params_rolling = [1,-0.5,-0.75,1.3,-0.2,0,1.88,-1.0] 
-			params = params_rolling
-			for s in self.sortingMDP.S():
-				initial[s] = 1.0
-
-		if reward_type == 'sortingReward7':
-			sortingReward = sortingReward7(11) 
-			params_pickinspect = [2, 1, 2, 1, 0.2, 1, 0, 4, 0, 0, 4] 
-			params = params_pickinspect
-			params_rolling = [0, 4, 0, 4, 0.2, 0, 8, 0, 8, 4, 0] 
-			params = params_rolling
-			s = sortingState(0,2,0,0)	
-			initial[s] = 1.0
-		
-		norm_params = [float(i)/sum(np.absolute(params)) for i in params]
-		sortingReward.params=norm_params
-		self.sortingMDP.reward_function = sortingReward 
-		self.sortingMDP.gamma = 0.998 
-		initial = initial.normalize()
-
-		args = [get_home() + "/catkin_ws/devel/bin/solveSortingMDP", ] 
-		sp = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		stdin = str(norm_params)	
-		(stdout, stderr) = sp.communicate(stdin)
-		self.policy = parse_sorting_policy(stdout)						
-
-		# self.policy = mdp.solvers.ValueIteration(0.55).solve(self.sortingMDP)
-		# Python code gives different policy for same set of weights
-		# As D code is the language for solver, it is better to read policy output for there
-		# example mdppatrolctrl.py 
-
-		conv_traj = mdp.simulation.simulate(self.sortingMDP,self.policy,initial,30)
-		print("\nsimuated mdp traj ")
-		print_traj_sortingMDP(conv_traj)
-
-		# for s in self.sortingMDP.S():
-	 # 		ol = None
-	 # 		pr = None
-	 # 		el = None
-
-		# 	if s._onion_location == 0:
-		# 		ol = 'Onconveyor'
-		# 	elif s._onion_location == 1:
-		# 		ol = 'Infront'
-		# 	elif s._onion_location == 2:
-		# 		ol = 'Inbin'
-		# 	else:
-		# 		ol = 'Picked/AtHomePose'
-		# 	if s._prediction == 0:
-		# 		pr = 'bad'
-		# 	elif s._prediction == 1:
-		# 		pr = 'good'
-		# 	else:
-		# 		pr = 'unknown'
-		# 	if s._EE_location == 0:
-		# 		el = 'Onconveyor'
-		# 	elif s._EE_location == 1:
-		# 		el = 'Infront'
-		# 	elif s._EE_location == 2:
-		# 		el = 'Inbin'
-		# 	else:
-		# 		el = 'Picked/AtHomePose'
-		# 	print str((ol,pr,el)) 
-		# 	print '\tpi({}) = {}'.format(s, self.policy._policy[s]) 
-
-		# self.startState = sortingState(-1,-1,-1,-1) #(0,2,3) conv, unknown, home
-
-		impl_GoHome() 
-		try: 
-			print "making location EE 0 by going to conveyor center" 
-			resp = handle_move_sawyer_service("conveyorCenter",index_chosen_onion) 
-			time.sleep(1.0)
-		except rospy.ServiceException, e: 
-			print "Service call failed: %s"%e 
-			return False
-
-		self.startState = sortingState(0,2,0,0) 
-		self.currentState = self.startState 
-		# self.currentAction = self.next_optimal_action() 
-
-	def update_current_state(self): 
-
-		global location_claimed_onion, prediction_chosen_onion, location_EE, ListStatus,\
-		last_location_claimed_onion
-
-		if last_location_claimed_onion != 0 and location_claimed_onion == 0 and (self.currentState != self.startState):
-			# self.currentState = sortingState(4, prediction_chosen_onion, 0, ListStatus)				
-			# with psuresh's cahnges in mdp
-			self.currentState = sortingState(4, 2, 0, 2)				
-		else:
-			self.currentState = sortingState(location_claimed_onion, prediction_chosen_onion, location_EE, ListStatus)
-
-		# check placed before changing last_location_claimed_onion
-		if last_location_claimed_onion != location_claimed_onion:
-			last_location_claimed_onion = location_claimed_onion
-		
-		return 
-
-	def next_optimal_action(self):
-		self.currentAction = self.policy._policy[self.currentState]
-		return self.currentAction
-
-	def update_trajectories(self, state, action):
-		sa = (self.currentState, self.currentAction)
-		self.traj_states.append(sa) 
-		return
-
-	def recordStateSequencetoFile(self):
-		
-		f = open(get_home() + "/patrolstudy/toupload/recd_convertedstates.log", "w")
-		f.write("")
-		f.close()
-
-		# record trajectory directly in file
-		print("desired length reached. recordStateSequence to file ") 
-		outtraj = ""
-		
-		conv_traj = self.traj_states
-		for sap in conv_traj: 
-			if (sap is not None): 
-				s = sap[0]
-				#print(s)
-				#print(sap[1].__class__.__name__)
-				outtraj += str(s._onion_location)+","\
-				+str(s._prediction)+","+\
-				str(s._EE_location)+","+\
-				str(s._listIDs_status)+","
-				if sap[1].__class__.__name__ == "InspectAfterPicking":
-					outtraj += "InspectAfterPicking"
-				elif sap[1].__class__.__name__ == "InspectWithoutPicking":
-					outtraj += "InspectWithoutPicking"
-				elif sap[1].__class__.__name__ == "Pick":
-					outtraj += "Pick"
-				elif sap[1].__class__.__name__ == "PlaceOnConveyor":
-					outtraj += "PlaceOnConveyor"
-				elif sap[1].__class__.__name__ == "PlaceInBin":
-					outtraj += "PlaceInBin"
-				elif sap[1].__class__.__name__ == "ClaimNewOnion":
-					outtraj += "ClaimNewOnion"
-				elif sap[1].__class__.__name__ == "ClaimNextInList":
-					outtraj += "ClaimNextInList"
+			# needed for both			
+			emptytraj = (not self.recd_statesCurrSession[0] \
+						and not self.recd_statesCurrSession[1])
+	#				while allnone == 1 or emptytraj == 1:
+			while emptytraj == 1:
+				if (not self.recd_convertedstates[0] \
+					and not self.recd_convertedstates[1]):
+					print(" no further states left to be read  ")
+					emptyinput()
+				
+				#print("can't send empty traj for multiprocessing.Process! ")
+				if (max(len(x) for x in self.recd_convertedstates)>= min_BatchIRL_InputLen):
+					# if batch irl input is needed
+					#print("\n BatchIRLflag == True create input ")
+					for patroller in range(0,len(self.recd_convertedstates)):
+						if len(self.recd_convertedstates[patroller]) >= min_BatchIRL_InputLen:
+							print("\n len(self.recd_convertedstates[patroller]) >= min_BatchIRL_InputLen ")
+	#								print(str(len(self.recd_convertedstates[patroller])))
+							self.recd_statesCurrSession[patroller] = self.recd_convertedstates[patroller][0:min_BatchIRL_InputLen]
+							self.recd_convertedstates[patroller] = self.recd_convertedstates[patroller][min_BatchIRL_InputLen:]
+	#								print(str(len(self.recd_convertedstates[patroller])))
+						else:
+	#								print(str(len(self.recd_convertedstates[patroller])))
+							self.recd_statesCurrSession[patroller] = self.recd_convertedstates[patroller][:]
+							self.recd_convertedstates[patroller] = []
+	#								print(str(len(self.recd_convertedstates[patroller])))
 				else:
-					outtraj += "ActionInvalid"
-			else:
-				outtraj += "None"
-			outtraj += "\n"
-		outtraj += "ENDREC\n"
-		
-		print outtraj
+					print("insufficient states for batch. BatchIRLflag == True and \
+				(max(len(x) for x in self.recd_convertedstates)< min_BatchIRL_InputLen) ")
+				emptytraj = (not self.recd_statesCurrSession[0] \
+							and not self.recd_statesCurrSession[1])
 
-		f = open(get_home() + "/patrolstudy/toupload/recd_convertedstates.log", "w")
-		f.write(outtraj)
-		f.close()
-		return
+			input = [[], []]
+			input[0] = self.recd_statesCurrSession[0][:]
+			input[1] = self.recd_statesCurrSession[1][:]
 
+#			print(count, get_time(), self.policy, max(len(a) for a in self.traj))
+#			if ((get_time() > obstime and self.policy is None)) and max(len(a) for a in self.traj) > self.predictTime:  # found enough states for both patrollers
+			self.isSolving = True
+
+			self.q = multiprocessing.Queue()
+
+			self.p = multiprocessing.Process(target=idealirlsolve_recdstates, args=(self.q,self.add_delay, self.map, input, self.pmodel, self.observableStateLow, self.eq) )
+			#p = multiprocessing.Process(target=idealirlsolve, args=(self.q,self.add_delay, self.map, self.traj, self.pmodel, self.observableStateLow, self.eq) )
+			self.p.start()
+
+		elif self.isSolving:
+			try:
+				newStuff = self.q.get(False)
+				# got a new set of patroller policies, kickoff the final step after popping extra
+				self.T = newStuff.pop()
+				#temp = newStuff.pop()
+				#temp = newStuff.pop()
+				self.patPolicies = newStuff
+				print "learning finished for perfect attacker"
+				print "self.patPolicies:"+str(self.patPolicies)
+				# save the generated policy to the logs
+				f = open(get_home() + "/patrolstudy/toupload/policy.log", "w")
+				pickle.dump(self.patPolicies,f)
+				f.close()
+				
+			except Queue.Empty:
+				pass		
+
+		if self.finalQ is None and self.patPolicies is not None and rospy.get_time() - self.lastSolveAttempt > getTimeConv():
+			self.finalQ = multiprocessing.Queue()
+			
+			self.p = multiprocessing.Process(target=perfectgetattackerpolicy, args=(self.finalQ, self.patPolicies, self.traj, self.pmodel, self.goalState, self.reward, self.penalty, self.detectDistance, self.predictTime, self.add_delay, self.p_fail, self.map, self.T) )
+
+			self.p.start()
+			print "perfectgetattackerpolicy called for perfect attacker"
+			self.lastSolveAttempt = rospy.get_time()
+
+def Attack():
+	global pub
+	
+	pub.publish(String("attackerleft"))
+	global state
+	state = "a"
+
+
+def Gooooooal():
+	global pub
+	pub.publish(String("reachgoal"))
 
 def abortRun():
 	global pub
@@ -2152,10 +4273,35 @@ def emptyinput():
 	global pub
 	pub.publish(String("emptyinput"))
 
+def handle_pose(req):
+	global state
+	global goal
+	global lastPositionBelief
+	global mdpWrapper
+	global cur_waypoint
+	global percepts
+	global perceptsUpdated
+	global amclmessageReceived
 
+
+	x = req.pose.pose.position.x
+	y = req.pose.pose.position.y
+	angle = req.pose.pose.orientation
+
+	a = tf.transformations.euler_from_quaternion([angle.x, angle.y, angle.z, angle.w])
+
+	if (a[2] < 0):
+		a = (0,0, 2 * math.pi + a[2])
+	
+	lastPositionBelief = (x, y, a[2])
+	amclmessageReceived = get_time();
+
+currentAttackerState = None
 amclmessageReceived = 0 
 lastpublish = 0
+
 waitUntilGoalState = False
+
 
 def step():
 	
@@ -2177,8 +4323,187 @@ def step():
 		return
 
 	if not state == "w":
-		return
+		if mdpWrapper.latestPolicy() is None:
+			return
+		# we're attacking
+		# open file for appending
+		f = open(get_home() + "/patrolstudy/output_tracking/experiment_data.txt", "a")
 
+		#		if math.sqrt( (cur_waypoint[0] - lastPositionBelief[0])*(cur_waypoint[0] - lastPositionBelief[0]) + (cur_waypoint[1] - lastPositionBelief[1])*(cur_waypoint[1] - lastPositionBelief[1])) < .1:
+		#			lastPositionBelief = cur_waypoint
+		# what mdp state are we closest to? 
+		mdpState = mdpWrapper.getStateFor(lastPositionBelief)
+
+		# go back to start if reached goal or been detected - Didn't Work
+		# global goBacktoStart
+		# if goBacktoStart == 1:
+		# 	print ("goBacktoStart = 1")
+		# 	cur_waypoint = mdpWrapper.getPositionFor(mdpWrapper.startState)
+		# 	returnval = PoseStamped()
+		# 	returnval.pose.position = Point(cur_waypoint[0], cur_waypoint[1], 0)
+		# 	q = tf.transformations.quaternion_from_euler(0,0,cur_waypoint[2])
+		# 	returnval.pose.orientation = Quaternion(q[0],q[1],q[2],q[3])
+		# 	returnval.header.frame_id = "/map"
+		# 	goal.publish(returnval)
+		# 	print("Returning to start state", cur_waypoint)
+		# 	lastpublish = get_time()
+		# 	return
+
+		#		print("CurState: ", mdpState)
+		# are we at the goal?
+		goalState = mdpWrapper.getGoalState()
+		if np.all( mdpState.location == goalState.location):
+			newwaypoint = mdpWrapper.getPositionFor(mdpState)
+			if newwaypoint[1] != cur_waypoint[1] or newwaypoint[0] != cur_waypoint[0]:
+				returnval = PoseStamped()
+				returnval.pose.position = Point(cur_waypoint[0], cur_waypoint[1], 0)
+				returnval.pose.orientation = Quaternion()
+				returnval.pose.orientation.w = 1
+
+				returnval.header.frame_id = "/map"
+				goal.publish(returnval)
+				cur_waypoint = newwaypoint
+				#f.write("\nstate:"+str(mdpState))
+
+		#			print("belief", lastPositionBelief, "goal", cur_waypoint, math.sqrt( (cur_waypoint[0] - lastPositionBelief[0])*(cur_waypoint[0] - lastPositionBelief[0]) + (cur_waypoint[1] - lastPositionBelief[1])*(cur_waypoint[1] - lastPositionBelief[1])))
+
+			if math.sqrt( (cur_waypoint[0] - lastPositionBelief[0])*(cur_waypoint[0] - lastPositionBelief[0]) + (cur_waypoint[1] - lastPositionBelief[1])*(cur_waypoint[1] - lastPositionBelief[1])) < .4:
+				print("GOOOOOOOOOOOOAL")
+				# we've Won!
+				f.close()
+				Gooooooal()
+			return
+
+		global waitUntilGoalState
+		if waitUntilGoalState:
+			return
+
+		# special case for boydright, if we are currently in a state with no actions, give it the goal state and set a variable
+		if mapToUse == "boydright" or mapToUse == "boydright2":
+			if mdpWrapper.latestPolicy().actions(mdpState).keys()[0] is None:
+				goalwaypoint = mdpWrapper.getPositionFor(goalState)
+				returnval = PoseStamped()
+				returnval.pose.position = Point(goalwaypoint[0], goalwaypoint[1], 0)
+				returnval.pose.orientation = Quaternion()
+				returnval.pose.orientation.w = 1
+
+				returnval.header.frame_id = "/map"
+				goal.publish(returnval)
+				cur_waypoint = goalwaypoint
+				f.write("\ncurrently in a state with no actions, give it the goal:"+str(goalState))
+
+				waitUntilGoalState = True
+				return
+		
+		# ask that state for the policy, run policy to get next state
+		#	Look at what position that state corresponds to, if it is different than cur_waypoint,
+		#	update cur_waypoint and send out a new goal
+
+
+		#		action = mdpWrapper.latestPolicy().actions(mdpState).keys()[0]
+		#		newMdpState = action.apply(mdpState)
+		#		if not mdpWrapper.getModel().is_legal(newMdpState):
+		#			newMdpState = mdpState
+
+		#		print("newMDPState", newMdpState, "action", action)
+		#		newWayPoint = mdpWrapper.getPositionFor(newMdpState)
+		#		if not newWayPoint[0] == cur_waypoint[0] or not newWayPoint[1] == cur_waypoint[1]:
+		if np.all(mdpState.location == currentAttackerState.location):
+		#		if math.sqrt( (cur_waypoint[0] - lastPositionBelief[0])*(cur_waypoint[0] - lastPositionBelief[0]) + (cur_waypoint[1] - lastPositionBelief[1])*(cur_waypoint[1] - lastPositionBelief[1])) < .75:
+
+			test = mdpWrapper.latestPolicy().actions(mdpState).keys()[0]
+			testState = test.apply(mdpState)
+			if testState == currentAttackerState:
+				return
+
+
+			action = mdpWrapper.latestPolicy().actions(currentAttackerState).keys()[0]
+			newMdpState = action.apply(currentAttackerState)
+			if not mdpWrapper.model.is_legal(newMdpState):
+				print("INVALID", currentAttackerState, "action", action, "newstate", newMdpState)
+				newMdpState =  mdpWrapper.getStateFor(lastPositionBelief)
+
+			newWayPoint = mdpWrapper.getPositionFor(newMdpState)
+			currentAttackerState = newMdpState
+			
+			# skip ahead one state to prevent slowdowns from occuring
+			if action.__class__.__name__ == "AttackerMoveForward":
+				action = mdpWrapper.latestPolicy().actions(currentAttackerState).keys()[0]
+				if not action is None:
+					newMdpState = action.apply(currentAttackerState)
+					if mdpWrapper.model.is_legal(newMdpState):
+						newWayPoint = mdpWrapper.getPositionFor(newMdpState)
+			
+			
+			cur_waypoint = newWayPoint
+
+			returnval = PoseStamped()
+			returnval.pose.position = Point(cur_waypoint[0], cur_waypoint[1], 0)
+			q = tf.transformations.quaternion_from_euler(0,0,cur_waypoint[2])   
+			returnval.pose.orientation = Quaternion(q[0],q[1],q[2],q[3])
+
+			returnval.header.frame_id = "/map"
+			goal.publish(returnval)
+			print("cur_waypoint", cur_waypoint)
+			lastpublish = get_time()
+			#f.write("\nstate:" + str(currentAttackerState))
+			if (currentAttackerState.location[1]< 16 and currentAttackerState.location[0] > 0
+					and currentAttackerState.location[0] < 13):
+				f.write("\nstate:" + str(currentAttackerState)+" in rooms.")
+
+			#IS it in rooms? s.location[1] < 16 && s.location[0] > 0 && s.location[0] < 13
+
+
+		elif get_time() - lastpublish > 2.5 and get_time() - amclmessageReceived > 1.5:
+			# attacker stopped, send a future goal
+			
+			if np.all( currentAttackerState.location == goalState.location):
+
+				newWayPoint = mdpWrapper.getPositionFor(currentAttackerState)
+				cur_waypoint = newWayPoint
+	
+				returnval = PoseStamped()
+				returnval.pose.position = Point(random.gauss(cur_waypoint[0], .1), random.gauss(cur_waypoint[1], .1), 0)
+				q = tf.transformations.quaternion_from_euler(0,0,cur_waypoint[2])   
+				returnval.pose.orientation = Quaternion(q[0],q[1],q[2],q[3])
+	
+				returnval.header.frame_id = "/map"
+				goal.publish(returnval)
+				print("Skipping Ahead cur_waypoint", cur_waypoint)
+				lastpublish = get_time()
+				# f.write("\nstate:" + str(currentAttackerState))
+				if (currentAttackerState.location[1] < 16 and currentAttackerState.location[0] > 0
+						and currentAttackerState.location[0] < 13):
+					f.write("\nstate:" + str(currentAttackerState) + " in rooms.")
+
+				return
+			
+			action = mdpWrapper.latestPolicy().actions(currentAttackerState).keys()[0]
+			
+			newMdpState = action.apply(currentAttackerState)
+
+			if not mdpWrapper.model.is_legal(newMdpState):
+				print("INVALID", currentAttackerState, "action", action, "newstate", newMdpState)
+				lastpublish = get_time()
+				return
+			
+			newWayPoint = mdpWrapper.getPositionFor(newMdpState)
+			currentAttackerState = newMdpState
+			cur_waypoint = newWayPoint
+
+			returnval = PoseStamped()
+			returnval.pose.position = Point(cur_waypoint[0], cur_waypoint[1], 0)
+			q = tf.transformations.quaternion_from_euler(0,0,cur_waypoint[2])   
+			returnval.pose.orientation = Quaternion(q[0],q[1],q[2],q[3])
+
+			returnval.header.frame_id = "/map"
+			goal.publish(returnval)
+			print("Skipping Ahead cur_waypoint", cur_waypoint)
+			lastpublish = get_time()
+			# f.write("\nstate:" + str(currentAttackerState))
+			if (currentAttackerState.location[1] < 16 and currentAttackerState.location[0] > 0
+					and currentAttackerState.location[0] < 13):
+				f.write("\nstate:" + str(currentAttackerState) + " in rooms.")
 
 	else:
 		global irlfinish_time, useRecordedTraj, recordConvTraj, print_once
@@ -2204,12 +4529,12 @@ def step():
 					abortRun()
 				return
 
-# 			current_time = rospy.Time.now().to_sec()
-# 			if (current_time - irlfinish_time > 200):
-# 				print("aborting because time for computing go time crossed 100 secs")
-# 				abortRun()
-# 				return
-# 			else:
+			# 			current_time = rospy.Time.now().to_sec()
+			# 			if (current_time - irlfinish_time > 200):
+			# 				print("aborting because time for computing go time crossed 100 secs")
+			# 				abortRun()
+			# 				return
+			# 			else:
 			#print("\n current_time:"+str(current_time)+\
 			#	" irlfinish_time:"+str(irlfinish_time))
 			# same call for irl and computing attackerpolicy
@@ -2239,14 +4564,14 @@ def step():
 
 				print("\n Computing attacker's val function finished at "+str(current_time - start_forGoTime))
 				Attack()
-	#			import std_srvs.srv
-	#			try:
-	#				resetservice = rospy.ServiceProxy('move_base_node/clear_costmaps', std_srvs.srv.Empty)
-	#
-	#				resetservice()
-	#			except:
-	#				# ros can't be counted on for anything, at least we tried.
-	#				pass
+				#			import std_srvs.srv
+				#			try:
+				#				resetservice = rospy.ServiceProxy('move_base_node/clear_costmaps', std_srvs.srv.Empty)
+				#
+				#				resetservice()
+				#			except:
+				#				# ros can't be counted on for anything, at least we tried.
+				#				pass
 
 
 				# get the current state (to base the plan on), then give the first goal message
@@ -2274,13 +4599,13 @@ def step():
 				goal.publish(returnval)
 				lastpublish = get_time()
 		else:
-# 			print("\n recordConvTraj, (not mdpWrapper.recd_convertedstates[0]\
-# 				and not mdpWrapper.recd_convertedstates[1]), patPolicies \n")
-# 			print(recordConvTraj)
+			# 			print("\n recordConvTraj, (not mdpWrapper.recd_convertedstates[0]\
+			# 				and not mdpWrapper.recd_convertedstates[1]), patPolicies \n")
+			# 			print(recordConvTraj)
 			emptytraj=(not mdpWrapper.recd_convertedstates[0] \
 						and not mdpWrapper.recd_convertedstates[1])
-# 			print(emptytraj)
-# 			print(mdpWrapper.patPolicies)
+			# 			print(emptytraj)
+			# 			print(mdpWrapper.patPolicies)
 			
 			global recordConvTraj, desiredRecordingLen, print_once
 
@@ -2338,7 +4663,7 @@ def step():
 			elif recordConvTraj == 0 and emptytraj == False \
 			and mdpWrapper.patPolicies is None:
 				# learning to computeLBA with recorded state sequences
-# 				print("in step() calling update")
+				# 				print("in step() calling update")
 				mdpWrapper.update()
 				
 			elif recordConvTraj == 0 and mdpWrapper.patPolicies is not None:
@@ -2383,14 +4708,14 @@ def step():
 						f.close()
 						print("\n Computing attacker's val function finished at "+str(rospy.Time.now().to_sec()))
 						Attack()
-			#			import std_srvs.srv
-			#			try:
-			#				resetservice = rospy.ServiceProxy('move_base_node/clear_costmaps', std_srvs.srv.Empty)
-			#
-			#				resetservice()
-			#			except:
-			#				# ros can't be counted on for anything, at least we tried.
-			#				pass
+						#			import std_srvs.srv
+						#			try:
+						#				resetservice = rospy.ServiceProxy('move_base_node/clear_costmaps', std_srvs.srv.Empty)
+						#
+						#				resetservice()
+						#			except:
+						#				# ros can't be counted on for anything, at least we tried.
+						#				pass
 			
 						
 						# get the current state (to base the plan on), then give the first goal message
@@ -2426,846 +4751,301 @@ def step():
 					print("None of conditions in step method satisfied")
 					print_once = 0
 
-# leftmostonion_position=None
+	#print(mdpWrapper.recd_convertedstates)
+	
+	# need patroller's original policy for computing lba every session
+	'''
+	print("finished reading data")
+	
+	correctboydpolicy = "/home/saurabh/eclipse_workspace/Ross/Server Side/boydpolicy_mdppatrolcontrol_bkup"
+	f = open(correctboydpolicy)
+	global boydpolicy
+	for stateaction in f:
+			temp=stateaction.strip().split(" = ")
+			if len(temp) < 2: continue
+			state = temp[0]
+			action = temp[1]
+	
+			state = state[1 : len(state) - 1]
+			pieces = state.split(",")
+			ps = (int(pieces[0]), int(pieces[1]), int(pieces[2]) )
+	
+			boydpolicy[ps] = action
+	f.close()
+	'''		
 
-# def callback_trackedOnion(point_msg):
+def boydrightisvisible(state, visiblenum):
+	
+	if visiblenum == 14:
+		return True
 
-# 	leftmostonion_position.x = point_msg.x
-# 	leftmostonion_position.y = point_msg.y
-# 	leftmostonion_position.z = point_msg.z
-# 	return
+	if visiblenum == 1:
+		# 4 locations visible
+		if state.location[0] == 0 and state.location[1] >= 14:
+			return True
+		if state.location[0] == 1 and state.location[1] == 16:
+			return True
+		return False
 
-# needed services
-try: 
-	attach_srv = rospy.ServiceProxy('/link_attacher_node/attach', Attach)
-	attach_srv.wait_for_service()
-except rospy.ServiceException, e: 
-	print "creating handle failed /link_attacher_node/attach service : %s"%e 
-try: 
-	detach_srv = rospy.ServiceProxy('/link_attacher_node/detach', Attach)
-	detach_srv.wait_for_service()
-except rospy.ServiceException, e: 
-	print "creating handle failed /link_attacher_node/attach service : %s"%e 
+	if visiblenum == 2:
+		# 8 locations visible
+		# if state.location[0] == 0 and state.location[1] >= 13:
+		# 	return True
+		# if state.location[0] <= 3 and state.location[1] == 16:
+		# 	return True
+		if state.location[0] == 0 and state.location[1] >= 10:
+			return True
+		if state.location[0] == 1 and state.location[1] == 16:
+			return True
+		return False
 
-req_attach_detach = AttachRequest()
+	if visiblenum == 4:
+		# 15 states visible
+		
+		if state.location[0] == 0 and state.location[1] >= 10:
+			return True
+		if state.location[0] == 1 and state.location[1] >= 10:
+			return True
+		if state.location[0] <= 6 and ( state.location[1] == 15 or state.location[1] == 16) :
+			return True
+		return False	
+		
+	if visiblenum == 6:
+		# 22 states visible
+		
+		if state.location[0] == 0 and state.location[1] >= 8:
+			return True
+		if state.location[0] == 1 and state.location[1] >= 10:
+			return True
+		if state.location[0] == 2 and state.location[1] >= 9:
+			return True
+		if state.location[0] == 5 and state.location[1] >= 14:
+			return True
+		if state.location[0] <= 7 and state.location[1] == 16:
+			return True
+		
+		return False
+		
+	if visiblenum == 10:
+		# 37 states visible
+		
+		if state.location[0] == 0 and state.location[1] >= 6:
+			return True
+		if state.location[0] <= 4 and state.location[1] >= 10:
+			return True
+		if state.location[0] == 5 and state.location[1] >= 12:
+			return True
+		if state.location[0] <= 7 and state.location[1] >= 14:
+			return True
+		if state.location[0] <= 11 and state.location[1] >= 15:
+			return True
+		
+		return False
+		
+	return False
 
-try: 
-	handle_claim_track_service = rospy.ServiceProxy('claim_n_track', claim_track) 
-	handle_claim_track_service.wait_for_service()
-except rospy.ServiceException, e: 
-	print "creating handle failed claim_n_track service : %s"%e 
+def boydisvisible(state, visiblenum):
+	
+	if visiblenum == 14:
+		return True
+	
+	
+	if visiblenum == 1:
+		if (state.location[0] == 0 and state.location[1] == 1):
+			return True
+		if (state.location[0] == 0 and state.location[1] == 2):
+			return True
+		
+		
+	if visiblenum == 2:
+		if (state.location[0] == 0 and state.location[1] <= 4):
+			return True
 
-try: 
-	handle_pose_chosen_index = rospy.ServiceProxy('pose_chosen_index', pose_chosen_index) 
-	handle_pose_chosen_index.wait_for_service()
-except rospy.ServiceException, e: 
-	print "creating handle failed pose_chosen_index service : %s"%e 
+		
+	if visiblenum == 4:
+		if (state.location[0] <= 2 and state.location[1] <= 6):
+			return True
+	
+	if visiblenum == 6:
+		if (state.location[0] <= 5):
+			return True
+
+	
+	if visiblenum == 10:
+		if (state.location[0] <= 14):
+			return True
+
+	return False
 
 
-index_chosen_onion = -1
-last_index_chosen_onion = -1
-ground_truth_chosen_onion = 1
-prediction_chosen_onion = 2
-target_location_x = -100
-target_location_y = -100
-target_location_z = -100
-location_claimed_onion = -1 
-last_location_claimed_onion = -1
-location_EE = -1 # home
-ground_truths_all_onions = {}
-ListIndices = [] 
-ListPoses = [] # may be needed to enable making listIndices empty when objects disappear 
-ListStatus = 0
-current_cylinder_x = []
-last_size_current_cylinder_x = None
-list_pool = None
+def boydright2isvisible(state, visiblenum):
+	if visiblenum == 14: # all 30 locations
+		return True
 
-def callback_poses(cylinder_poses_msg):
+	if visiblenum == 4: # 30% of 30 = 9 locations
+		if (state.location[0] <= 9 and state.location[0] >= 1 and state.location[1] == 10):
+			return True
 
-	global location_claimed_onion, index_chosen_onion,\
-	ConveyorWidthRANGE_LOWER_LIMIT,ObjectPoseZ_RANGE_UPPER_LIMIT,\
-	ListIndices, ListPoses, ListStatus, current_cylinder_x
+	if visiblenum == 6: # 13 locations
+		if (state.location[0] <= 9 and state.location[0] >= 1 and state.location[1] == 10):
+			return True
+		if (state.location[0] == 1 and state.location[1] >= 6 and state.location[1] <= 10):
+			return True
 
-	current_cylinder_x = cylinder_poses_msg.x
-	current_cylinder_y = cylinder_poses_msg.y
-	current_cylinder_z = cylinder_poses_msg.z
-	if index_chosen_onion < len(current_cylinder_x) and index_chosen_onion != -1:
-		target_location_x = current_cylinder_x[index_chosen_onion]
-		target_location_y = current_cylinder_y[index_chosen_onion]
-		target_location_z = current_cylinder_z[index_chosen_onion]
+	if visiblenum == 10: # 21 locations
+		if (state.location[0] <= 14 and state.location[0] >= 1 and state.location[1] == 10):
+			return True
+		if (state.location[0] == 1 and state.location[1] >= 6 and state.location[1] <= 9):
+			return True
+		if (state.location[0] == 14 and state.location[1] >= 11 and state.location[1] <= 13):
+			return True
 
-		if target_location_x >= ConveyorWidthRANGE_LOWER_LIMIT and \
-		target_location_z <= ObjectPoseZ_RANGE_UPPER_LIMIT:
-			location_claimed_onion = 0 # on conveyor
-		else:
-			if (target_location_x < 0.5 and target_location_y < 0.2 and\
-			target_location_z > 0.7 and target_location_z <= 0.99) or\
-			(target_location_x >= ConveyorWidthRANGE_LOWER_LIMIT and \
-			target_location_z > ObjectPoseZ_RANGE_UPPER_LIMIT and\
-			target_location_z <= ObjectPoseZ_RANGE_UPPER_LIMIT+0.2):
-				location_claimed_onion = 3 # at home or picked
-			else:
-				if target_location_x > 0.5 and target_location_x < 0.69 and \
-				target_location_y < 0.2 and\
-				target_location_z >= 1.3 and target_location_z <= 1.55:
-					location_claimed_onion = 1 # in front
-				else:
-					if target_location_x < 0.16 and \
-					target_location_y > 0.56 and target_location_y < 0.7 and \
-					target_location_z > 0.77 and target_location_z < 0.82:
-						location_claimed_onion = 2 # at bin
-					else:
-						location_claimed_onion = -1 # either deleted or still changing
+	return False
+
+
+def isvisible(state, visiblenum):
+	global mapToUse
+	
+	if (mapToUse == "boyd2"):
+		return boydisvisible(state, visiblenum)
+	if (mapToUse == "boydright2"):
+		return boydright2isvisible(state, visiblenum)
+
+	return boydrightisvisible(state, visiblenum)
+
+	
+	
+def handle_patroller0(req):
+
+	global mdpWrapper
+	global patroller0GroundTruth
+	patroller0GroundTruth = req
+	global patrollerOGMap, patroller0LastSeenAt, patroller1LastSeenAt
+	
+	if (mdpWrapper is None):
+		return
+	
+	pos = req.pose.pose.position
+	a = req.pose.pose.orientation
+
+	angles = tf.transformations.euler_from_quaternion([a.x, a.y, a.z, a.w])
+
+	# that function returns negative angles :facepalm: convert this to positive rotations
+
+	if (angles[2] < 0):
+		angles = (0,0, 2 * math.pi + angles[2])
+
+	pState = patrollerOGMap.toState((pos.x, pos.y, angles[2]), False)
+
+	observable = isvisible(pState, mdpWrapper.observableStateLow)
+
+	if observable:
+		mdpWrapper.addPercept(0, (pos.x, pos.y, angles[2]), get_time())
+		mdpWrapper.addPerceptFull(0, (pos.x, pos.y, angles[2]), get_time())
+		patroller0LastSeenAt = rospy.Time.now().to_sec()
+		''' print(last_observedtime) 
+		if (rospy.get_time()-last_observedtime > 2.0):
+			last_observedtime=rospy.get_time()
+			print("p0 observable at")
+			print(last_observedtime)'''
 		
 
-		# print "target_location_x,target_location_y,target_location_z"+\
-		# str((target_location_x,target_location_y,target_location_z))
-		# print "location_claimed_onion"+\
-		# str(location_claimed_onion)
+def handle_patroller1(req):
+
+	global mdpWrapper
+	global patroller1GroundTruth
+	global patroller0GroundTruth
+	global patrollerOGMap, patroller0LastSeenAt, patroller1LastSeenAt
 	
-	loc = location_claimed_onion
-	if loc == 0:
-		str_loc = "Conv"
-	else:
-		if loc == 1:
-			str_loc = "InFront"
-		else:
-			if loc == 2:
-				str_loc = "AtBin"
-			else:
-				if loc == 3:
-					str_loc = "Home"
-				else:
-					str_loc = "Unknown"
-
-	global last_index_chosen_onion, last_location_claimed_onion
-	if index_chosen_onion != last_index_chosen_onion:
-		last_index_chosen_onion = index_chosen_onion
-		print "callback_poses - index_chosen_onion:" + str(index_chosen_onion)
-		print str((target_location_x,target_location_y,target_location_z))
-		print "location_claimed_onion:" + str(str_loc)
-
-	# if objects are deleted and nothing is grasped, make list empty
-	ind_location_x = None
-	ind_location_y = None
-	ind_location_z = None
-	all_deleted = True 
-	for ind in ListIndices: 
-		if ind < len(current_cylinder_x) and ind != -1:
-			ind_location_x = current_cylinder_x[ind]
-			ind_location_y = current_cylinder_y[ind]
-			ind_location_z = current_cylinder_z[ind]
-
-			if ind_location_x != -100:
-				all_deleted = False
-				if (ind_location_x,ind_location_y,ind_location_z) not in ListPoses:
-					ListPoses.append((ind_location_x,ind_location_y,ind_location_z))
-
-		else:
-		# if an object index is in list but not in current_cylinder_x, there is a synchronization issue
-		# between pose publisher and spawner. restart.
-			ListPoses = None
-			ListIndices = None
-			ListStatus = 2
-
-	if all_deleted: 
-		# ind_location_x == -100: 
-		# if all objects (including grasped) have disappeared, make lists empty
-		print "objects have disappeared, make lists empty"
-		ListPoses = []
-		ListIndices = []
-		ListStatus = 0
-		
-	# else: # else add pose to list
-	# 	if (ind_location_x,ind_location_y,ind_location_z) not in ListPoses:
-	# 		ListPoses.append((ind_location_x,ind_location_y,ind_location_z))
-
-
-	return 
-
-def callback_modelname(color_indices_msg):
-	global ground_truths_all_onions, current_cylinder_x,\
-	last_size_current_cylinder_x
-	# print "color_indices_msg.data:"+str(color_indices_msg.data)
-	# update ground_truths for new batch
-
-	if len(current_cylinder_x) != last_size_current_cylinder_x:
-		ground_truths_all_onions = {}
-		for ind in range(0, len(current_cylinder_x)):
-			if current_cylinder_x[ind] != -100:
-				# dictionary, not a list
-				ground_truths_all_onions[ind] = color_indices_msg.data[ind]
-
-		last_size_current_cylinder_x = len(current_cylinder_x)
-		print "ground_truths_all_onions:"+str(ground_truths_all_onions)
-
+	patroller1GroundTruth = req
 	
+	if (mdpWrapper is None):
+		return
+
+	pos = req.pose.pose.position
+	a = req.pose.pose.orientation
+
+	angles = tf.transformations.euler_from_quaternion([a.x, a.y, a.z, a.w])
+
+	# that function returns negative angles :facepalm: convert this to positive rotations
+
+	if (angles[2] < 0):
+		angles = (0,0, 2 * math.pi + angles[2])
+
+	pState = patrollerOGMap.toState((pos.x, pos.y, angles[2]), False)
+	observable = isvisible(pState, mdpWrapper.observableStateLow)
+
+	if observable:
+		mdpWrapper.addPercept(1, (pos.x, pos.y, angles[2]), get_time())
+		mdpWrapper.addPerceptFull(1, (pos.x, pos.y, angles[2]), get_time())
+		patroller1LastSeenAt = rospy.Time.now().to_sec()
+
+
+
+def handle_attacker(req):
+	global lastActualPosition
+
+	lastActualPosition = req.pose.pose.position
+#	tmp = lastActualPosition.x
+#	lastActualPosition.x = - lastActualPosition.y
+#	lastActualPosition.y = tmp
+
+def handle_attacker_status(req):
+
+	data = req.data
+	if data == "reachgoal":
+		global goBacktoStart
+		goBacktoStart = 1
 	return
 
-# def add_model_name_input_index(ind):
-# 	global req_attach_detach, ground_truth_chosen_onion
-# 	if (ind < len(ground_truth_chosen_onions)) and (ind != -1):
-# 		ground_truth_chosen_onion = ground_truth_chosen_onions[ind]
-# 		if (ground_truth_chosen_onion == 0):#clean
-# 		  req_attach_detach.model_name_1 = "red_cylinder_" + str(ind);
-# 		else:#defective
-# 		  req_attach_detach.model_name_1 = "blue_cylinder_" + str(ind);    
-# 		# print "attached model: "+str(req_attach_detach.model_name_1)
-# 	return
+def handle_status(req):
 
-def update_pose_chosen_index():
-	global index_chosen_onion, target_location_x, target_location_y,\
-	target_location_z, location_claimed_onion 
-	global ConveyorWidthRANGE_LOWER_LIMIT, ObjectPoseZ_RANGE_UPPER_LIMIT 
-
-	if index_chosen_onion != -1:
-
-		res_pose = handle_pose_chosen_index(index_chosen_onion)
-		if res_pose.success == True: 
-			target_location_x = res_pose.position_x
-			target_location_y = res_pose.position_y
-			target_location_z = res_pose.position_z
-
-			if target_location_x >= ConveyorWidthRANGE_LOWER_LIMIT and \
-			target_location_z <= ObjectPoseZ_RANGE_UPPER_LIMIT:
-				location_claimed_onion = 0 # on conveyor
-			else:
-				if (target_location_x < 0.5 and target_location_y < 0.2 and\
-				target_location_z > 0.7 and target_location_z <= 0.99) or\
-				(target_location_x >= ConveyorWidthRANGE_LOWER_LIMIT and \
-				target_location_z > ObjectPoseZ_RANGE_UPPER_LIMIT and\
-				target_location_z <= ObjectPoseZ_RANGE_UPPER_LIMIT+0.2):
-					location_claimed_onion = 3 # at home or picked
-				else:
-					if target_location_x > 0.5 and target_location_x < 0.69 and \
-					target_location_y < 0.2 and\
-					target_location_z >= 1.3 and target_location_z <= 1.55:
-						location_claimed_onion = 1 # in front
-					else: 
-						if target_location_x < 0.19 and \
-						target_location_y > 0.56 and target_location_y < 0.7 and \
-						target_location_z > 0.74 and target_location_z < 0.84: 
-							location_claimed_onion = 2 # at bin
-						else:
-							print "x,y,z: "+str((target_location_x,target_location_y,target_location_z))
-							location_claimed_onion = -1 # either deleted or still changing
-
-
-	if index_chosen_onion == -1 or res_pose.success == False:
-		print "update_pose_chosen_index - can't find pose of onion"
-		return False
-
-	return True
-
-
-def callback_pool(pool_msg):
-	global list_pool
-	list_pool = pool_msg.data
+	data = req.data
+	if data == "spotattacker":
+		global goBacktoStart
+		goBacktoStart = 1
 	return
-
-def highAccuracyPred(ind):
-	global prediction_chosen_onion, ground_truths_all_onions
-	alternative = None
-	ground_truth_chosen_onion = None
-
-	if ind not in ground_truths_all_onions.keys():
-		print "input index - "+str(ind)
-		print "ground_truths_all_onions:"+str(ground_truths_all_onions)
-		print "chosen onion not in pool"
-		return -1
-
-	ground_truth_chosen_onion = ground_truths_all_onions[ind]
-
-	if ind != -1:
-		if ground_truth_chosen_onion==0: alternative = 1
-		else: alternative = 0
-		prediction_chosen_onion = np.random.choice([ground_truth_chosen_onion,alternative],1,p=[0.95,0.05])[0]
-
-	return prediction_chosen_onion 
-
-def lowAccuracyPred(ind):
-	global prediction_chosen_onion, ground_truths_all_onions
-	alternative = None
-	ground_truth_chosen_onion = None
-	if ind not in ground_truths_all_onions.keys():
-		print "chosen onion not in pool"
-		return -1
-	
-	ground_truth_chosen_onion = ground_truths_all_onions[ind]
-
-	if ind != -1:
-		if ground_truth_chosen_onion==0: 
-			alternative=1
-			prediction_chosen_onion = np.random.choice([ground_truth_chosen_onion,alternative],1,p=[0.75,1-0.75])[0] 
-		else: 
-			alternative=0
-			prediction_chosen_onion = np.random.choice([ground_truth_chosen_onion,alternative],1,p=[0.85,1-0.85])[0] 
-		print "gt, alt, pred"+str((ground_truth_chosen_onion,alternative,prediction_chosen_onion))
-
-	return prediction_chosen_onion
-
-def callback_location_claimed_onion(loc_onion_msg):
-	global location_claimed_onion
-	location_claimed_onion = loc_onion_msg.data
-	print "updated location_claimed_onion:"+str(location_claimed_onion)
-	return
-
-def callback_location_EE(loc_EE_msg):
-	global location_EE
-	location_EE = loc_EE_msg.data
-	print "updated location_EE:"+str(location_EE)
-	return
-
-last_argument = None
-
-def execute_policy():
-	global index_chosen_onion, WrapperObjectRL, last_index_chosen_onion,\
-	location_claimed_onion, location_EE, last_argument
-	result = None
-
-	print("execut epolicy location_EE, ListStatus = ",(location_EE, ListStatus))
-
-	print "last action executed. location_claimed_onion,location_EE:"\
-	+str((location_claimed_onion,location_EE))
-
-	global target_location_x
- 	if index_chosen_onion != -1 and target_location_x != -100: 
- 		print "update_pose_chosen_index"
- 		update_pose_chosen_index() 
- 		print "location_claimed_onion:"+str(location_claimed_onion)
- 		
-	 	if location_claimed_onion == -1:
-			# onion can't be in bin because detach happens later, 
-			print "onion can't be in bin because detach happens later, find why update_pose_chosen_index not finding location?"
-			# print "location_claimed_onion == -1,index_chosen_onion = -1"
-			# index_chosen_onion = -1
-	 		return 
- 	else:
- 		# onion deleted? 
- 		print "onion deleted - prediction_chosen_onion = 2,ListStatus = 2"
- 		# global prediction_chosen_onion, ListStatus
- 		# prediction_chosen_onion, ListStatus = 2, 2
- 		impl_ClaimNewOnion()
-		update_pose_chosen_index()
-		if location_claimed_onion == -1:
-			print "onion deleted - location not changing by claiming random onion" 
-			return 
-		else:
-			print "onion deleted - location changed by claiming random onion" 
-
-		global prediction_chosen_onion, ListStatus
- 		prediction_chosen_onion = 2
- 		
- 		# ListStatus = 2
- 		# psuresh mdp, both behaviors start over if onions deleted 
- 		ListStatus = 0
-
-	try:
-		resp = handle_update_state_EE() 
-		location_EE = resp.locations[1] 
-		# if WrapperObjectRL.currentState ==  WrapperObjectRL.startState:
-		# 	print ("current state is start state, adjusting ee location and ListStatus")
-		# 	location_EE, ListStatus = 0, 0
-
-		print "UPDATE_STATE srv. location_claimed_onion,location_EE:"\
-		+str((location_claimed_onion,location_EE))
-	except rospy.ServiceException, e: 
-		print "Service call failed: %s"%e 
-
-	if location_claimed_onion == -1:
-		return 
-
-	global prediction_chosen_onion
-	print "prediction_chosen_onion:"+str(prediction_chosen_onion)
-
-	WrapperObjectRL.update_current_state()
-	print "state:"+str(WrapperObjectRL.currentState)
-
-	# this is only way to update the onion location before it gets in bin and gets deleted
-	if last_argument == "PlaceInBin":
-		res = detach_forBin()
-		print "last_argument == PlaceInBin detach_forBin "+str(res)
-
-	act = WrapperObjectRL.next_optimal_action()
-	print "action:"+str(act)
-
-	argument = act.__class__.__name__
-	switcher = {
-	"InspectAfterPicking": impl_InspectAfterPicking,
-	"InspectWithoutPicking": impl_InspectWithoutPicking,
-	"Pick": impl_Pick,
-	"PlaceOnConveyor": impl_PlaceOnConveyor,
-	"PlaceInBin": impl_PlaceInBin,
-	"GoHome": impl_GoHome,
-	"ClaimNewOnion": impl_ClaimNewOnion,
-	"ClaimNextInList": impl_ClaimNextInList
-	}
-	# Get the function from switcher dictionary
-	func = switcher.get(argument, lambda: "Invalid action")
-	if argument not in switcher.keys():
-		"Invalid action"
-	
-	result=func()
-
-	while result == None:
-		sleep(0.1)
-
-	last_argument = argument
-
-	return result
-
-def impl_InspectAfterPicking():
-	global handle_move_sawyer_service, index_chosen_onion
-	print "InspectAfterPicking"
-	try: 
-		resp = handle_move_sawyer_service("home",index_chosen_onion) 
-	except rospy.ServiceException, e: 
-		print "Service call failed: %s"%e 
-		return False
-
-	try: 
-		# print "lookNrotate" 
-		resp = handle_move_sawyer_service("lookNrotate",index_chosen_onion) 
-		global prediction_chosen_onion
-		prediction_chosen_onion = highAccuracyPred(index_chosen_onion) 
-		print "highAccuracyPred(index_chosen_onion):"+str(prediction_chosen_onion) 
-
-	except rospy.ServiceException, e: 
-		print "Service call failed: %s"%e 
-		return False
-
-	# psuresh mdp 
-	global ListStatus 
-	ListStatus = 2 
-
-	return True
-
-def impl_InspectWithoutPicking():
-	global handle_move_sawyer_service, index_chosen_onion, ListIndices
-	print "InspectWithoutPicking"
-	try: 
-		resp = handle_move_sawyer_service("home",index_chosen_onion) 
-	except rospy.ServiceException, e: 
-		print "Service call failed: %s"%e 
-		return False
-
-	try: 
-		resp = handle_move_sawyer_service("roll",index_chosen_onion) 
-	except rospy.ServiceException, e: 
-		print "Service call failed: %s"%e 
-		return False
-
-	# find bad onions
-	global ground_truths_all_onions
-	print "finding bad onions, ground_truths_all_onions:"+str(ground_truths_all_onions)
-	print "before finding bad onions, ListIndices:"+str(ListIndices)
-	for i in ground_truths_all_onions.keys(): 
-		print "check ground_truths_all_onions for index "+str(i)
-		if lowAccuracyPred(i) == 0:
-			ListIndices.append(i)
-
-	print "ListIndices:"+str(ListIndices)
-
-	# if list is non-empty, make first index claimed onion 
-	global ListPoses, ListStatus, prediction_chosen_onion
-	if ListIndices == []:
-		ListStatus = 0
-		prediction_chosen_onion = 2
-	else:
-		ListStatus = 1
-		index_chosen_onion = ListIndices[0] 
-		ListIndices = ListIndices[1:] 
-		ListPoses = ListPoses[1:] 
-		prediction_chosen_onion = 0
-
-	print "prediction_chosen_onion:"+str(prediction_chosen_onion)+" ListStatus:"+str(ListStatus)
-
-	return True
-
-attempt = 0
-
-def impl_Pick():
-	global handle_move_sawyer_service, index_chosen_onion, location_claimed_onion
-
-	print "Pick"
-	try: 
-		print "hover" 
-		# check if object out of range
-		update_pose_chosen_index()
-		if location_claimed_onion == -1:
-			print "hover not possible"
-	 		global index_chosen_onion
-	 		print "index_chosen_onion = -1"
-	 		index_chosen_onion = -1 # execute policy will change list status and location and prediction
-			try: 
-				# print "liftgripper" 
-				resp = handle_move_sawyer_service("conveyorCenter",index_chosen_onion) 
-				time.sleep(1.0)
-			except rospy.ServiceException, e: 
-				print "Service call failed: %s"%e 
-				return False
-			return False
-		resp = handle_move_sawyer_service("hover",index_chosen_onion) 
-		time.sleep(2.5)
-	except rospy.ServiceException, e: 
-		print "Service call failed: %s"%e 
-		return False
-
-	if resp.success == False:
-		global attempt
-		attempt = 0
-		global index_chosen_onion
-		if attempt == 0:
-			print "perturbing startBin loc"
-			print "hover returned false attempt 0, give intermediate waypoint"
-			try: 
-				resp = handle_move_sawyer_service("perturbStartBin",index_chosen_onion) 
-				time.sleep(2.0)
-			except rospy.ServiceException, e: 
-				print "Service call failed: %s"%e 
-				return False 
-			attempt =1
-		else:
-			# if attempt == 1:
-			print "hover returned false attempt 1, goto home and back to bin" 
-			handle_move_sawyer_service("home",index_chosen_onion)
-			time.sleep(2.0)
-			try: 
-				resp = handle_move_sawyer_service("bin",index_chosen_onion) 
-				time.sleep(2.0)
-			except rospy.ServiceException, e: 
-				print "Service call failed: %s"%e 
-				return False 
-			attempt =0
-
-		return False
-	else:
-		try: 
-			print "lowergripper" 
-			# check if object out of range
-			update_pose_chosen_index()
-			if location_claimed_onion == -1:
-				print "grasping not possible"
-		 		global index_chosen_onion
-		 		print "index_chosen_onion = -1"
-		 		index_chosen_onion = -1 # execute policy will change list status and location and prediction
-				try: 
-					# print "liftgripper" 
-					resp = handle_move_sawyer_service("conveyorCenter",index_chosen_onion) 
-					time.sleep(1.0)
-				except rospy.ServiceException, e: 
-					print "Service call failed: %s"%e 
-					return False
-				return False
-
-			resp = handle_move_sawyer_service("lowergripper",index_chosen_onion) 
-			time.sleep(1.5)
-		except rospy.ServiceException, e: 
-			print "Service call failed: %s"%e 
-			return False
-		if resp.success == False:
-			return False
-		else:
-			try: 
-				print "attach object" 
-				# object out of range
-				if location_claimed_onion == -1:
-			 		global index_chosen_onion
-			 		print "attach object - index_chosen_onion = -1"
-			 		index_chosen_onion = -1 # execute policy will change list status and location and prediction
-					try: 
-						# print "liftgripper" 
-						resp = handle_move_sawyer_service("conveyorCenter",index_chosen_onion) 
-						time.sleep(1.0)
-					except rospy.ServiceException, e: 
-						print "Service call failed: %s"%e 
-						return False
-					return False
-
-				# add_model_name_input_index(index_chosen_onion)
-				call_success = False
-				resp = handle_move_sawyer_service("attach",index_chosen_onion) 
-				time.sleep(1.0)
-				call_success = resp.success
-			except rospy.ServiceException, e: 					
-				print "Service call failed: %s"%e 
-
-			current_time = rospy.get_time()
-			while (call_success == False) and (rospy.get_time()-current_time <= 8.0):
-				try: 
-					# object out of range
-					if location_claimed_onion == -1:
-				 		global index_chosen_onion
-				 		print "attach object - index_chosen_onion = -1"
-				 		index_chosen_onion = -1 # execute policy will change list status and location and prediction
-						try: 
-							# print "liftgripper" 
-							resp = handle_move_sawyer_service("conveyorCenter",index_chosen_onion) 
-							time.sleep(1.0)
-						except rospy.ServiceException, e: 
-							print "Service call failed: %s"%e 
-							return False
-						return False
-
-					print "try again attach object" 
-					resp = handle_move_sawyer_service("attach",index_chosen_onion) 
-					time.sleep(1.0)
-					call_success = resp.success
-				except rospy.ServiceException, e: 					
-					print "Service call failed: %s"%e 
-
-			if call_success == False:
-				print "couldn't attach in time limit"
-				return False
-			else:
-				try: 
-					print "liftgripper" 
-					resp = handle_move_sawyer_service("liftgripper",index_chosen_onion) 
-					time.sleep(1.5)
-				except rospy.ServiceException, e: 
-					print "Service call failed: %s"%e 
-					return False
-
-				if resp.success == False:
-					print "liftgripper failed"
-					notgrasped = detach_notgrasped() 
-					print "notgrasped:"+str(notgrasped)
-					return False
-	
-	# impl_GoHome()
-
-	update_pose_chosen_index()
-	print "impl_Pick. location_claimed_onion:"+str(location_claimed_onion)
- 	if location_claimed_onion == -1:
- 		global index_chosen_onion
- 		index_chosen_onion = -1 # execute policy will change list status and location and prediction
-		try: 
-			# print "liftgripper" 
-			resp = handle_move_sawyer_service("conveyorCenter",index_chosen_onion) 
-			time.sleep(1.0)
-		except rospy.ServiceException, e: 
-			print "Service call failed: %s"%e 
-			return False
-		print "onion deleted"
-		print "pick fails"
-		return False
-
-	notgrasped = detach_notgrasped() 
-	print "notgrasped:"+str(notgrasped)
-	global location_EE
-	print "impl_Pick. location_EE:"+str(location_EE)
-
-	return True
-
-def impl_PlaceOnConveyor():
-	global handle_move_sawyer_service, index_chosen_onion
-	print "PlaceOnConveyor"
-	try: 
-		# print "conveyorCenter" 
-		resp = handle_move_sawyer_service("conveyorCenter",index_chosen_onion) 
-	except rospy.ServiceException, e: 
-		print "Service call failed: %s"%e 
-		return False
-	if resp.success == False:
-		print "couldn't reach conveyorCenter"
-		return False
-	else:
-		try: 
-			# print "detach object" 
-			call_success = False
-			resp = handle_move_sawyer_service("detach",index_chosen_onion) 
-			time.sleep(1.0)
-			call_success = resp.success
-		except rospy.ServiceException, e: 					
-			print "Service call failed: %s"%e 
-
-		current_time = rospy.get_time()
-		while (call_success == False) and (rospy.get_time()-current_time <= 3.0):
-			try: 
-				resp = handle_move_sawyer_service("detach",index_chosen_onion) 
-				time.sleep(1.0)
-				call_success = resp.success
-			except rospy.ServiceException, e: 					
-				print "Service call failed: %s"%e 
-
-		# if call_success == False:
-		# 	print "couldn't detach in time limit"
-		# 	return False
-
-	return True
-
-def impl_PlaceInBin():
-	global handle_move_sawyer_service, index_chosen_onion
-	print "PlaceInBin"
-	try: 
-		print "bin" 
-		resp = handle_move_sawyer_service("bin",index_chosen_onion) 
-		time.sleep(2.0)
-	except rospy.ServiceException, e: 
-		print "Service call failed: %s"%e 
-		return False
-
-	if resp.success == False:
-		print "couldn't go to bin"
-		return False
-	else:
-
-		# for psuresh mdp
-		global ListIndices, ListStatus, prediction_chosen_onion, ListPoses
-		print "ListIndices:"+str(ListIndices)	
-		# print "PlaceInBin pre processing ListStatus:"+str(ListStatus)	
-
-		if ListStatus == 1:
-			# roll behavior
-			if len(ListIndices) == 0:
-				ListStatus = 0
-			else:
-				ListStatus = 1
-
-		prediction_chosen_onion = 2
-		print "PlaceInBin post processing ListStatus:"+str(ListStatus)+" prediction_chosen_onion:"+str(prediction_chosen_onion)	
-
-		return True
-		# detach should happen after updating state
-	
-
-	return True
-
-def detach_forBin():
-	global index_chosen_onion
-	try: 
-		print "detach object" 
-		call_success = False
-		resp = handle_move_sawyer_service("detach",index_chosen_onion) 
-		time.sleep(1.0)
-		call_success = resp.success
-	except rospy.ServiceException, e: 					
-		print "Service call failed: %s"%e 
-
-	current_time = rospy.get_time()
-	while (call_success == False) and (rospy.get_time()-current_time <= 3.0):
-		try: 
-			resp = handle_move_sawyer_service("detach",index_chosen_onion) 
-			time.sleep(1.0)
-			call_success = resp.success
-		except rospy.ServiceException, e: 					
-			print "Service call failed: %s"%e 
-
-	# if call_success == False:
-	# 	print "couldn't detach in time limit"
-	# 	return False
-	return call_success
-
-def impl_GoHome():
-	global handle_move_sawyer_service, index_chosen_onion
-	print "GoHome"
-	try: 
-		resp = handle_move_sawyer_service("home",index_chosen_onion) 
-		return True
-	except rospy.ServiceException, e: 
-		print "Service call failed: %s"%e 
-		return False
-
-def impl_ClaimNewOnion():
-	global last_index_chosen_onion, index_chosen_onion
-	try:
-		last_index_chosen_onion = index_chosen_onion
-		print_once = 0
-		while (index_chosen_onion == last_index_chosen_onion or index_chosen_onion == -1):
-			# repeat if claimed nothing or if claimed same object again
-			if print_once == 0:
-				print "repeat if claimed nothing or if claimed same object again"
-				print_once = 1
-			resp = handle_claim_track_service(1) 
-			index_chosen_onion = resp.chosen_index
-		print "resp.success:"+str(resp.success)+",resp.chosen_index:"+str(resp.chosen_index) 
-		global prediction_chosen_onion
-		prediction_chosen_onion = 2
-		return True
-	except rospy.ServiceException, e: 
-		print "Service call failed: %s"%e 
-		return False
-
-def impl_ClaimNextInList(): 
-	global ListIndices, index_chosen_onion, ListStatus, ListPoses, prediction_chosen_onion
-	print "impl_ClaimNextInList"
-	print("pre ListStatus:",ListStatus)
-
-	if ListIndices == []: 
-		ListPoses = []
-		# ListStatus = 2
-		# psuresh mdp
-		ListStatus = 0
-		impl_ClaimNewOnion() 
-		update_pose_chosen_index() 
-		if location_claimed_onion == -1:
-			print "impl_ClaimNextInList - location not changing by claiming random onion" 
-			return False
-		else:
-			print "impl_ClaimNextInList - location changed by claiming random onion" 
-		return False
-	else:
-		index_chosen_onion = ListIndices[0]
-		ListIndices = ListIndices[1:]
-		ListPoses = ListPoses[1:]
-		update_pose_chosen_index() 
-		while location_claimed_onion == -1:
-			print "impl_ClaimNextInList - onion fell down, claiming next one in list" 
-			index_chosen_onion = ListIndices[0]
-			ListIndices = ListIndices[1:]
-			ListPoses = ListPoses[1:]
-			update_pose_chosen_index() 
-
-		ListStatus = 1
-		# prediction_chosen_onion = 0
-		# psuresh mdp
-		prediction_chosen_onion = 2
-		return True
-
-def detach_notgrasped():
-	try: 
-		print "detach_notgrasped" 
-		resp = handle_move_sawyer_service("detach_notgrasped",index_chosen_onion) 
-		time.sleep(1.0)
-	except rospy.ServiceException, e: 
-		print "Service call failed: %s"%e 
-	return resp.success
-
-# def impl_MoveAllInList():
-# 	global ListIndices
-
-# 	for i in ListIndices:
-# 		res2 = impl_Pick()
-# 		if res2 == True:
-# 			res3 = impl_PlaceInBin()
-# 	# empty list
-# 	ListIndices = []
-# 	return True	
-
 
 if __name__ == "__main__":
-
-	global BatchIRLflag, lastQ, min_IncIRL_InputLen, irlfinish_time, \
+	#  Need to know:
+	#  Which policy to use
+	#  Which Map to use
+	#  Starting position on the MDP
+	#  Goal position on the MDP
+	#  Reward for making it to the goal
+	#  Penalty for getting caught
+	#  Assumed detection distance from each attacker (in mdp states)
+	#  
+	
+	rospy.init_node('attacker_controller')
+	
+	global minGapBwDemos, patroller0LastSeenAt, patroller1LastSeenAt, \
+	BatchIRLflag, lastQ, min_IncIRL_InputLen, irlfinish_time, \
 	patrtraj_len, min_BatchIRL_InputLen, startat, glbltrajstarttime, \
-	cum_learntime, lineFeatureExpecfull, desiredRecordingLen, \
-	useRecordedTraj, recordConvTraj, recordonce, print_once, analyzeAttack, \
-	timeoutThresh, sessionStart, \
-	sessionFinish, recordConvTraj, \
-	startat, glbltrajstarttime, currentile, lastile, lastcalltimeaddstates,\
-	index_chosen_onion, attach_srv, detach_srv, req_attach_detach, \
-	handle_move_sawyer_service, handle_claim_track_service,\
-	WrapperObjectRL
-
-	rospy.init_node('sorting_onions')
+	startat_attpolicyI2RL, glbltrajstarttime_attpolicyI2RL, cum_learntime, lineFeatureExpecfull, \
+	desiredRecordingLen, useRecordedTraj, recordConvTraj, recordonce, print_once,\
+	found_muE, exact_mu_E, analyzeAttack, start_forGoTime,  \
+	timeoutThresh, reward_dim, useRegions, sessionStart, \
+	sessionFinish, statesfromstarttogoal, goBacktoStart, recordConvTraj, \
+	startat, glbltrajstarttime, currentile, lastile
 
 	time.sleep(1)
+
+	# forward + 1 turn + 7 forwards
+	statesfromstarttogoal = 1 + 1 + 7
+	goBacktoStart=0
+
 	sessionStart = False
 	sessionFinish = True
+	global lastcalltimeaddstates
 	lastcalltimeaddstates=0
-	desiredRecordingLen = 20
+	desiredRecordingLen = 400
 	useRecordedTraj = 1
 	recordConvTraj = 0
 	cum_learntime = 0 
+	patroller0LastSeenAt=sys.maxint
+	patroller1LastSeenAt=sys.maxint
+	minGapBwDemos = 2.0
 	min_IncIRL_InputLen= 5
 	min_BatchIRL_InputLen= 20 #500 
 	lastQ = "" #final likelihood value achieved
@@ -3273,292 +5053,183 @@ if __name__ == "__main__":
 	patrtraj_len = [1,1]
 	print_once = 1
 	lineFeatureExpecfull = ""
+	start_forGoTime = rospy.Time.now().to_sec()
 	useRegions=0
-
+	
 	startat = rospy.get_time()
+	startat_attpolicyI2RL = rospy.get_time()
 	glbltrajstarttime = fromRospyTime(get_time()) # get_time() needs startat
+	glbltrajstarttime_attpolicyI2RL = fromRospyTime(get_time())
 
 	currentile=100.0000
 	lastile=100.0000
 
-	policy = "irl";
-	# rospy.get_param("~policy")
-	# pfail = float(rospy.get_param("~pfail"))
-	# usesimplefeatures = rospy.get_param("~usesimplefeatures") == "true"
-	# BatchIRLflag = (int(rospy.get_param("~BatchIRLflag")))==1
-	# min_BatchIRL_InputLen = int(rospy.get_param("~min_BatchIRL_InputLen"))
-	# min_IncIRL_InputLen = int(rospy.get_param("~min_IncIRL_InputLen"))
-	# desiredRecordingLen = int(rospy.get_param("~desiredRecordingLen"))
-	# useRecordedTraj = int(rospy.get_param("~useRecordedTraj"))
-	# recordConvTraj = int(rospy.get_param("~recordConvTraj")) 
-	# analyzeAttack = int(rospy.get_param("~analyzeAttack")) 
-	# timeoutThresh = int(rospy.get_param("~timeoutThresh"))
-	# useRegions = int(rospy.get_param("~useRegions"))
+	print("startat ", startat)
 
+	pub = rospy.Publisher("/study_attacker_status", String, latch=True)
+
+	if mapToUse != "largeGrid":
+		goal = rospy.Publisher("move_base_simple/goal", PoseStamped)
+
+	policy = rospy.get_param("~policy")
+	mapToUse = rospy.get_param("~map")
+	
+	if mapToUse == "boyd2":
+		mapparams = boyd2MapParams(False)
+		patrollerOGMap = OGMap(*mapparams)
+		
+		mapparams = boyd2MapParams(True)
+		attackerOGMap = OGMap(*mapparams)
+	elif mapToUse == "largeGrid":
+		mapparams = largeGridMapParams(False)
+		patrollerOGMap = OGMap(*mapparams)
+		
+		mapparams = boyd2MapParams(True) # assess only LBA for large grid, not success rate
+		attackerOGMap = OGMap(*mapparams)
+	elif mapToUse == "boydright2":
+		mapparams = boydright2MapParams(False)
+		patrollerOGMap = OGMap(*mapparams)
+
+		mapparams = boydright2MapParams(True)  # assess only LBA for large grid, not success rate
+		attackerOGMap = OGMap(*mapparams)
+	else:
+		mapparams = boydrightMapParams(False)
+		patrollerOGMap = OGMap(*mapparams)
+		
+		mapparams = boydrightMapParams(True)
+		attackerOGMap = OGMap(*mapparams)
+
+
+	reward = float(rospy.get_param("~goalReward"))
+	penalty = float(rospy.get_param("~detectionPenalty"))
+	detectDistance = int(rospy.get_param("~detectDistance")) 
+	predictTime = int(rospy.get_param("~predictionTime"))
+	observableStates = int(rospy.get_param("~observableStates"))
+	pfail = float(rospy.get_param("~pfail"))
+	patroller = rospy.get_param("~patroller")
+	patrollersuccessrate = float(rospy.get_param("~patrollersuccessrate"))
+	usesimplefeatures = rospy.get_param("~usesimplefeatures") == "true"
+	add_delay = int(rospy.get_param("~add_delay"))
+	add_delay = (add_delay == 1)
+	interactionLength = int(rospy.get_param("~interactionLength"))
+	eq = rospy.get_param("~equilibrium")
+	use_em = int(rospy.get_param("~use_em"))
+	use_em = (use_em == 1)
+	BatchIRLflag = (int(rospy.get_param("~BatchIRLflag")))==1
+	min_BatchIRL_InputLen = int(rospy.get_param("~min_BatchIRL_InputLen"))
+	min_IncIRL_InputLen = int(rospy.get_param("~min_IncIRL_InputLen"))
+	desiredRecordingLen = int(rospy.get_param("~desiredRecordingLen"))
+	useRecordedTraj = int(rospy.get_param("~useRecordedTraj"))
+	recordConvTraj = int(rospy.get_param("~recordConvTraj")) 
+	analyzeAttack = int(rospy.get_param("~analyzeAttack")) 
+	timeoutThresh = int(rospy.get_param("~timeoutThresh"))
+	useRegions = int(rospy.get_param("~useRegions"))
+	
 	f = open("/tmp/timestamps","w") 
 	f.write("\n time durations for current trial") 
-	f.close() 
-
-	# print("\nBatchIRLflag:\n"+str(BatchIRLflag)+"\nmin_BatchIRL_InputLen:\n"\
-		# +str(min_BatchIRL_InputLen)+"\nmin_IncIRL_InputLen:\n"+str(min_IncIRL_InputLen)\
-		# +"\nuseRecordedTraj:\n"+str(useRecordedTraj)+"\nrecordConvTraj:\n"+str(recordConvTraj)\
-		# +"\ndesiredRecordingLen:\n"+str(desiredRecordingLen)+"\nanalyzeAttack:\n"\
-		# +str(analyzeAttack)) 
+	f.close()
+	
+	print("\nBatchIRLflag:\n"+str(BatchIRLflag)+"\nmin_BatchIRL_InputLen:\n"\
+		+str(min_BatchIRL_InputLen)+"\nmin_IncIRL_InputLen:\n"+str(min_IncIRL_InputLen)\
+		+"\nuseRecordedTraj:\n"+str(useRecordedTraj)+"\nrecordConvTraj:\n"+str(recordConvTraj)\
+		+"\ndesiredRecordingLen:\n"+str(desiredRecordingLen)+"\nanalyzeAttack:\n"\
+		+str(analyzeAttack)) 
+	
 	f = open("/tmp/studyresults2","w") 
 	f.write("BatchIRLflag:\n"+str(BatchIRLflag))
-	f.write("\n min_BatchIRL_InputLen:\n"+str(min_BatchIRL_InputLen))
-	f.write("\n min_IncIRL_InputLen:\n"+str(min_IncIRL_InputLen))
+	f.write("\nmin_BatchIRL_InputLen:\n"+str(min_BatchIRL_InputLen))
+	f.write("\nmin_IncIRL_InputLen:\n"+str(min_IncIRL_InputLen))
 	f.close()
+	
+#	equilibriumKnown = int(rospy.get_param("~equilibriumKnown"))	
+#	equilibriumKnown = (equilibriumKnown == 1)
+	equilibriumKnown = True # Fix for the current experiment
+	equilibriumKnown = False # Fix for the current experiment
+	
+	obstime = int(rospy.get_param("~obstime"))
 
-	global ConveyorWidthRANGE_LOWER_LIMIT, ObjectPoseZ_RANGE_UPPER_LIMIT,\
-	handle_update_state_EE, handle_move_sawyer_service
+	f = open(rospy.get_param("~configFile"))
 
-	ConveyorWidthRANGE_LOWER_LIMIT = rospy.get_param("/ConveyorWidthRANGE_LOWER_LIMIT")
-	ObjectPoseZ_RANGE_UPPER_LIMIT = rospy.get_param("/ObjectPoseZ_RANGE_UPPER_LIMIT")
+	startPos = f.readline().strip()
+	goalPos = f.readline().strip()
 
-	# updating the locations of onion and EE
-	# rospy.Subscriber("location_claimed_onion", Int64, callback_location_claimed_onion)
-	# rospy.Subscriber("location_EE", Int64, callback_location_EE)
+	startPos = startPos.split(" ")
+	startPos = (float(startPos[0]), float(startPos[1]), float(startPos[3]) * 0.0174532925)
 
-	try: 
-		handle_update_state_EE = rospy.ServiceProxy('update_state', update_state) 
-		handle_update_state_EE.wait_for_service()
-	except rospy.ServiceException, e: 
-		print "creating handle failed update_state service : %s"%e 
-	try: 
-		handle_move_sawyer_service = rospy.ServiceProxy('move_sawyer', move_robot) 
-		handle_move_sawyer_service.wait_for_service()
-	except rospy.ServiceException, e: 
-		print "creating handle failed move_sawyer service : %s"%e 
+	goalPos = goalPos.split(" ")
+	goalPos = (float(goalPos[0]), float(goalPos[1]), 90 * 0.0174532925)
+	
+	goalPos2 = None
+#	if mapToUse == "boyd2":
+#		goalPos2 = f.readline().strip()
+#		goalPos2 = goalPos2.split(" ")
+#		goalPos2 = (float(goalPos2[0]), float(goalPos2[1]), 90 * 0.0174532925)
+	f.close()
+	
+	# non-modified irl assumes no interaction
+	if policy == "irl" or policy == "maxentirl":
+		interactionLength = 0
 
-	# service to claim and track leftmost onion	
-	# rospy.wait_for_service('claim_n_track') 
-	# # subscribe to position of leftmost onion
-	# rospy.Subscriber("pose_claimedobject", Point, callback_trackedOnion)
-	# rospy.wait_for_service('move_sawyer') 
+	if policy == "random":
+		mdpWrapper = WrapperRandom(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance)
+	elif policy == "irl":
+		mdpWrapper = WrapperIRL(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)
+	elif policy == "irldelay":
+		mdpWrapper = WrapperIRLDelay(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)
+	elif policy == "maxentirl":
+		mdpWrapper = WrapperMaxEntIRL(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)
+	elif policy == "maxentirlzexact":
+		mdpWrapper = WrapperMaxEntIRLZExact(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)
+	elif policy == "maxentirldelay":
+		mdpWrapper = WrapperMaxEntIRLDelay(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)
+	elif policy == "lmeirl":
+		mdpWrapper = WrapperLMEIRL(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)		
+	elif policy == "lmei2rl":
+		mdpWrapper = WrapperLMEI2RL(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)		
+	elif policy == "lmeirlblockedgibbs":
+		mdpWrapper = WrapperLMEIRLBLOCKEDGIBBS(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)		
+	elif (policy == "lmeirlblockedgibbs2" or policy == "lmei2rlblockedgibbs2"):
+		mdpWrapper = WrapperLMEIRLBLOCKEDGIBBS2(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)
+	elif policy == "lmeirlblockedgibbstimestep":
+		mdpWrapper = WrapperLMEIRLBLOCKEDGIBBSTIMESTEP(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)		
+	elif policy == "lmeirlblockedgibbstimestepsa":
+		mdpWrapper = WrapperLMEIRLBLOCKEDGIBBSTIMESTEPSA(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)				
+	elif policy == "knownpolicy":
+		mdpWrapper = WrapperIdealIRL(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)
+	else:
+		mdpWrapper = WrapperPerfect(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)
 
-	rospy.Subscriber("current_cylinder_blocks", Int8MultiArray, callback_modelname)
-	rospy.Subscriber("cylinder_blocks_poses", cylinder_blocks_poses, callback_poses)
-	rospy.Subscriber("SAWYER_cylinder_active_pool", Int8MultiArray, callback_pool)
+	startState = mdpWrapper.getStartState()
+	print(startPos, " Start state is", startState)
 
-	# testing retrieval of model_names
-	req_attach_detach.link_name_1 = "base_link"
-	req_attach_detach.model_name_2 = "sawyer"
-	req_attach_detach.link_name_2 = "right_l6"
+	if mapToUse != "largeGrid":
+		rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, handle_pose)
+		rospy.Subscriber("/robot_0/base_pose_ground_truth", Odometry, handle_patroller0)
+		rospy.Subscriber("/robot_1/base_pose_ground_truth", Odometry, handle_patroller1)
+		rospy.Subscriber("base_pose_ground_truth", Odometry, handle_attacker)
+		rospy.Subscriber("/study_status", String, handle_status)
+		rospy.Subscriber("/study_attacker_status", String, handle_attacker_status)
 
-	resp = handle_move_sawyer_service("home",-1) 
-	# global ground_truths_all_onions, ListIndices
-	# while not ground_truths_all_onions:
-	# 	pass
-
-	# global ListStatus
-	# res1 = impl_InspectWithoutPicking()
-	# if res1 == True:
-	# 	res2 = impl_Pick()
-	# 	if res2 == True:
-	# 		res3 = impl_PlaceInBin()
-	# 		print ("ListStatus after PlaceInBin:",str(ListStatus))
-	# 		if res3 == True:
-	# 			res4 = impl_ClaimNextInList()
-	# 			if ListStatus == 1 and res4 == True:
-	# 				res2 = impl_Pick()
-	# 				if res2 == True:
-	# 					res3 = impl_PlaceInBin()
-	# 					print ("ListStatus after PlaceInBin:",str(ListStatus))
-	# 					if res3 == True:
-	# 						res4 = impl_ClaimNextInList()
-	# 						if ListStatus == 1 and res4 == True:
-	# 							res2 = impl_Pick()
-	# 							if res2 == True:
-	# 								res3 = impl_PlaceInBin() 
-	# 								print ("ListStatus after PlaceInBin:",str(ListStatus)) 
-
-	# try:
-	# 	resp = handle_update_state() 
-	# 	location_claimed_onion = resp.locations[0] 
-	# 	location_EE = resp.locations[1]
-	# 	print "UPDATE_STATE srv. location_claimed_onion,location_EE:"\
-	# 	+str((location_claimed_onion,location_EE))
-	# except rospy.ServiceException, e: 
-	# 	print "Service call failed: %s"%e 
-	# 	return False
-	# exit(0) 
-
-	# print "test handle_pose_chosen_index" 
-	# res_pose = handle_pose_chosen_index(0) 
-	# print str((res_pose.position_x,res_pose.position_y,res_pose.position_z)) 
-
-	# impl_ClaimNewOnion()
-	print "WrapperObjectRL"
-	# WrapperObjectRL = WrapperSortingForwardRL(p_fail=0.05,reward_type='sortingReward2')
-	WrapperObjectRL = WrapperSortingForwardRL(p_fail=0.05,reward_type='sortingReward7')
-
-	r = rospy.Rate(20) # 10hz 30	
-	global location_claimed_onion, location_EE, ground_truths_all_onions, ListIndices, \
-	ListStatus, index_chosen_onion, target_location_x
-	notgrasped = True
-
+	r = rospy.Rate(20) # 10hz 30
+	count = 0
 	while not rospy.is_shutdown():
-		# implement MDP policy
-		# res of previous will update the state, so need not check that
-		execute_policy() 
-		if len(WrapperObjectRL.traj_states) > desiredRecordingLen: 
-			WrapperObjectRL.recordStateSequencetoFile() 
-			exit(0) 
+		
+		step()
+		if mapToUse != "largeGrid":
+			if state == "w" and count == 200:
+				# initialize 
+				cur_waypoint = mdpWrapper.getPositionFor(startState)
+				returnval = PoseStamped()
+				returnval.pose.position = Point(cur_waypoint[0], cur_waypoint[1], 0)
+	
+				q = tf.transformations.quaternion_from_euler(0,0,cur_waypoint[2])   
+				returnval.pose.orientation = Quaternion(q[0],q[1],q[2],q[3])
+	
+				returnval.header.frame_id = "/map"
+				goal.publish(returnval)
+	
+			count += 1
+			time.sleep(0.25)
+		else:
+ 			time.sleep(1)
 
-		r.sleep()
-
-'''
-		# Trial for fixing implementation issues in sequential execution of actions
-		res3 = False
-		res1 = impl_InspectWithoutPicking()
-		print "res1:"+str(res1)
-		print "ListIndices:"+str(ListIndices)
-		print "ListStatus:"+str(ListStatus)
-		print "index_chosen_onion:"+str(index_chosen_onion)
-		res2 = False
-		while ListStatus != 2:
-
-		 	if index_chosen_onion != -1:
-		 		print "update_pose_chosen_index"
-		 		update_pose_chosen_index()
-		 		print "target_location_x:"+str(target_location_x)
-		 		print "location_claimed_onion:"+str(location_claimed_onion)
-
-			if res1 == True and index_chosen_onion != -1:
-
-				print "location_claimed_onion"+str(location_claimed_onion)
-				res1 = False
-				###### PICK action
-				### did it disappear at time of picking? If yes, then discontinue
-				while not (res2 == True and notgrasped == False): 
-					if location_claimed_onion == -1:
-						break
-					res2 = impl_Pick() 
-					# DONt implement detach_notgrasped if PICK doesn't return true
-					if res2 == True: 
-						notgrasped = detach_notgrasped() 
-						print "notgrasped:"+str(notgrasped)
-					print "impl_Pick():"+str(res2)
-
-				# picking finished 
-			if res2 == True:
-				res2 = False 	
-				res3 = impl_PlaceInBin()
-				while res3 == False:
-					res3 = impl_PlaceInBin()
-				# resetting is necessary
-				notgrasped = True
-
-			if ListStatus != 2 and res3 == True:
-				res3 = False
-				res1 = impl_ClaimNextInList()
-				print "index_chosen_onion:"+str(index_chosen_onion)
-				print "res1:"+str(res1)
-				print "ListIndices:"+str(ListIndices)
-				print "ListStatus:"+str(ListStatus)
-			else:
-				print "res1:"+str(res1)
-				print "ListIndices:"+str(ListIndices)
-				print "ListStatus:"+str(ListStatus)
-				break
-
-
-'''
-
-		# try:
-		# 	resp = handle_update_state_EE() 
-		# 	location_EE = resp.locations[1]
-		# 	print "UPDATE_STATE srv. location_claimed_onion,location_EE:"\
-		# 	+str((location_claimed_onion,location_EE))
-		# except rospy.ServiceException, e: 
-		# 	print "Service call failed: %s"%e 
-		# execute_policy()
-
-'''
-	inspect_single = 1
-	call_success = True
-	try:
-		print "called to reach home"
-		resp = handle_move_sawyer_service("home",0) 
-		print "resp.success:"+str(resp.success) 
-		try:
-			last_index_chosen_onion = index_chosen_onion
-			while (index_chosen_onion == last_index_chosen_onion):
-				resp = handle_claim_track_service(inspect_single) 
-				print "resp.success:"+str(resp.success)+",resp.chosen_index:"+str(resp.chosen_index) 
-				index_chosen_onion = resp.chosen_index
-
-			if (index_chosen_onion != -1):
-				try: 
-					print "hover" 
-					resp = handle_move_sawyer_service("hover",index_chosen_onion) 
-				except rospy.ServiceException, e: 
-					print "Service call failed: %s"%e 
-				try: 
-					print "lowergripper" 
-					resp = handle_move_sawyer_service("lowergripper",index_chosen_onion) 
-				except rospy.ServiceException, e: 
-					print "Service call failed: %s"%e 
-				try: 
-					print "attach object" 
-					resp = handle_move_sawyer_service("attach",index_chosen_onion) 
-					time.sleep(1.0)
-					call_success = resp.success
-					# attach_srv.call(req_attach_detach)
-					print "call_success: "+str(call_success)
-				except rospy.ServiceException, e: 					
-					print "Service call failed: %s"%e 
-				while (call_success == False):
-					try: 
-						print "attach object" 
-						resp = handle_move_sawyer_service("attach",index_chosen_onion) 
-						time.sleep(1.0)
-						call_success = resp.success
-						# attach_srv.call(req_attach_detach)
-						print "call_success: "+str(call_success)
-					except rospy.ServiceException, e: 					
-						print "Service call failed: %s"%e 
-
-				if (call_success == True):
-					try: 
-						print "liftgripper" 
-						resp = handle_move_sawyer_service("liftgripper",index_chosen_onion) 
-						time.sleep(1.0)
-					except rospy.ServiceException, e: 
-						print "Service call failed: %s"%e 
-
-					print "called to reach home"
-					resp = handle_move_sawyer_service("home",index_chosen_onion) 
-
-					try: 
-						print "lookNrotate" 
-						resp = handle_move_sawyer_service("lookNrotate",index_chosen_onion) 
-					except rospy.ServiceException, e: 
-						print "Service call failed: %s"%e 
-
-					try: 
-						print "conveyorCenter" 
-						resp = handle_move_sawyer_service("conveyorCenter",index_chosen_onion) 
-					except rospy.ServiceException, e: 
-						print "Service call failed: %s"%e 
-					# try: 
-					# 	print "bin" 
-					# 	resp = handle_move_sawyer_service("bin",index_chosen_onion) 
-					# except rospy.ServiceException, e: 
-					# 	print "Service call failed: %s"%e 
-					try: 
-						print "detach object" 
-						resp = handle_move_sawyer_service("detach",index_chosen_onion) 
-						call_success = resp.success
-						# detach_srv.call(req_attach_detach)
-						print "call_success: "+str(call_success)
-					except rospy.ServiceException, e: 
-						print "Service call failed: %s"%e 
-						
-		except rospy.ServiceException, e: 
-			print "Service call failed: %s"%e 
-	except rospy.ServiceException, e: 
-		print "Service call failed: %s"%e 
-
-'''

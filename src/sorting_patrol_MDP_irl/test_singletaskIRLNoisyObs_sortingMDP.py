@@ -589,8 +589,8 @@ if __name__ == "__main__":
 	# threshold for convergence of gibbs sampling for robust-irl 
 	# by Shervin 
 	# 0.025 not giving expected trend
-	conv_threshold_gibbs = 0.015
-	# conv_threshold_gibbs = 0.01
+	# conv_threshold_gibbs = 0.015
+	conv_threshold_gibbs = 0.0075
 
 	# which kind of sampling method is being used?
 	use_ImpSampling = 0
@@ -618,8 +618,8 @@ if __name__ == "__main__":
 
 	print("writing result of calls to noisyObsRobustSamplingMeirl to file Downloads/noisyObsRobustSamplingMeirl_LBA_data.csv") 
 	# output LBA to file
-	f_input_IRL = open(get_home() +'/Downloads/noisyObsRobustSamplingMeirl_LBA_data.csv', "w")
-	f_input_IRL.write("")
+	f_input_IRL = open(get_home() +'/Downloads/noisyObsRobustSamplingMeirl_LBA_data.csv', "a")
+	f_input_IRL.write("\n")
 	f_input_IRL.close()
 	f_rec = open(get_home()+'/Downloads/noisyObsRobustSamplingMeirl_LBA_data.csv','a') 
 	csvstring = "\n" 
@@ -679,10 +679,10 @@ if __name__ == "__main__":
 			outtraj += lineFoundWeights+lineFeatureExpec+ str(num_Trajsofar)+"\n"  
 
 			# input data to file
-			f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRLNoisyObs_sorting.log", "w")
+			f_input_IRL = open(get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/data_singleTaskIRLNoisyObs_sorting.log", "w")
 			f_input_IRL.write("")
 			f_input_IRL.close()
-			f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRLNoisyObs_sorting.log", "a")
+			f_input_IRL = open(get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/data_singleTaskIRLNoisyObs_sorting.log", "a")
 			f_input_IRL.write(outtraj)
 			f_input_IRL.close()
 

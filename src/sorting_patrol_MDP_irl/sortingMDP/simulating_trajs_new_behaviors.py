@@ -72,13 +72,13 @@ if __name__ == "__main__":
 
 	pol_ind = [1,2,2,2,2,1,1,1,2,1,1,1,2,2,2,2,2,2,1,2,2,2,2,1,1,2,2,2,2,2]
 
-	f = open(get_home() + "/catkin_ws/src/navigation_irl/sortingMDP/MTIRL_data_test.log", "w")
+	f = open(get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/sortingMDP/MTIRL_data_test.log", "w")
 	f.write("")
 	f.close()
-	f = open(get_home() + "/catkin_ws/src/navigation_irl/sortingMDP/MTIRL_data_test.log", "a")
+	f = open(get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/sortingMDP/MTIRL_data_test.log", "a")
 	f.write("DPMMEIRL\n")
 	f.close()
-	f = open(get_home() + "/catkin_ws/src/navigation_irl/sortingMDP/MTIRL_data_test.log", "a")
+	f = open(get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/sortingMDP/MTIRL_data_test.log", "a")
 
 	for j in range(0,len(pol_ind)):
 
@@ -147,7 +147,7 @@ if __name__ == "__main__":
 		
 		f.write(outtraj)
 
-	# f = open(get_home() + "/catkin_ws/src/navigation_irl/sortingMDP/MTIRL_data_test.log", "a")
+	# f = open(get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/sortingMDP/MTIRL_data_test.log", "a")
 	f.write("ENDDEMO\n")
 	f.write(str(pol_ind[i])+"\n")
 	f.close()

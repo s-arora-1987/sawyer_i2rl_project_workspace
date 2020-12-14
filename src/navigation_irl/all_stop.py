@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('navigation_irl')
+#import roslib; roslib.load_manifest('navigation_irl')
 
 import rospy
 

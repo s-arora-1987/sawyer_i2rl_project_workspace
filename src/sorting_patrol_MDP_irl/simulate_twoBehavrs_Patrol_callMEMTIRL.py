@@ -181,7 +181,7 @@ if __name__ == "__main__":
 	for i in range(0, len(List_TrueWeights)):
 		input_dpmMEIRL += str(List_TrueWeights[i])+"\n"
 
-	# f = open(get_home() + "/catkin_ws/src/navigation_irl/MEMTIRL_boyd2Patrol_dataTest.log", "w")
+	# f = open(get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/MEMTIRL_boyd2Patrol_dataTest.log", "w")
 	f = open(get_home() + "/Downloads/MEMTIRL_boyd2Patrol_dataTest2.log", "w")
 	f.write(input_dpmMEIRL)
 	f.close()

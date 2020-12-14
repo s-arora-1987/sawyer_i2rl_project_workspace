@@ -1,0 +1,22 @@
+<package>
+  <description brief="patroller_ctrl">
+
+     patroller_ctrl
+
+  </description>
+  <author>Kenneth Bogert</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/patroller_ctrl</url>
+
+  <depend package="rospy"/>
+  <depend package="geometry_msgs"/>
+  <depend package="nav_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="tf"/>
+  <depend package="rosbag"/>
+
+</package>
+
+
+

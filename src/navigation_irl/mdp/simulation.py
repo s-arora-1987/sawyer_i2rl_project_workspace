@@ -20,42 +20,16 @@ def simulate(model, agent, initial, t_max):
     while t < t_max and not model.is_terminal(s): 
         a = agent.sample(s)
         s_p = util.functions.sample( model.T(s,a) )
-        r = model.R(s,a)
+#        r = model.R(s,a)
         
-        result.append( (s,a,r) )
+        result.append( (s,a) )
         s = s_p
         t += 1
     if model.is_terminal(s):
         a = agent.sample(s)
-       	r = model.R(s,a)
-
-        result.append( (s,a,r) )
+#        r = model.R(s,a)
         
-    return result
-
-def simulate_givenstart(model, agent, s, t_max):
-    '''
-    Simulate an MDP for t_max timesteps or until the
-    a terminal state is reached.  Returns a list
-        [ (s_0, a_0, r_0), (s_1, a_1, r_1), ...]
-    '''
-    
-    # s = util.functions.sample(initial)
-    result = []
-    t = 0
-    while t < t_max and not model.is_terminal(s): 
-        a = agent.sample(s)
-        s_p = util.functions.sample( model.T(s,a) )
-        r = model.R(s,a)
-        
-        result.append( (s,a,r) )
-        s = s_p
-        t += 1
-    if model.is_terminal(s):
-        a = agent.sample(s)
-       	r = model.R(s,a)
-
-        result.append( (s,a,r) )
+        result.append( (s,a) )
         
     return result
 
@@ -129,9 +103,7 @@ def sample_traj(model, t_max, initial, agent):
     s = util.functions.sample(initial) 
     while t < t_max and not atTerminal:
         a = agent.sample(s) 
-        # print("(s,a) ",(s,a))
         s_p = util.functions.sample(model.T(s,a)) 
-        # print("(model.T(s,a),s_p) ",(model.T(s,a),s_p))
         result.append( (s,a,s_p) ) 
         if model.is_terminal(s_p):
             atTerminal = True

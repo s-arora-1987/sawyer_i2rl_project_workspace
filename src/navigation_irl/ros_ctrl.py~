@@ -94,7 +94,10 @@ global minGapBwDemos, patroller0LastSeenAt, patroller1LastSeenAt, \
 	
 #I2RL
 BatchIRLflag=False
+recordConvTraj=0
+startat=0
 sessionNumber=1
+glbltrajstarttime=0
 num_Trajsofar=0
 normedRelDiff=sys.maxint*1.0 # start with a high value to call update()
 stopI2RLThresh=0.0095 #tried 0.0001, didn't go below 0.025 0.04 
@@ -135,9 +138,10 @@ class WrapperRandom():
 	def __init__(self, mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance):
 
 		global obstime, start_forGoTime, timeoutThresh
-		self.goTime = random.randint(start_forGoTime, 2*timeoutThresh) #obstime, obstime+600) 
+		self.goTime = random.randint(0, timeoutThresh) #obstime, obstime+600)
 
 		self.policy = None
+		self.patPolicies = None
 		print("The Go time is at: " + str(self.goTime))
 		self.predictTime = 30
 
@@ -277,7 +281,8 @@ class WrapperRandom():
 		policies = []
 		for q in pols:
 			policies.append(mdp.agent.MapAgent(q))			
-		
+		self.patPolicies = policies
+
 		# choose randomly between available goals
 		# print(policies)
 		whichone = random.randint(0,len(policies) - 1)
@@ -311,6 +316,9 @@ class WrapperRandom():
 		return FakeModel()
 
 	def addPercept(self, patroller, state, time):
+		pass
+
+	def addStates(self):
 		pass
 
 	def addPerceptFull(self, patroller, state, time):
@@ -642,9 +650,12 @@ def convertObsToDiscreteStates(obsin, traj_begintime):
 	
 	obs = obsin[:]
 	global patrollerOGMap
-	
 	discreteStates = []
-	flag=0
+	flag = 0
+	# print "DiscreteStates len(obs) before adjustment:" + str(len(obs))
+	while (len(obs) > 0 and obs[0][1] < traj_begintime*getTimeConv()):
+		obs.pop(0)
+	# print "DiscreteStates len(obs) after adjustment:" + str(len(obs))
 
 	for i in range(traj_begintime, fromRospyTime(get_time())): #(fromRospyTime(get_time())):
 		
@@ -657,6 +668,7 @@ def convertObsToDiscreteStates(obsin, traj_begintime):
 
 		countObsInTimeStep = 0
 	
+
 		while (len(obs) > 0 and obs[0][1] >= timeLowerRange and obs[0][1] < timeUpperRange):
 #			for j in range(len(obsInTimestep) - 1, max(len(obsInTimestep) - numOfReadings - 1, -1), -1):
 #			for j in range(0, min(len(obsInTimestep), numOfReadings)):
@@ -670,7 +682,6 @@ def convertObsToDiscreteStates(obsin, traj_begintime):
 				sumObsInTimeStep[2] += math.cos(curObs[2])
 				sumObsInTimeStep[3] += math.sin(curObs[2])
 				
-			
 				countObsInTimeStep += 1
 
 		if countObsInTimeStep > 0:
@@ -679,9 +690,12 @@ def convertObsToDiscreteStates(obsin, traj_begintime):
 			if avg[2] < 0:
 				avg[2] += 2 * math.pi
 			s = patrollerOGMap.toState(avg, False)
-			
 			discreteStates.append(s)
+
+			# print "DiscreteStates length after discreteStates.append"+str(len(discreteStates))
+
 		else:
+			# print "DiscreteStates countObsInTimeStep < 0"
 			discreteStates.append(None)
 		
 	
@@ -695,11 +709,11 @@ def convertObsToDiscreteStates(obsin, traj_begintime):
 
 	return discreteStates
 
-def convertObsToTrajectoryWPolicy(obsin, policy):
+def convertObsToTrajectoryWPolicy(obsin, policy, glbltrajstarttime_attpolicyI2RL):
 	
-	global glbltrajstarttime
- 	print("glbltrajstarttime in convertObsToTrajectoryWPolicy :", glbltrajstarttime)
-	discreteStates = convertObsToDiscreteStates(obsin, glbltrajstarttime)
+ 	# print("glbltrajstarttime_attpolicyI2RL in convertObsToTrajectoryWPolicy :", glbltrajstarttime_attpolicyI2RL)
+	discreteStates = convertObsToDiscreteStates(obsin, glbltrajstarttime_attpolicyI2RL)
+
 	#print("output convertObsToDiscreteStates(obsin, glbltrajstarttime): "+str(discreteStates) )
 	traj = []
 	for ds in discreteStates:
@@ -709,40 +723,43 @@ def convertObsToTrajectoryWPolicy(obsin, policy):
 			a = policy.actions(ds).keys()[0]
 			traj.append((ds, a))
 	
-		
-	
-	return traj	
+	return traj
 		
 		
 def convertObsToTrajectory(obsin, traj_begintime):
 	
 	discreteStates = convertObsToDiscreteStates(obsin, traj_begintime)
-	
 	obs = obsin[:]
-	
 	traj = []
-	
+
+	# print "convertObsToTrajectory inputs "+str(obsin)+"\n"+str(traj_begintime)
+
+	# print "convertObsToTrajectory len(obs) before adjustment:" + str(len(obs))
+	while (len(obs) > 0 and obs[0][1] < traj_begintime * getTimeConv()):
+		obs.pop(0)
+
+	# print "convertObsToTrajectory len(obs) after adjustment:" + str(len(obs))
+
 	for i in range(traj_begintime, fromRospyTime(get_time())): #(fromRospyTime(get_time())):
 		timeLowerRange = i * getTimeConv()
 		timeUpperRange = (i + 1) * getTimeConv()
 		
 		obsInTimestep = []
-	
+
 		while (len(obs) > 0 and obs[0][1] >= timeLowerRange and obs[0][1] < timeUpperRange):
 			obsInTimestep.append(obs.pop(0)[0])
 
-
 		if len(obsInTimestep) > 0:
-			
+
 			a = getPatrollerAction(obsInTimestep, discreteStates[len(traj)], discreteStates[len(traj) + 1])
 			
 			traj.append((discreteStates[len(traj)], a))
+			# print "convertObsToTrajectory length after traj.append"+str(len(traj))
 		else:
 			traj.append(None)
 		
-	
-	return traj	
-
+	# print "convertObsToTrajectory return traj \n" + str(traj)
+	return traj
 
 def convertObsToTrajectoryUncertainActions(obsin):
 	
@@ -1650,7 +1667,8 @@ def idealirlsolve_recdstates(q, add_delay, mapToUse, traj, pmodel, visibleStates
 		f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "a")
 		f.write(outtraj)
 		f.write("ITERATE\n")
-		f.close()			
+		f.close()
+
 	(stdout, stderr) = p.communicate(outtraj)
 
 
@@ -1697,7 +1715,9 @@ def irlsolve(q, obs, add_delay, algorithm, pmodel, mapToUse, NE, visibleStatesNu
 	traj = []
 	traj.append(convertObsToTrajectory(obs[0], traj_begintime))
 	traj.append(convertObsToTrajectory(obs[1], traj_begintime))
-	
+
+	print("\n trajectories for session " + str(sessionNumber) + ": " + \
+		  +str(traj[0]) + ", " + str(traj[1]) + "\n")
 	#print("\n sizes of complete trajectories for session "+str(sessionNumber)+": "+\
 	#	str(len(traj[0]))+", "+str(len(traj[1])))#+"\n contents"+str(traj[0])+", "+str(traj[1])+"\n")
 
@@ -2183,17 +2203,17 @@ def emirlsolve(q, obs, add_delay, algorithm, pmodel, mapToUse, NE, visibleStates
 
 	policies.append(T)			
 	q.put(policies)	
-	return		
+	return
 
 
 def irlsolve_recdStates(q, traj, add_delay, algorithm, pmodel, mapToUse, NE, visibleStatesNum, \
-			lineFoundWeights, lineFeatureExpec, learned_weights, \
-			num_Trajsofar, \
+			lineFoundWeights, lineFeatureExpec, learned_weights, num_Trajsofar, \
 			BatchIRLflag, wt_data, normedRelDiff, traj_begintime, trajfull, useRegions):
 	
 	#f = open("/tmp/timestamps","a")
-	print("\n sizes of complete trajectories for session "+str(sessionNumber)+": "+\
-		str(len(traj[0]))+", "+str(len(traj[1]))+"\n contents"+str(traj[0])+", "+str(traj[1])+"\n")
+	# print "\n contents"+str(traj)+"\n"
+	# print("\n sizes of complete trajectories for session "+str(sessionNumber)+": "+\
+	# 	str(len(traj[0]))+", "+str(len(traj[1])))
 	#f.close()
 
 	f = open(get_home() + "/patrolstudy/toupload/t_traj_irl.log", "w")
@@ -2313,6 +2333,11 @@ def irlsolve_recdStates(q, traj, add_delay, algorithm, pmodel, mapToUse, NE, vis
 		
 		lineFeatureExpec = str(learned_mu_E)+"\n"
 
+	if not not lineFoundWeights and lineFoundWeights[-1] != '\n':
+		lineFoundWeights = lineFoundWeights + "\n"
+	if not not lineFeatureExpec and lineFeatureExpec[-1] != '\n':
+		lineFeatureExpec = lineFeatureExpec + "\n"
+
 	outtraj += lineFoundWeights+lineFeatureExpec+ str(num_Trajsofar)+"\n"
 	outtraj += printTrajectories(trajfull)
 		
@@ -2404,20 +2429,24 @@ def getattackerpolicy(q, policies, obs, pmodel, goalState, reward, penalty, dete
 	global patrollersuccessrate
 
 	traj = []
-	traj.append(convertObsToTrajectoryWPolicy(obs[0], policies[0]))
-	traj.append(convertObsToTrajectoryWPolicy(obs[1], policies[1]))
+	global glbltrajstarttime_attpolicyI2RL
+	glbltrajstarttime_attpolicyI2R = fromRospyTime(obs[0][0][1])
+	traj.append(convertObsToTrajectoryWPolicy(obs[0], policies[0],glbltrajstarttime_attpolicyI2RL))
+	glbltrajstarttime_attpolicyI2R = fromRospyTime(obs[1][0][1])
+	traj.append(convertObsToTrajectoryWPolicy(obs[1], policies[1],glbltrajstarttime_attpolicyI2RL))
 
 	patrollerStartStates = []
 	patrollerTimes = []
 	
 	#print("\n results convertObsToTrajectoryWPolicy(obs[0], policies[0]):\n:"+str(traj[0]))
 	
-	# As startat is used in process of convertObsToTrajectoryWPolicy, it should be modified after computing
+	# As startat is used in process of convertObsToTrajectoryWPolicy,
+	# it should be modified after computing
 	# trajectories
 	global BatchIRLflag
- 	if BatchIRLflag == False:
- 		global startat, startat_attpolicyI2RL
- 		startat = startat_attpolicyI2RL
+ 	# if BatchIRLflag == False:
+ 	# 	global startat, startat_attpolicyI2RL
+ 	# startat = startat_attpolicyI2RL
 	
 	global startat
 	print("startat for getattackerpolicy", startat)
@@ -2544,7 +2573,10 @@ def getattackerpolicy(q, policies, obs, pmodel, goalState, reward, penalty, dete
 	f.close()
 	
 	print("patpolicy log written")
-	
+	# exit(0)
+	# abortRun()
+	# rospy.signal_shutdown('')
+
 	(stdout, stderr) = p.communicate(outtraj)
 	
 	splitit = stdout.split("ENDPROBS")
@@ -2562,7 +2594,7 @@ def getattackerpolicy(q, policies, obs, pmodel, goalState, reward, penalty, dete
 	f = open(get_home() + "/patrolstudy/toupload/prediction.log", "w")
 	f.write(towrite)
 	f.close()
-		
+	
 	
 	# stdout now needs to be parsed into a hash of state => action, which is then sent to mapagent
 	pols = []
@@ -2831,6 +2863,7 @@ class WrapperIRL():
 		self.detectDistance = detectDistance
 		self.trajfull = [[], []]
 		self.traj = [[], []]
+		self.traj_states = [[], []]
 		self.trajOffsets = [[] , [] ]
 		self.recd_convertedstates = [[], []] 
 		self.recd_convertedstatesfull = [[], []] 
@@ -2857,12 +2890,15 @@ class WrapperIRL():
 		self.pmodel = patrol.model.PatrolModel(p_fail, None, patrollerOGMap.theMap())
 		
 		global reward_dim, found_muE, exact_mu_E, learned_mu_E, learned_weights, wt_data
-		reward_dim = 6
+		if self.map == "boyd2":
+			reward_dim = 6
 		if self.map == "largeGrid":
-			self.pmodel = patrol.model.PatrolModel(p_fail, PatrolState\
-							(np.array( [6, 8, 0] )), patrollerOGMap.theMap())
-			reward_dim = len(self.pmodel.S())
-			
+			reward_dim = 8
+		if self.map == "boydright":
+			reward_dim = 5
+		if self.map == "boydright2":
+			reward_dim = 7
+
 		found_muE = [[0.0]*reward_dim,[0.0]*reward_dim] 
 		exact_mu_E = [[0.0]*reward_dim,[0.0]*reward_dim] 
 		learned_mu_E=[[0.0]*reward_dim,[0.0]*reward_dim] 
@@ -2874,6 +2910,7 @@ class WrapperIRL():
 		## Create Model
 		self.goalStates = [self.getStateFor(goalPos), ]
 		self.goalState = self.goalStates[0]
+		print ("self.goalState",self.goalState)
 
 		model = patrol.model.AttackerModel(p_fail, attackerOGMap.theMap(), self.predictTime, self.goalStates[0])
 		model.gamma = 0.99
@@ -2906,13 +2943,14 @@ class WrapperIRL():
 	def goNow(self):
 
 		if self.finalQ is not None and not self.goTime < sys.maxint:
+
 			# check if there's something in the queue, if so we've got a new goTime
 			try:
 				newStuff = self.finalQ.get(False)
 				global startat, BatchIRLflag
-				if BatchIRLflag == False:
-					global startat, startat_attpolicyI2RL
-					startat = startat_attpolicyI2RL
+				# if BatchIRLflag == False:
+				# 	global startat, startat_attpolicyI2RL
+				# 	startat = startat_attpolicyI2RL
 	
 				print("startat for goNow loop: ", startat)
 				self.p.join()
@@ -2986,26 +3024,67 @@ class WrapperIRL():
 
 		return get_time() >= self.goTime
 
-
-			
 	def patrollerModel(self):
 		return self.pmodel
-	
 
 	def addPercept(self, patroller, state, time):
-		global glbltrajstarttime
 		self.traj[patroller].append((state, time))
-		
-		if (not not convertObsToDiscreteStates(self.traj[patroller], glbltrajstarttime)):
-			# list of state objects
-			conv_states = convertObsToDiscreteStates(self.traj[patroller], glbltrajstarttime) 
-			# print("patroller "+str(patroller)+" current conv_states "+str(conv_states))
-			global patrtraj_len
-			patrtraj_len[patroller] = len(conv_states)
+		return
+
+	def addStates(self):
+		# add states after a regular interval
+		global lastcalltimeaddstates
+		current_time = rospy.Time.now().to_sec()
+		if current_time - lastcalltimeaddstates >= getTimeConv():# 3* getTimeConv()
+			for patroller in range(len(self.traj)):
+				# if (not not convertObsToTrajectory(self.traj[patroller], glbltrajstarttime)):
+				global glbltrajstarttime
+				new_stateactions = convertObsToTrajectory(self.traj[patroller], glbltrajstarttime)
+				# if not not new_stateactions:
+				#print "patroller"+str(patroller)+" - new_stateactions:"+str(new_stateactions)
+				for sa in new_stateactions:
+					self.traj_states[patroller].append(sa)
+
+				global patrtraj_len
+				patrtraj_len[patroller] = len(self.traj_states[patroller])
+				# print "length after update "+str(patrtraj_len[patroller])
+				lastcalltimeaddstates = rospy.Time.now().to_sec()
+
+			'''
+			Instead of waiting for visibility of both patrollers,
+			start recording None for non-visible one from the
+			beginning of moment first one is visible.
+			Sending none for both will be useless.
+			'''
+			if (len(self.traj_states[0]) > len(self.traj_states[1]) )\
+					and (len(self.traj_states[1]) == 0):
+					print "filling None states for 1"
+					for sa in self.traj_states[0]:
+						self.traj_states[1].append(None)
+			if (len(self.traj_states[1]) > len(self.traj_states[0]) )\
+					and (len(self.traj_states[0]) == 0):
+					print "filling None states for 0"
+					for sa in self.traj_states[1]:
+						self.traj_states[0].append(None)
+
+			# need to happen only after storing states for all the patrollers
+			global glbltrajstarttime
+			glbltrajstarttime = fromRospyTime(get_time())
+
+		# if (not not convertObsToDiscreteStates(self.traj[patroller], glbltrajstarttime)):
+		# 	# list of state objects
+		# 	conv_states = convertObsToDiscreteStates(self.traj[patroller], glbltrajstarttime)
+		# 	# print("patroller "+str(patroller)+" current conv_states "+str(conv_states))
+		# 	global patrtraj_len
+		# 	patrtraj_len[patroller] = len(conv_states)
+
+		# print "min(patrtraj_len): "+str(min(patrtraj_len))
+		return
 
 	def addPerceptFull(self, patroller, state, time):
 		global glbltrajstarttime
-		self.trajfull[patroller].append((state, time))
+		pass
+		# self.trajfull[patroller].append((state, time))
 					
 	def recordStateSequencetoFile(self):
 		
@@ -3020,13 +3099,13 @@ class WrapperIRL():
 		
 		for patroller in range(0,len(patrtraj_len)): 
 			global glbltrajstarttime
-			if not not convertObsToTrajectory(self.traj[patroller], glbltrajstarttime):
-				conv_traj = convertObsToTrajectory(self.traj[patroller], glbltrajstarttime)
+			if not not self.traj_states[patroller]:#convertObsToTrajectory(self.traj[patroller], glbltrajstarttime):
+				conv_traj = self.traj_states[patroller] #convertObsToTrajectory(self.traj[patroller], glbltrajstarttime)
 				for sap in conv_traj: 
 					if (sap is not None): 
 						s = sap[0].location[0:3]
-						#print(s)
-						#print(sap[1].__class__.__name__)
+						# print(s)
+						# print(sap[1].__class__.__name__)
 						outtraj += str(s[0])+","+str(s[1])+","+str(s[2])+","
 						if sap[1].__class__.__name__ == "PatrolActionMoveForward":
 							outtraj += "PatrolActionMoveForward"
@@ -3047,25 +3126,7 @@ class WrapperIRL():
 		f.write(outtraj)
 		f.close()
 		return
-		'''
-		else:
-			print("error: trajectory states not recorded in mdpWrapper.recd_convertedstates")
 
-			for i in range(0,patrtraj_len[patroller]):
-			for patroller in self.recd_convertedstates:
-				
-				if not not conv_traj[i][0]:
-					print("patroller "+str(patroller)+"adding not None state to recd_convertedstates "+\
-						str(conv_traj[i][0].location[0:3]))
-					self.recd_convertedstates[patroller].append(conv_traj[i][0].location[0:3])
-				else:
-					self.recd_convertedstates[patroller].append(conv_traj[i][0])
-		
-		global desiredRecordingLen
-		if max(len(x) for x in self.recd_convertedstates) >= desiredRecordingLen:
-			# store states without actions
-		'''
-	
 	def recordFullStateSequencetoFile(self):
 		f = open(get_home() + "/patrolstudy/toupload/recd_convertedstates_full.log", "w")
 		f.write("")
@@ -3077,8 +3138,8 @@ class WrapperIRL():
 		global patrtraj_len
 		for patroller in range(0,len(patrtraj_len)): 
 			global glbltrajstarttime
-			if not not convertObsToTrajectory(self.trajfull[patroller], glbltrajstarttime):
-				conv_traj = convertObsToTrajectory(self.trajfull[patroller], glbltrajstarttime)
+			if not not self.traj_states[patroller]:#convertObsToTrajectory(self.traj[patroller], glbltrajstarttime):
+				conv_traj = self.traj_states[patroller] #convertObsToTrajectory(self.traj[patroller], glbltrajstarttime)
 				for sap in conv_traj: 
 					if (sap is not None): 
 						s = sap[0].location[0:3]
@@ -3191,114 +3252,98 @@ class WrapperIRL():
 		patrtraj_len, glbltrajstarttime, startat_attpolicyI2RL
 		
 		if not self.isSolving and self.policy is None:
-			# print(count, get_time(), self.policy, max(len(a) for a in self.traj)
-			# , self.predictTime)
-			
-			'''
-			print("NEXT if conditions in update:")
-			print(((get_time() > obstime and self.policy is None) and \
-			(max(len(a) for a in self.traj) > self.predictTime))) 
 
-			print(((current_time - patroller0LastSeenAt > minGapBwDemos) and \
-			(current_time - patroller1LastSeenAt > minGapBwDemos)))
-			'''
 			global obstime, sessionStart, sessionNumber, normedRelDiff, \
 			stopI2RLThresh, sessionFinish, num_Trajsofar, print_once, \
 			patroller0LastSeenAt, patroller1LastSeenAt, BatchIRLflag, \
-			minGapBwDemos, lastQ, sess_starttime, sess_endtime, min_IncIRL_InputLen,\
-			patrtraj_len, min_BatchIRL_InputLen, startat_attpolicyI2RL, glbltrajstarttime
-		
-			current_time=rospy.Time.now().to_sec()
-			
-			#((((current_time - patroller0LastSeenAt > minGapBwDemos) and \
-			#(current_time - patroller1LastSeenAt > minGapBwDemos)) or \
-			#if ((get_time() > obstime and self.policy is None) and \
-			
-			if ((max(patrtraj_len) > min_BatchIRL_InputLen and self.policy is None) and \
-			(max(len(a) for a in self.traj) > self.predictTime) and BatchIRLflag == True) or \
-			(max(patrtraj_len) > min_IncIRL_InputLen  and self.policy is None and \
-			sessionStart == False and BatchIRLflag == False ) or \
-			(sessionStart == True and sessionFinish == False and self.policy is None and \
-			BatchIRLflag == False and (max(patrtraj_len) > min_IncIRL_InputLen) ):
-			# found enough states for both patrollers or 
-			# current session starts because current demonstration is over
-			# or session started but didn't finish because of 
-			# segmentation fault
-				
+			minGapBwDemos, lastQ, min_IncIRL_InputLen,\
+			patrtraj_len, min_BatchIRL_InputLen, startat_attpolicyI2RL, \
+			glbltrajstarttime, useRegions
+
+			if ((self.policy is None) and (max(len(a) for a in self.traj)\
+			> self.predictTime)) and \
+			(min(patrtraj_len) > min_BatchIRL_InputLen and\
+			BatchIRLflag == True) or \
+			(min(patrtraj_len) > min_IncIRL_InputLen and \
+			(min_IncIRL_InputLen*sessionNumber <= min_BatchIRL_InputLen)  \
+			and sessionFinish == True and BatchIRLflag == False):
 
 				global sessionStart, num_Trajsofar, print_once, BatchIRLflag, \
 				lineFoundWeights, lineFeatureExpec, learned_weights, sessionNumber, \
 				num_Trajsofar, lineLastBeta, lineLastZS, lineLastZcount, sessionFinish, \
 				patrtraj_len, startat, glbltrajstarttime, recording_mode
-				
+				min_BatchIRL_InputLen, startat_attpolicyI2RL, useRegions
+
 				#print("sessionStart, sessionFinish, BatchIRLflag: "+str(sessionStart)\
 				#	+str(sessionFinish)+str(BatchIRLflag))
-				
+
+				# print "patrtraj_len"+str(patrtraj_len)
+				# print "min(patrtraj_len) > min_IncIRL_InputLen"+str((min(patrtraj_len) > min_IncIRL_InputLen))
+
 				self.isSolving = True
 				self.q = multiprocessing.Queue()
-				#print("calling irlsolve")
+				# print("calling irlsolve")
 				# current session started
 				sessionStart = True
 				# i2rl specific flag
 				sessionFinish = False
 				
 				print("beginning for session")
-# 				print("new q for sessionNumber")
+				# print("new q for sessionNumber")
  				print(sessionNumber)
- 				sess_starttime=rospy.Time.now().to_sec()
- 				print(" at time "+str(sess_starttime))
- 				
- 				#change acc to number of patrollers involved
-				
-				#REASON: same demo should not be repeated 
-				#and new percepts should be converted from different start time 
-				currentsessionpercepts = [[], []]
-				currentsessionpercepts[0]=self.traj[0][:]
-				currentsessionpercepts[1]=self.traj[1][:]
-				traj_begintime = glbltrajstarttime
-				
-				tempB=(not currentsessionpercepts[0] and not currentsessionpercepts[1])
-				print("sending empty traj for multiprocessing.Process? "+str(tempB))
-				if tempB:
-# 					print("current_time, patroller0LastSeenAt, patroller1LastSeenAt "+\
-# 						str((current_time, patroller0LastSeenAt,patroller1LastSeenAt)))
-# 					print(" self.traj: "+str(currentsessionpercepts))
-					emptyinput()
-				else:
-					pass
-# 					print(" max length amongst two trajectories: "+str(max(patrtraj_len)))
-				
-				if (min_IncIRL_InputLen*sessionNumber < min_BatchIRL_InputLen) and BatchIRLflag==False:
-					# new demo and new beginning time for next session
-					print("(min_IncIRL_InputLen*sessionNumber < min_BatchIRL_InputLen), update glbltrajstarttime startat_attpolicyI2RL")
-					self.traj = [[], []]
-					glbltrajstarttime = fromRospyTime(get_time())
-					startat_attpolicyI2RL = rospy.get_time()
-				
-				
+
+				if BatchIRLflag == True:
+					current_time2 = rospy.Time.now().to_sec()
+					f = open(get_home()+"/perception_times.txt", "a")
+					f.write("\n"+"Perception time is:"+str(current_time2-start_forGoTime))
+					f.close()
+					print "Perception time is:"+str(current_time2-start_forGoTime)
+
+				input_traj = [[], []]
+				input_trajfull = [[], []]
+
+				global patrtraj_len
+				for patroller in range(len(self.traj_states)):
+					self.trajfull[patroller] = self.traj_states[patroller][:]
+					if BatchIRLflag == True:
+						input_traj[patroller] = self.traj_states[patroller][0:min_BatchIRL_InputLen]
+						self.traj_states[patroller] = self.traj_states[patroller][min_BatchIRL_InputLen:]
+						input_trajfull[patroller] = self.trajfull[patroller][0:min_BatchIRL_InputLen]
+						self.trajfull[patroller] = self.trajfull[patroller][min_BatchIRL_InputLen:]
+					else:
+						input_traj[patroller] = self.traj_states[patroller][:min_IncIRL_InputLen]
+						self.traj_states[patroller] = self.traj_states[patroller][min_IncIRL_InputLen:]
+						input_trajfull[patroller] = self.trajfull[patroller][:min_IncIRL_InputLen]
+						self.trajfull[patroller] = self.trajfull[patroller][min_IncIRL_InputLen:]
+					patrtraj_len[patroller] = len(self.traj_states[patroller])
+
+				print "input trajectories:\n"+str(input_traj)+"\n"
+
 				f = open("/tmp/timestamps","a")
-				f.write("\n session "+str(sessionNumber)+" starting at time "+str(sess_starttime)+\
-					" with perceptseq lengths "+str(len(currentsessionpercepts[0]))+", "+str(len(currentsessionpercepts[1])))
+				f.write("\n session "+str(sessionNumber))
 				f.close()
 				
-				f = open("/tmp/timestamps","a")
-				f.write("\n size(demo) for session "+str(sessionNumber)+": "+str(patrtraj_len[0])+", "+str(patrtraj_len[1]))
-				f.close()
-				
-				if not not lineFoundWeights:
-					if lineFoundWeights[-1]!='\n': 
-						lineFoundWeights=lineFoundWeights+"\n"
-						lineFeatureExpec=lineFeatureExpec+"\n"
-						lineLastBeta=lineLastBeta+"\n"
-						lineLastZS=lineLastZS+"\n"
+				# if not not lineFoundWeights:
+				# 	if lineFoundWeights[-1]!='\n':
+				# 		lineFoundWeights=lineFoundWeights+"\n"
+				# 		lineFeatureExpec=lineFeatureExpec+"\n"
+				# 		lineLastBeta=lineLastBeta+"\n"
+				# 		lineLastZS=lineLastZS+"\n"
 				
 				global use_em, wt_data, normedRelDiff
 				if use_em:
 					self.p = multiprocessing.Process(target=emirlsolve, args=(self.q, currentsessionpercepts, patrollerdelay, alg, self.pmodel, self.map, self.eq, self.observableStateLow) )
 				else:
-					self.p = multiprocessing.Process(target=irlsolve, args=(self.q, currentsessionpercepts, patrollerdelay, alg, self.pmodel, self.map, self.eq, self.observableStateLow,\
-																		lineFoundWeights, lineFeatureExpec, learned_weights, num_Trajsofar, lineLastBeta, lineLastZS, \
-																		lineLastZcount, BatchIRLflag, wt_data, normedRelDiff, traj_begintime) )
+					# self.p = multiprocessing.Process(target=irlsolve, args=(self.q, currentsessionpercepts, patrollerdelay, alg, self.pmodel, self.map, self.eq, self.observableStateLow,\
+					# lineFoundWeights, lineFeatureExpec, learned_weights, num_Trajsofar, lineLastBeta, lineLastZS, \
+					# lineLastZcount, BatchIRLflag, wt_data, normedRelDiff, traj_begintime) )
+
+					self.p = multiprocessing.Process(target=irlsolve_recdStates, args=(
+					self.q, input_traj, patrollerdelay, alg, self.pmodel, self.map, self.eq, \
+					self.observableStateLow, lineFoundWeights, lineFeatureExpec, \
+					learned_weights, num_Trajsofar, BatchIRLflag, wt_data, \
+					normedRelDiff, glbltrajstarttime, input_trajfull, useRegions))
+
 				#print("multiprocessing.Process before self.p.start() ")
 				self.p.start()
 
@@ -3307,174 +3352,112 @@ class WrapperIRL():
 
 		elif (self.isSolving and sessionStart == True and \
 			self.patPolicies is None):
-			
-			global sessionStart, num_Trajsofar, print_once, BatchIRLflag, \
-			lineFoundWeights, lineFeatureExpec, learned_weights, \
-			num_Trajsofar, lineLastBeta, lineLastZS, lineLastZcount, sessionFinish, \
-			wt_data, normedRelDiff, lastQ, sess_starttime, sess_endtime, Q_wait_timestamp
-			# check if irl solver computed any patroller policies 
-			
-			try:
-				# pull parmas results first from queue
-				# false in arg, return an item if 
-				# one is immediately available, else raise the Empty exception
-				temp=self.q.get(False)
-				
-				# Block the calling thread until
-				# the process whose join() method is called terminates
-				# print("\n before self.p.join() at time: "+str(rospy.Time.now().to_sec()))
-				
-				self.p.join() 
-				# print(temp)
-				
- 				[lineFoundWeights, lineFeatureExpec, learned_weights, num_Trajsofar, \
-				lineLastBeta, lineLastZS, lineLastZcount, sessionFinish, \
-				wt_data, normedRelDiff, lastQ, newStuff]=temp
-				current_time=rospy.Time.now().to_sec()
 
-				print("sessionFinish: "+str(sessionFinish)+" at time"+str(current_time))
-# 				print("lineFoundWeights:"+lineFoundWeights+"lineFeatureExpec"+\
-# 					lineFeatureExpec+"num_Trajsofar:"+str(num_Trajsofar)+"\n"\
-# 					+"lineLastBeta: "+ lineLastBeta + "lineLastZS:"+\
-# 					lineLastZS + "lineLastZcount:"+lineLastZcount+"lastQ:"+str(lastQ)+"end")
-				
-				
-				# checking status of global variable
-				global wt_data
-# 				print("wt_data: "+str(wt_data))
-				
-				
-				#print("if sessionFinish=True, compare following for next session")
-				#print("returned [lineFoundWeights, lineFeatureExpec, learned_weights, \
-				#num_Trajsofar, lineLastBeta, lineLastZS, lineLastZcount]: "+\
-				#str([lineFoundWeights, lineFeatureExpec, learned_weights, \
-				#num_Trajsofar, lineLastBeta, lineLastZS, lineLastZcount]))
-				
-				# if session finished  or batch irl true
-				if sessionFinish==True or BatchIRLflag==True:
-# 					print("sessionFinish==True")
-					# print("sessionFinish==True, normedRelDiff:"+str(normedRelDiff)+" ,stopI2RLThresh:"+str(stopI2RLThresh)+" " +str((normedRelDiff < stopI2RLThresh)))
-					
-					# if i2rl converged or irl is batch type, then save the policies
-					if (min_IncIRL_InputLen*sessionNumber >= min_BatchIRL_InputLen) or (BatchIRLflag == True): #(lastQ > 1.9) (normedRelDiff < stopI2RLThresh) or (BatchIRLflag == True):
-#						try:
-						# pull policy results from queue
-#						newStuff = self.q.get(False)
-						
-						#print("\n self.p.is_alive()? "+str(self.p.is_alive())+"at time: "+str(rospy.Time.now().to_sec()))
-						#print("\n sessionFinish==True or BatchIRLflag==True:"+str((sessionFinish==True or BatchIRLflag==True)))
-						#print("\n (BatchIRLflag==False and sessionFinish==False):"+str((BatchIRLflag==False and sessionFinish==False)))
-						#global normedRelDiff, stopI2RLThresh, \
-						# sessionFinish, BatchIRLflag
-						global lineFoundWeights
-						print("lineFoundWeights\n",lineFoundWeights)
-						
-						global irlfinish_time 
-						irlfinish_time=rospy.Time.now().to_sec()
-						
-						global cum_learntime
- 						cum_learntime = cum_learntime+irlfinish_time-sess_starttime
-						f = open("/tmp/timestamps","a")
-						f.write("\n session "+str(sessionNumber)+" ends in time "+str(irlfinish_time-sess_starttime))
-						f.write("\n cum_learntime "+str(cum_learntime))
-						f.close()
-						
-	 					f = open("/tmp/timestamps","a")
-	 					f.write("\n irl converged. Learning finished at "+str(irlfinish_time))
-	 					f.close()
-				
-						print("\n irl converged. Learning finished at "+str(irlfinish_time))
-						#print("current time: "+str(rospy.Time.now().to_sec()))
-						#print("abort run commented ")
-						# f = open("/tmp/finalLikelihood","w")
-						# f.write("Final likelihood val: "+str(lastQ))
-						# f.close()
+			global sessionStart, num_Trajsofar, print_once, BatchIRLflag, \
+				lineFoundWeights, lineFeatureExpec, learned_weights, \
+				num_Trajsofar, sessionFinish, \
+				wt_data, normedRelDiff, lastQ, \
+				Q_wait_timestamp, lineFeatureExpecfull
+
+			try:
+				temp = self.q.get(False)
+				self.p.join()
+
+				[lineFoundWeights, lineFeatureExpec, learned_weights, num_Trajsofar, \
+				 sessionFinish, wt_data, normedRelDiff, lastQ, lineFeatureExpecfull, newStuff] = temp
+
+				current_time = rospy.Time.now().to_sec()
+				# print("sessionFinish: "+str(sessionFinish)+" at time "+str(current_time))
+				# print("lineFoundWeights: ",lineFoundWeights)
+
+				if not not newStuff and (sessionFinish == True or BatchIRLflag == True):
+					# CONVERGENCE
+					if ((min_IncIRL_InputLen * sessionNumber >= min_BatchIRL_InputLen) or (BatchIRLflag == True)):  # (lastQ > 1.9) (normedRelDiff < stopI2RLThresh) or (BatchIRLflag == True):
+
+						global BatchIRLflag, \
+						lineFeatureExpec, lineFeatureExpecfull
+						print("\n irl converged. Learning finished at " + str(irlfinish_time))
+						print("lineFoundWeights " + lineFoundWeights+"\nlineFeatureExpec \n" + lineFeatureExpec)
 
 						self.T = newStuff.pop()
 						self.patPolicies = newStuff
-						
-						# save the generated policy to the logs
-						f = open(get_home() + "/patrolstudy/toupload/policy.log", "w")
-						pickle.dump(self.patPolicies,f)
-						f.close()
-#						except Queue.Empty: # no item in queue 
-#							pass		
-							
-					# else continue for next session of i2rl
-					# batchirl will automatically do only one session because 
-					# the batchirlflag need to be False for next session to happen
-					elif (BatchIRLflag == False and sessionFinish == True): 
-						global sessionStart, sessionNumber, \
-						sessionFinish, num_Trajsofar, print_once, min_IncIRL_InputLen 
+						print( "\n keys of policy: \n" + str(self.patPolicies[0]._policy.keys()) + "\n")
+						#
+						return None
 
-						#print("\n desired params computed by i2rl at,")
- 						#print(" for sessionNumber, num_Trajsofar:")
-# 						print(rospy.Time.now().to_sec())
-# 						print(sessionNumber)
- 						#print(num_Trajsofar)
- 						
- 						sess_endtime=rospy.Time.now().to_sec()
- 						global cum_learntime
- 						cum_learntime = cum_learntime+sess_endtime-sess_starttime
-						f = open("/tmp/timestamps","a")
-						f.write("\n session "+str(sessionNumber)+" ends in time "+str(sess_endtime-sess_starttime))
-						f.write("\n cum_learntime "+str(cum_learntime))
+					# ELSE continue for next session of i2rl
+					elif (BatchIRLflag == False and sessionFinish == True):
+
+						global sessionStart, sessionNumber, glbltrajstarttime_attpolicyI2RL, \
+						sessionFinish, num_Trajsofar, print_once, min_IncIRL_InputLen, \
+						lineFeatureExpec, found_muE, lastile, currentile, lineFoundWeights
+
+						lastile=currentile
+						#compute ILE
+						global mapToUse, patrollersuccessrate, lineFoundWeights
+						f = open(get_home() + "/patrolstudy/toupload/data_ile.log", "w")
+						f.write("")
 						f.close()
-						
-						# start collecting demonstration
-						current_time=rospy.Time.now().to_sec()
-						
-# 						if (max(len(self.traj[0]),len(self.traj[1])) > maxInputLength+100):#condition maxlength (500)+1+large number(99 in this case) 
-# 							self.traj = [[], []] # new demo for next session
-# 							patroller0LastSeenAt=sys.maxint
-# 							patroller1LastSeenAt=sys.maxint
-# 							print("recording restarted \
-# 							because previously collected demo emptied")
-# 							
-						# sessionFinish should stay True
-						# flipped flags makes sure it does start next session
-						# and doesn't enter again here till sessionFinish==True
+
+						global patrollersuccessrate
+						args = ['boydsimple_t', ]
+						p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+											 stderr=subprocess.PIPE)
+						outtraj = ""
+						outtraj += mapToUse + "\n"
+						outtraj += str(patrollersuccessrate)
+						(transitionfunc, stderr) = p.communicate(outtraj)
+						args = ['boydile', ]
+						p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+											 stderr=subprocess.PIPE)
+						outtraj = ""
+						outtraj += mapToUse + "\n"
+						outtraj += transitionfunc + "ENDT" + "\n"
+						outtraj += lineFoundWeights + "\n"
+						f = open(get_home() + "/patrolstudy/toupload/data_ile.log", "a")
+						f.write(outtraj)
+						f.close()
+						(ile, stderr) = p.communicate(outtraj)
+						iles=[]
+						iles=ile.split('\n')
+						currentile=(float(iles[0])+float(iles[1]))/2
+						print("ile diff \n " + str(lastile-currentile))
+
+						# print "reached if for # ELSE continue for next session"
 						sessionStart = False
 						self.isSolving = False
 						num_Trajsofar += 1
 						# sessionNumber should be updated only here
 						sessionNumber += 1
-						print_once = 0 # print once empty q for next session
-						
-				
-				# else if session is yet to be finished and we waited long enough
+						print_once = 0  # print once empty q for next session
+
+				# NOT USED
+				# else if session call didn't return as expected
 				# call solver again without deleting (but enlarged) traj
-				elif (BatchIRLflag==False and sessionFinish==False): #and (Q_wait_timestamp-sess_starttime > 90):
-					
-					global print_once, patroller0LastSeenAt, patroller1LastSeenAt
+				elif not not newStuff and (BatchIRLflag == False and sessionFinish == False):
+
+					global print_once
 					self.isSolving = False
-					# self.p.terminate()
 					self.q = None
-					print("\n need another call for session "+str(sessionNumber)) 
-					global sess_starttime
-	 				sess_starttime=rospy.Time.now().to_sec()
-	 				print(" at time "+str(sess_starttime))
-#					print("to i2rl at time: "+str(rospy.Time.now().to_sec()))
+					print("\n need another call for session " + str(sessionNumber))
 					print_once = 0
-						
-			except Queue.Empty: # no item in queue boydirl is not done
-				
-				global print_once, Q_wait_timestamp
-				Q_wait_timestamp = rospy.Time.now().to_sec() 
-				#time.sleep(60)
+
+			except Queue.Empty:  # no item in queue, boydirl is not done
+				global print_once
 				if print_once == 0:
-					print("\nprint_once queue self.q empty\n")
+					pass
+					#print("print_once queue self.q empty")
 				print_once = 1
-				pass		
-					
+				pass
 
 		if self.finalQ is None and self.patPolicies is not None and rospy.get_time() - self.lastSolveAttempt > getTimeConv():
 			# compute attacker policy in new process and share results in new queue
-			print("\n compute attacker policy because self.patPolicies is not None")
+			# print("\n compute attacker policy because self.patPolicies is not None")
 			self.finalQ = multiprocessing.Queue()
+
 			self.p = multiprocessing.Process(target=getattackerpolicy, args=(self.finalQ, self.patPolicies, self.traj, self.pmodel,\
-																			 self.goalState, self.reward, self.penalty, self.detectDistance,\
-																			  self.predictTime, self.add_delay, self.p_fail, self.map, self.T) )
+															 self.goalState, self.reward, self.penalty, self.detectDistance,\
+															  self.predictTime, self.add_delay, self.p_fail, self.map, self.T) )
 				
 			self.p.start()
 			self.lastSolveAttempt = rospy.get_time()
@@ -3611,7 +3594,8 @@ class WrapperIRL():
 																		useRegions) )
 				self.p.start()
 				
-		elif (self.isSolving and sessionStart == True and self.patPolicies is None):
+		elif (self.isSolving and sessionStart == True and\
+			  self.patPolicies is None):
 			
 			global sessionStart, num_Trajsofar, print_once, BatchIRLflag, \
 			lineFoundWeights, lineFeatureExpec, learned_weights, \
@@ -3642,6 +3626,7 @@ class WrapperIRL():
 						print("\n irl converged. Learning finished at "+str(irlfinish_time))
 						print("lineFoundWeights "+lineFoundWeights)
  						cum_learntime = cum_learntime+irlfinish_time-sess_starttime
+
 						self.T = newStuff.pop()
 						self.patPolicies = newStuff
 						# code computing LBA 
@@ -3651,6 +3636,8 @@ class WrapperIRL():
 							correctboydpolicy = get_home() + "/patrolstudy/largeGridpolicy_mdppatrol"
 						if mapToUse == "boydright":
 							correctboydpolicy = get_home() + "/patrolstudy/boydright_policy"
+						if mapToUse == "boydright2":
+							correctboydpolicy = get_home() + "/patrolstudy/boydright2_policy"
 						if mapToUse == "boyd2":
 							correctboydpolicy = get_home() + "/patrolstudy/boydpolicy_mdppatrolcontrol"
 						
@@ -3674,7 +3661,7 @@ class WrapperIRL():
 						lba=0.0
 						i=0
 						global mapToUse
-						if mapToUse == "boydright" or mapToUse == "boyd2" or mapToUse == "largeGrid":
+						if mapToUse == "boydright" or mapToUse == "boyd2" or mapToUse == "boydright2":
 						
 							for patroller in self.patPolicies:
 								totalsuccess = 0
@@ -3719,7 +3706,10 @@ class WrapperIRL():
 									break
 								
 								lba=float(totalsuccess) / float(totalstates)
-								lba=(50*lba)+5 #scaling magnitude and subtracting offset
+								if mapToUse == "boyd2":
+									lba=(50*lba)+5 #scaling magnitude and subtracting offset
+								else:
+									lba = (50 * lba)
 								policyaccuracy.append(lba)
 								
 								print("LBA["+str(i)+"] = "+str(policyaccuracy[i]))
@@ -3828,8 +3818,7 @@ class WrapperIRL():
 									f.write("\nfound_muE"+str(reward_dim*i+j)+":\n"+str(found_muE[i][j]))
 
 							f.write("\nQ:\n"+str(lastQ)+\
-								"\nILE:\n"+ile+\
-								"\nCUMLEARNTIME:\n"+str(cum_learntime))
+								"\nCUMLEARNTIME:\n"+str(cum_learntime)+"\nILE:\n"+ile)
 
 							f.close()
 
@@ -4076,6 +4065,15 @@ class WrapperLMEIRLBLOCKEDGIBBS(WrapperIRL):
 		else:
 			self.updateWithAlg("LMEBLOCKEDGIBBS", True)
 
+class WrapperLMEIRLBLOCKEDGIBBS2(WrapperIRL):
+
+	def update(self):
+		global useRecordedTraj, recordConvTraj
+		if useRecordedTraj == 1 and recordConvTraj == 0:
+			self.updateWithAlgRecTraj("LMEBLOCKEDGIBBS2", True)
+		else:
+			self.updateWithAlg("LMEBLOCKEDGIBBS2", True)
+
 class WrapperLMEIRLBLOCKEDGIBBSTIMESTEP(WrapperIRL):
 
 	def update(self):
@@ -4259,6 +4257,10 @@ def abortRun():
 	global pub
 	pub.publish(String("abortrun"))
 
+def abortRun2():
+	global pub
+	pub.publish(String("abortrun2"))
+
 def datacollected():
 	global pub
 	pub.publish(String("datacollected"))
@@ -4310,7 +4312,8 @@ def step():
 	global amclmessageReceived
 	global lastpublish
 	global mapToUse
-	
+
+
 	if mdpWrapper is None:
 		print("\n \n mdpWrapper is None \n ")
 		return
@@ -4319,11 +4322,29 @@ def step():
 		if mdpWrapper.latestPolicy() is None:
 			return
 		# we're attacking
+		# open file for appending
+		f = open(get_home() + "/patrolstudy/output_tracking/experiment_data.txt", "a")
 
 #		if math.sqrt( (cur_waypoint[0] - lastPositionBelief[0])*(cur_waypoint[0] - lastPositionBelief[0]) + (cur_waypoint[1] - lastPositionBelief[1])*(cur_waypoint[1] - lastPositionBelief[1])) < .1:
 #			lastPositionBelief = cur_waypoint
 		# what mdp state are we closest to? 
 		mdpState = mdpWrapper.getStateFor(lastPositionBelief)
+
+		# go back to start if reached goal or been detected - Didn't Work
+		# global goBacktoStart
+		# if goBacktoStart == 1:
+		# 	print ("goBacktoStart = 1")
+		# 	cur_waypoint = mdpWrapper.getPositionFor(mdpWrapper.startState)
+		# 	returnval = PoseStamped()
+		# 	returnval.pose.position = Point(cur_waypoint[0], cur_waypoint[1], 0)
+		# 	q = tf.transformations.quaternion_from_euler(0,0,cur_waypoint[2])
+		# 	returnval.pose.orientation = Quaternion(q[0],q[1],q[2],q[3])
+		# 	returnval.header.frame_id = "/map"
+		# 	goal.publish(returnval)
+		# 	print("Returning to start state", cur_waypoint)
+		# 	lastpublish = get_time()
+		# 	return
+
 #		print("CurState: ", mdpState)
 		# are we at the goal?
 		goalState = mdpWrapper.getGoalState()
@@ -4337,13 +4358,15 @@ def step():
 
 				returnval.header.frame_id = "/map"
 				goal.publish(returnval)
-				cur_waypoint = newwaypoint        
+				cur_waypoint = newwaypoint
+				#f.write("\nstate:"+str(mdpState))
 
 #			print("belief", lastPositionBelief, "goal", cur_waypoint, math.sqrt( (cur_waypoint[0] - lastPositionBelief[0])*(cur_waypoint[0] - lastPositionBelief[0]) + (cur_waypoint[1] - lastPositionBelief[1])*(cur_waypoint[1] - lastPositionBelief[1])))
 
 			if math.sqrt( (cur_waypoint[0] - lastPositionBelief[0])*(cur_waypoint[0] - lastPositionBelief[0]) + (cur_waypoint[1] - lastPositionBelief[1])*(cur_waypoint[1] - lastPositionBelief[1])) < .4:
 				print("GOOOOOOOOOOOOAL")
 				# we've Won!
+				f.close()
 				Gooooooal()
 			return
 
@@ -4352,7 +4375,7 @@ def step():
 			return
 
 		# special case for boydright, if we are currently in a state with no actions, give it the goal state and set a variable
-		if mapToUse == "boydright":
+		if mapToUse == "boydright" or mapToUse == "boydright2":
 			if mdpWrapper.latestPolicy().actions(mdpState).keys()[0] is None:
 				goalwaypoint = mdpWrapper.getPositionFor(goalState)
 				returnval = PoseStamped()
@@ -4363,13 +4386,11 @@ def step():
 				returnval.header.frame_id = "/map"
 				goal.publish(returnval)
 				cur_waypoint = goalwaypoint
-				
+				f.write("\ncurrently in a state with no actions, give it the goal:"+str(goalState))
+
 				waitUntilGoalState = True
 				return
 		
-		
-		
-
 		# ask that state for the policy, run policy to get next state
 		#	Look at what position that state corresponds to, if it is different than cur_waypoint,
 		#	update cur_waypoint and send out a new goal
@@ -4385,6 +4406,7 @@ def step():
 #		if not newWayPoint[0] == cur_waypoint[0] or not newWayPoint[1] == cur_waypoint[1]:
 		if np.all(mdpState.location == currentAttackerState.location):
 #		if math.sqrt( (cur_waypoint[0] - lastPositionBelief[0])*(cur_waypoint[0] - lastPositionBelief[0]) + (cur_waypoint[1] - lastPositionBelief[1])*(cur_waypoint[1] - lastPositionBelief[1])) < .75:
+
 			test = mdpWrapper.latestPolicy().actions(mdpState).keys()[0]
 			testState = test.apply(mdpState)
 			if testState == currentAttackerState:
@@ -4420,7 +4442,14 @@ def step():
 			goal.publish(returnval)
 			print("cur_waypoint", cur_waypoint)
 			lastpublish = get_time()
-			
+			#f.write("\nstate:" + str(currentAttackerState))
+			if (currentAttackerState.location[1]< 16 and currentAttackerState.location[0] > 0
+					and currentAttackerState.location[0] < 13):
+				f.write("\nstate:" + str(currentAttackerState)+" in rooms.")
+
+			#IS it in rooms? s.location[1] < 16 && s.location[0] > 0 && s.location[0] < 13
+
+
 		elif get_time() - lastpublish > 2.5 and get_time() - amclmessageReceived > 1.5:
 			# attacker stopped, send a future goal
 			
@@ -4437,8 +4466,12 @@ def step():
 				returnval.header.frame_id = "/map"
 				goal.publish(returnval)
 				print("Skipping Ahead cur_waypoint", cur_waypoint)
-				lastpublish = get_time()				
-				
+				lastpublish = get_time()
+				# f.write("\nstate:" + str(currentAttackerState))
+				if (currentAttackerState.location[1] < 16 and currentAttackerState.location[0] > 0
+						and currentAttackerState.location[0] < 13):
+					f.write("\nstate:" + str(currentAttackerState) + " in rooms.")
+
 				return
 			
 			action = mdpWrapper.latestPolicy().actions(currentAttackerState).keys()[0]
@@ -4463,27 +4496,35 @@ def step():
 			goal.publish(returnval)
 			print("Skipping Ahead cur_waypoint", cur_waypoint)
 			lastpublish = get_time()
-											
-			
+			# f.write("\nstate:" + str(currentAttackerState))
+			if (currentAttackerState.location[1] < 16 and currentAttackerState.location[0] > 0
+					and currentAttackerState.location[0] < 13):
+				f.write("\nstate:" + str(currentAttackerState) + " in rooms.")
+
+
 	else:
 		global irlfinish_time, useRecordedTraj, recordConvTraj, print_once
-		
-		# are we using recorded trajectories  
+
+		# are we using recorded trajectories
 		if useRecordedTraj == 0:
 
-				current_time = rospy.Time.now().to_sec()
-				# recording time for 70  states is approx. 150 s and waiting for GoTime 
-				# + compute policy + learning was 900s-1200 s 
-				# That time is reduced significantly. 
-				# With 70 input states, learning has reached saturation point
-				# learning time is approx. 600 s. Time limit for computing policy
-				# and go time is approx (900 - 150 - 600 =) 150 s to 450 s
-				 
-				global start_forGoTime, timeoutThresh
-				if (current_time - start_forGoTime > timeoutThresh):
+			current_time = rospy.Time.now().to_sec()
+			# recording time for 70  states is approx. 150 s and waiting for GoTime
+			# + compute policy + learning was 900s-1200 s
+			# That time is reduced significantly.
+			# With 70 input states, learning has reached saturation point
+			# learning time is approx. 600 s. Time limit for computing policy
+			# and go time is approx (900 - 150 - 600 =) 150 s to 450 s
+
+			global start_forGoTime, timeoutThresh
+			if (current_time - start_forGoTime > timeoutThresh):
+				if mdpWrapper.patPolicies is not None:
+					print("aborting because leanring didn't finish within threshold")
+					abortRun2()
+				else:
 					print("aborting because time period from-learning-to-computinggotime crossed thresh secs")
 					abortRun()
-					return
+				return
 
 # 			current_time = rospy.Time.now().to_sec()
 # 			if (current_time - irlfinish_time > 200):
@@ -4491,56 +4532,69 @@ def step():
 # 				abortRun()
 # 				return
 # 			else:
-				#print("\n current_time:"+str(current_time)+\
-				#	" irlfinish_time:"+str(irlfinish_time))
-				# same call for irl and computing attackerpolicy 
-				mdpWrapper.update()
-				# should we go now?
-				# check if we got a valid go time
-				
-				if mdpWrapper.goNow():
-					global irlfinish_time
-					current_time = rospy.Time.now().to_sec()
-					f = open("/tmp/timestamps","a")
-					f.write("time for computing go time:"+str(current_time - irlfinish_time))
-					f.write("\n Computing attacker's val function finished at "+str(rospy.Time.now().to_sec()))
-					f.close()
-					print("\n Computing attacker's val function finished at "+str(rospy.Time.now().to_sec()))
-					Attack()
-		#			import std_srvs.srv
-		#			try:
-		#				resetservice = rospy.ServiceProxy('move_base_node/clear_costmaps', std_srvs.srv.Empty)
-		#
-		#				resetservice()
-		#			except:
-		#				# ros can't be counted on for anything, at least we tried.
-		#				pass
-		
-					
-					# get the current state (to base the plan on), then give the first goal message
-					currentAttackerState = mdpWrapper.getStateFor(lastPositionBelief)
-					action = mdpWrapper.latestPolicy().actions(currentAttackerState).keys()[0]   
-					newMdpState = action.apply(currentAttackerState)
+			#print("\n current_time:"+str(current_time)+\
+			#	" irlfinish_time:"+str(irlfinish_time))
+			# same call for irl and computing attackerpolicy
+
+			# perceive and store states
+			if BatchIRLflag == True and min(patrtraj_len) <= min_BatchIRL_InputLen:
+				mdpWrapper.addStates()
+			if BatchIRLflag == False and sessionNumber * min_IncIRL_InputLen <= min_BatchIRL_InputLen:
+				mdpWrapper.addStates()
+
+			mdpWrapper.update()
+			# should we go now?
+			# check if we got a valid go time
+
+			if mdpWrapper.goNow():
+				global irlfinish_time
+				current_time = rospy.Time.now().to_sec()
+				f = open("/tmp/timestamps","a")
+				f.write("time for computing go time:"+str(current_time - irlfinish_time))
+				f.write("\n Computing attacker's val function finished at "+str(rospy.Time.now().to_sec()))
+				f.close()
+
+				global start_forGoTime
+				f = open("/tmp/studyresults2", "a")
+				f.write("\nTMRG:\n" + str(current_time - start_forGoTime))
+				f.close()
+
+				print("\n Computing attacker's val function finished at "+str(current_time - start_forGoTime))
+				Attack()
+	#			import std_srvs.srv
+	#			try:
+	#				resetservice = rospy.ServiceProxy('move_base_node/clear_costmaps', std_srvs.srv.Empty)
+	#
+	#				resetservice()
+	#			except:
+	#				# ros can't be counted on for anything, at least we tried.
+	#				pass
+
+
+				# get the current state (to base the plan on), then give the first goal message
+				currentAttackerState = mdpWrapper.getStateFor(lastPositionBelief)
+				action = mdpWrapper.latestPolicy().actions(currentAttackerState).keys()[0]
+				newMdpState = action.apply(currentAttackerState)
+				if not mdpWrapper.model.is_legal(newMdpState):
+					newMdpState.location = currentAttackerState.location
+					newMdpState.orientation = currentAttackerState.orientation
 					if not mdpWrapper.model.is_legal(newMdpState):
-						newMdpState.location = currentAttackerState.location
-						newMdpState.orientation = currentAttackerState.orientation
-						if not mdpWrapper.model.is_legal(newMdpState):
-							newMdpState.time = currentAttackerState.time
-		
-					newWayPoint = mdpWrapper.getPositionFor(newMdpState)
-					print("cur_waypoint", newWayPoint, " curstate:", currentAttackerState, "newstate", newMdpState)
-					currentAttackerState = newMdpState
-					cur_waypoint = newWayPoint
-		
-					returnval = PoseStamped()
-					returnval.pose.position = Point(cur_waypoint[0], cur_waypoint[1], 0)
-		
-					q = tf.transformations.quaternion_from_euler(0,0,cur_waypoint[2])   
-					returnval.pose.orientation = Quaternion(q[0],q[1],q[2],q[3])
-		
-					returnval.header.frame_id = "/map"
-					goal.publish(returnval)
-					lastpublish = get_time()
+						newMdpState.time = currentAttackerState.time
+
+				newWayPoint = mdpWrapper.getPositionFor(newMdpState)
+				print("cur_waypoint", newWayPoint, " curstate:", currentAttackerState, "newstate", newMdpState)
+				currentAttackerState = newMdpState
+				cur_waypoint = newWayPoint
+
+				returnval = PoseStamped()
+				returnval.pose.position = Point(cur_waypoint[0], cur_waypoint[1], 0)
+
+				q = tf.transformations.quaternion_from_euler(0,0,cur_waypoint[2])
+				returnval.pose.orientation = Quaternion(q[0],q[1],q[2],q[3])
+
+				returnval.header.frame_id = "/map"
+				goal.publish(returnval)
+				lastpublish = get_time()
 		else:
 # 			print("\n recordConvTraj, (not mdpWrapper.recd_convertedstates[0]\
 # 				and not mdpWrapper.recd_convertedstates[1]), patPolicies \n")
@@ -4551,7 +4605,12 @@ def step():
 # 			print(mdpWrapper.patPolicies)
 			
 			global recordConvTraj, desiredRecordingLen, print_once
-			
+
+
+			if recordConvTraj == 1 and (max(patrtraj_len) < desiredRecordingLen) :
+				# perceive and store states
+				mdpWrapper.addStates()
+
 			if recordConvTraj == 1 and (max(patrtraj_len) >= desiredRecordingLen):
 				# print("calling recordStateSequencetoFile()")
 				
@@ -4608,6 +4667,10 @@ def step():
 				# Are analyzing only learning step or the complete attack
 				global analyzeAttack
 				if analyzeAttack==0:
+
+					global lineFeatureExpec
+					print("\nlineFeatureExpec:\n"+lineFeatureExpec)
+
 					print(" learning using recorded traj converged in step() ")
 					f = open("/tmp/studyresults2","a") 
 					f.write("\nlearning using recorded traj converged in step() ")
@@ -4633,6 +4696,7 @@ def step():
 					# check if we got a valid go time
 					
 					if mdpWrapper.goNow():
+						print "mdpWrapper.goNow()"
 						global irlfinish_time
 						current_time = rospy.Time.now().to_sec()
 						f = open("/tmp/timestamps","a")
@@ -4678,6 +4742,8 @@ def step():
 	
 					return
 			else:
+				global patrtraj_len
+				# print "max(patrtraj_len):"+str(max(patrtraj_len))
 				if print_once == 1:
 					print("None of conditions in step method satisfied")
 					print_once = 0
@@ -4710,23 +4776,26 @@ def boydrightisvisible(state, visiblenum):
 	if visiblenum == 14:
 		return True
 
-
 	if visiblenum == 1:
-		# 4 states visible
+		# 4 locations visible
 		if state.location[0] == 0 and state.location[1] >= 14:
 			return True
 		if state.location[0] == 1 and state.location[1] == 16:
 			return True
 		return False
-		
+
 	if visiblenum == 2:
-		# 7 states visible
-		if state.location[0] == 0 and state.location[1] >= 13:
+		# 8 locations visible
+		# if state.location[0] == 0 and state.location[1] >= 13:
+		# 	return True
+		# if state.location[0] <= 3 and state.location[1] == 16:
+		# 	return True
+		if state.location[0] == 0 and state.location[1] >= 10:
 			return True
-		if state.location[0] <= 3 and state.location[1] == 16:
+		if state.location[0] == 1 and state.location[1] == 16:
 			return True
 		return False
-		
+
 	if visiblenum == 4:
 		# 15 states visible
 		
@@ -4771,8 +4840,7 @@ def boydrightisvisible(state, visiblenum):
 		return False
 		
 	return False
-		
-		
+
 def boydisvisible(state, visiblenum):
 	
 	if visiblenum == 14:
@@ -4805,14 +4873,41 @@ def boydisvisible(state, visiblenum):
 			return True
 
 	return False
-	
+
+
+def boydright2isvisible(state, visiblenum):
+	if visiblenum == 14: # all 30 locations
+		return True
+
+	if visiblenum == 4: # 30% of 30 = 9 locations
+		if (state.location[0] <= 9 and state.location[0] >= 1 and state.location[1] == 10):
+			return True
+
+	if visiblenum == 6: # 13 locations
+		if (state.location[0] <= 9 and state.location[0] >= 1 and state.location[1] == 10):
+			return True
+		if (state.location[0] == 1 and state.location[1] >= 6 and state.location[1] <= 10):
+			return True
+
+	if visiblenum == 10: # 21 locations
+		if (state.location[0] <= 14 and state.location[0] >= 1 and state.location[1] == 10):
+			return True
+		if (state.location[0] == 1 and state.location[1] >= 6 and state.location[1] <= 9):
+			return True
+		if (state.location[0] == 14 and state.location[1] >= 11 and state.location[1] <= 13):
+			return True
+
+	return False
+
 
 def isvisible(state, visiblenum):
 	global mapToUse
 	
 	if (mapToUse == "boyd2"):
 		return boydisvisible(state, visiblenum)
-	
+	if (mapToUse == "boydright2"):
+		return boydright2isvisible(state, visiblenum)
+
 	return boydrightisvisible(state, visiblenum)
 
 	
@@ -4838,12 +4933,12 @@ def handle_patroller0(req):
 		angles = (0,0, 2 * math.pi + angles[2])
 
 	pState = patrollerOGMap.toState((pos.x, pos.y, angles[2]), False)
-		
+
 	observable = isvisible(pState, mdpWrapper.observableStateLow)
-	mdpWrapper.addPerceptFull(0, (pos.x, pos.y, angles[2]), get_time())
-	
+
 	if observable:
 		mdpWrapper.addPercept(0, (pos.x, pos.y, angles[2]), get_time())
+		mdpWrapper.addPerceptFull(0, (pos.x, pos.y, angles[2]), get_time())
 		patroller0LastSeenAt = rospy.Time.now().to_sec()
 		''' print(last_observedtime) 
 		if (rospy.get_time()-last_observedtime > 2.0):
@@ -4876,10 +4971,10 @@ def handle_patroller1(req):
 
 	pState = patrollerOGMap.toState((pos.x, pos.y, angles[2]), False)
 	observable = isvisible(pState, mdpWrapper.observableStateLow)
-	mdpWrapper.addPerceptFull(1, (pos.x, pos.y, angles[2]), get_time())
-	
+
 	if observable:
 		mdpWrapper.addPercept(1, (pos.x, pos.y, angles[2]), get_time())
+		mdpWrapper.addPerceptFull(1, (pos.x, pos.y, angles[2]), get_time())
 		patroller1LastSeenAt = rospy.Time.now().to_sec()
 
 
@@ -4891,6 +4986,22 @@ def handle_attacker(req):
 #	tmp = lastActualPosition.x
 #	lastActualPosition.x = - lastActualPosition.y
 #	lastActualPosition.y = tmp
+
+def handle_attacker_status(req):
+
+	data = req.data
+	if data == "reachgoal":
+		global goBacktoStart
+		goBacktoStart = 1
+	return
+
+def handle_status(req):
+
+	data = req.data
+	if data == "spotattacker":
+		global goBacktoStart
+		goBacktoStart = 1
+	return
 
 if __name__ == "__main__":
 	#  Need to know:
@@ -4908,11 +5019,23 @@ if __name__ == "__main__":
 	global minGapBwDemos, patroller0LastSeenAt, patroller1LastSeenAt, \
 	BatchIRLflag, lastQ, min_IncIRL_InputLen, irlfinish_time, \
 	patrtraj_len, min_BatchIRL_InputLen, startat, glbltrajstarttime, \
-	startat_attpolicyI2RL, cum_learntime, lineFeatureExpecfull, \
+	startat_attpolicyI2RL, glbltrajstarttime_attpolicyI2RL, cum_learntime, lineFeatureExpecfull, \
 	desiredRecordingLen, useRecordedTraj, recordConvTraj, recordonce, print_once,\
-	found_muE, exact_mu_E, analyzeAttack, start_forGoTime, \
-	timeoutThresh, reward_dim, useRegions
-	
+	found_muE, exact_mu_E, analyzeAttack, start_forGoTime,  \
+	timeoutThresh, reward_dim, useRegions, sessionStart, \
+	sessionFinish, statesfromstarttogoal, goBacktoStart, recordConvTraj, \
+	startat, glbltrajstarttime, currentile, lastile
+
+	time.sleep(1)
+
+	# forward + 1 turn + 7 forwards
+	statesfromstarttogoal = 1 + 1 + 7
+	goBacktoStart=0
+
+	sessionStart = False
+	sessionFinish = True
+	global lastcalltimeaddstates
+	lastcalltimeaddstates=0
 	desiredRecordingLen = 400
 	useRecordedTraj = 1
 	recordConvTraj = 0
@@ -4925,14 +5048,19 @@ if __name__ == "__main__":
 	lastQ = "" #final likelihood value achieved
 	irlfinish_time = sys.maxint
 	patrtraj_len = [1,1]
-	startat_attpolicyI2RL = rospy.get_time()
-	glbltrajstarttime = fromRospyTime(get_time())
-	startat = rospy.get_time()
 	print_once = 1
 	lineFeatureExpecfull = ""
 	start_forGoTime = rospy.Time.now().to_sec()
 	useRegions=0
 	
+	startat = rospy.get_time()
+	startat_attpolicyI2RL = rospy.get_time()
+	glbltrajstarttime = fromRospyTime(get_time()) # get_time() needs startat
+	glbltrajstarttime_attpolicyI2RL = fromRospyTime(get_time())
+
+	currentile=100.0000
+	lastile=100.0000
+
 	print("startat ", startat)
 
 	pub = rospy.Publisher("/study_attacker_status", String, latch=True)
@@ -4954,6 +5082,12 @@ if __name__ == "__main__":
 		patrollerOGMap = OGMap(*mapparams)
 		
 		mapparams = boyd2MapParams(True) # assess only LBA for large grid, not success rate
+		attackerOGMap = OGMap(*mapparams)
+	elif mapToUse == "boydright2":
+		mapparams = boydright2MapParams(False)
+		patrollerOGMap = OGMap(*mapparams)
+
+		mapparams = boydright2MapParams(True)  # assess only LBA for large grid, not success rate
 		attackerOGMap = OGMap(*mapparams)
 	else:
 		mapparams = boydrightMapParams(False)
@@ -5051,6 +5185,8 @@ if __name__ == "__main__":
 		mdpWrapper = WrapperLMEI2RL(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)		
 	elif policy == "lmeirlblockedgibbs":
 		mdpWrapper = WrapperLMEIRLBLOCKEDGIBBS(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)		
+	elif (policy == "lmeirlblockedgibbs2" or policy == "lmei2rlblockedgibbs2"):
+		mdpWrapper = WrapperLMEIRLBLOCKEDGIBBS2(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)
 	elif policy == "lmeirlblockedgibbstimestep":
 		mdpWrapper = WrapperLMEIRLBLOCKEDGIBBSTIMESTEP(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)		
 	elif policy == "lmeirlblockedgibbstimestepsa":
@@ -5061,14 +5197,15 @@ if __name__ == "__main__":
 		mdpWrapper = WrapperPerfect(mapToUse, startPos, goalPos, goalPos2, reward, penalty, detectDistance, predictTime, observableStates, pfail, add_delay, eq)
 
 	startState = mdpWrapper.getStartState()
-	print(startPos, " Start is", startState)
+	print(startPos, " Start state is", startState)
 
 	if mapToUse != "largeGrid":
 		rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, handle_pose)
 		rospy.Subscriber("/robot_0/base_pose_ground_truth", Odometry, handle_patroller0)
 		rospy.Subscriber("/robot_1/base_pose_ground_truth", Odometry, handle_patroller1)
 		rospy.Subscriber("base_pose_ground_truth", Odometry, handle_attacker)
-
+		rospy.Subscriber("/study_status", String, handle_status)
+		rospy.Subscriber("/study_attacker_status", String, handle_attacker_status)
 
 	r = rospy.Rate(20) # 10hz 30
 	count = 0
@@ -5076,7 +5213,7 @@ if __name__ == "__main__":
 		
 		step()
 		if mapToUse != "largeGrid":
-			if state == "w" and count == 2000:
+			if state == "w" and count == 200:
 				# initialize 
 				cur_waypoint = mdpWrapper.getPositionFor(startState)
 				returnval = PoseStamped()
@@ -5089,70 +5226,7 @@ if __name__ == "__main__":
 				goal.publish(returnval)
 	
 			count += 1
-			r.sleep()
+			time.sleep(0.25)
 		else:
  			time.sleep(1)
 
-	'''
-	ONLY LBA:
-	Storing converted percepts (x,y,angle,time) and using them for both algorithms
-	 as input. This must work.    
-	I need modified addpercept function for class to save self.recd_convertedstates list of lists.
-	record every additional state detected by repeated conversion
-	Disable call to update() by using a flag useRecordedTraj == 1.
-	Create new flag recordConvTraj that system is only recording, and use it to 
-	store converted trajectory in toupload/
-	recd_convertedstates.log, but abort run before starting learning.
-	
-	Problem: recording of state locations is way slower than conversion to states 
-	Solution: just keep recording percepts till length is states-length achieved.
-	after stopping percept addition convert to self.recd_convertedstates
-	DONE
-	Turning recordConvTraj off makes learning mode on. If recordConvTraj==0, 
-	useRecordedTraj==1, batchirl true or number of sessions are not as desired,
-	learning starts by reading all the contents of file.  
-	DONE
-	
-	Instead of using whole list of states, use the list required in session. 
-	For second session onwards, we start where we left and repeat 
-	process with patrtrajrecd_lens reset. variable for size per session. 
-
-	As converted trajectory is used for separating them acc to sessions
-	and existing code irlsolve uses percepts as input, I need a separate
-	function irlsolve_recd_convertedtraj that  accept converted traj as input
-	and a separate call in step function to a new function updateWithAlgRecTraj
-	that stops after storing patpolicy.log and computes LBA
-	updateWithAlgRecTraj calls irlsolve_recdStates
-	
-	As soon as learning is finished, LBA is computed	using patpolicy.log and run is aborted.
-	
-	start learning process independent of actual  patroller positions (this is 
-	only option because we can't start patrollers from last point if 
-	it's not observable). What if segfault happens? We repeat 
-	session with same input converted traj. 
-	
-	As focus is LBA rather than success rate, patroller can start anywhere
-	for now. 
-	
-	How is patroller's actual policy recorded for computing accuracy? already there. 
-	Is validation policy separate for both batch and incremental irl? nope. 
-	
-	- AFTER LBA EXPERIMENTS. What happens after learning is secondary 
-	focus after computing LBA , because attacking has less chances of 
-	being improved in I2RL!? 
-	Use separate config files for each patroller and only one starting 
-	point. Change patrolstudysimple accordingly. 
-	attacker policy needs current "final timesteps" and positions of 
-	patrollers, and it will always use self.traj 	
-	These timesteps need not be same or higher than those for endings 
-	of recd_convertedtraj, because purpose of irl using recd_convertedtraj is just 
-	computing weights and once weights are computed,  attackerpolicy can 
-	computed from starting at any point of time. There is no need to 
-	start patrollers from same point where recording ended. 
-	Therefore, reaching desired size of patrtrajrecd_lens, start learning 
-	process at same time  independent of actual  patroller positions (this
-	is only option because we can't start patrollers from last point if 
-	it's not observable). What if segfault happens? We have to repeat 
-	session with same input. 
-
-	'''

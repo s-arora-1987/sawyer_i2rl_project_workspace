@@ -1,0 +1,13 @@
+					
+# Most likely action taken in an old state given a new one
+					highestAction = None
+					highestProb = -1
+					for action in actions:
+						possibleStates = mdpWrapper.patrollerModel().T(lastPatroller1State, action)
+						if (newState in possibleStates):
+							if possibleStates[newState] > highestProb:
+								highestAction = action
+								highestProb = possibleStates[newState]
+	
+					# now we've got our percept
+					if highestAction is not None:

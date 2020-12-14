@@ -1,0 +1,12 @@
+[mdp1]
+hallway=10
+sides=4
+observeLow=7
+observeHigh=8
+name=patrol
+model=patrol.model.PatrolModel
+p_fail=0.05
+params=%(hallway)s;%(sides)s;%(observeLow)s;%(observeHigh)s
+gamma=0.999
+reward=patrol.reward.PatrolRewardIRL2
+reward_params=18;%(observeLow)s;%(observeHigh)s
