@@ -1,0 +1,2631 @@
+boyd2
+DPMMEIRL
+3
+3
+0.0001
+0.1
+[0,1,2]:TurnLeftAction:1;
+[0,1,3]:MoveForwardAction:1;
+[1,1,3]:MoveForwardAction:1;
+[2,1,3]:MoveForwardAction:1;
+[3,1,3]:MoveForwardAction:1;
+[4,1,3]:MoveForwardAction:1;
+[5,1,3]:MoveForwardAction:1;
+[6,1,3]:MoveForwardAction:1;
+[6,1,3]:MoveForwardAction:1;
+[7,1,3]:MoveForwardAction:1;
+[8,1,3]:MoveForwardAction:1;
+[9,1,3]:MoveForwardAction:1;
+[10,1,3]:MoveForwardAction:1;
+[11,1,3]:MoveForwardAction:1;
+[11,1,3]:MoveForwardAction:1;
+[11,1,2]:TurnLeftAction:1;
+[11,1,3]:MoveForwardAction:1;
+[12,1,3]:MoveForwardAction:1;
+[13,1,3]:MoveForwardAction:1;
+[14,1,3]:MoveForwardAction:1;
+[15,1,3]:MoveForwardAction:1;
+[16,1,3]:TurnLeftAction:1;
+[16,1,0]:MoveForwardAction:1;
+[16,2,0]:MoveForwardAction:1;
+[16,3,0]:MoveForwardAction:1;
+[16,4,0]:MoveForwardAction:1;
+[16,4,1]:TurnRightAction:1;
+[16,4,0]:MoveForwardAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+ENDTRAJ
+[16,4,3]:TurnLeftAction:1;
+[16,4,0]:MoveForwardAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+ENDTRAJ
+[0,2,3]:TurnRightAction:1;
+[0,2,2]:MoveForwardAction:1;
+[0,1,2]:TurnLeftAction:1;
+[0,1,3]:MoveForwardAction:1;
+[1,1,3]:MoveForwardAction:1;
+[2,1,3]:MoveForwardAction:1;
+[3,1,3]:MoveForwardAction:1;
+[4,1,3]:MoveForwardAction:1;
+[5,1,3]:MoveForwardAction:1;
+[6,1,3]:MoveForwardAction:1;
+[7,1,3]:MoveForwardAction:1;
+[8,1,3]:MoveForwardAction:1;
+[9,1,3]:MoveForwardAction:1;
+[9,1,3]:MoveForwardAction:1;
+[10,1,3]:MoveForwardAction:1;
+[11,1,3]:MoveForwardAction:1;
+[12,1,3]:MoveForwardAction:1;
+[12,1,3]:MoveForwardAction:1;
+[13,1,3]:MoveForwardAction:1;
+[14,1,3]:MoveForwardAction:1;
+[15,1,3]:MoveForwardAction:1;
+[15,1,0]:TurnRightAction:1;
+[15,1,3]:MoveForwardAction:1;
+[16,1,3]:TurnLeftAction:1;
+[16,1,0]:MoveForwardAction:1;
+[16,2,0]:MoveForwardAction:1;
+[16,2,0]:MoveForwardAction:1;
+[16,3,0]:MoveForwardAction:1;
+[16,4,0]:MoveForwardAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+ENDTRAJ
+[13,1,0]:TurnRightAction:1;
+[13,1,3]:MoveForwardAction:1;
+[14,1,3]:MoveForwardAction:1;
+[15,1,3]:MoveForwardAction:1;
+[15,1,3]:MoveForwardAction:1;
+[16,1,3]:TurnLeftAction:1;
+[16,1,0]:MoveForwardAction:1;
+[16,2,0]:MoveForwardAction:1;
+[16,3,0]:MoveForwardAction:1;
+[16,4,0]:MoveForwardAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,5,2]:TurnLeftAction:1;
+[16,5,3]:TurnLeftAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+ENDTRAJ
+[16,6,0]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+ENDTRAJ
+[0,8,1]:TurnLeftAction:1;
+[0,8,2]:MoveForwardAction:1;
+[0,7,2]:MoveForwardAction:1;
+[0,6,2]:MoveForwardAction:1;
+[0,5,2]:MoveForwardAction:1;
+[0,4,2]:MoveForwardAction:1;
+[0,3,2]:MoveForwardAction:1;
+[0,2,2]:MoveForwardAction:1;
+[0,1,2]:TurnLeftAction:1;
+[0,1,3]:MoveForwardAction:1;
+[1,1,3]:MoveForwardAction:1;
+[2,1,3]:MoveForwardAction:1;
+[3,1,3]:MoveForwardAction:1;
+[4,1,3]:MoveForwardAction:1;
+[5,1,3]:MoveForwardAction:1;
+[6,1,3]:MoveForwardAction:1;
+[7,1,3]:MoveForwardAction:1;
+[8,1,3]:MoveForwardAction:1;
+[9,1,3]:MoveForwardAction:1;
+[10,1,3]:MoveForwardAction:1;
+[11,1,3]:MoveForwardAction:1;
+[12,1,3]:MoveForwardAction:1;
+[13,1,3]:MoveForwardAction:1;
+[14,1,3]:MoveForwardAction:1;
+[15,1,3]:MoveForwardAction:1;
+[16,1,3]:TurnLeftAction:1;
+[16,1,0]:MoveForwardAction:1;
+[16,2,0]:MoveForwardAction:1;
+[16,3,0]:MoveForwardAction:1;
+[16,4,0]:MoveForwardAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+ENDTRAJ
+[11,1,3]:MoveForwardAction:1;
+[12,1,3]:MoveForwardAction:1;
+[13,1,3]:MoveForwardAction:1;
+[14,1,3]:MoveForwardAction:1;
+[15,1,3]:MoveForwardAction:1;
+[16,1,3]:TurnLeftAction:1;
+[16,1,0]:MoveForwardAction:1;
+[16,2,0]:MoveForwardAction:1;
+[16,3,0]:MoveForwardAction:1;
+[16,4,0]:MoveForwardAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+ENDTRAJ
+[8,1,2]:TurnLeftAction:1;
+[8,1,3]:MoveForwardAction:1;
+[9,1,3]:MoveForwardAction:1;
+[10,1,3]:MoveForwardAction:1;
+[11,1,3]:MoveForwardAction:1;
+[12,1,3]:MoveForwardAction:1;
+[13,1,3]:MoveForwardAction:1;
+[14,1,3]:MoveForwardAction:1;
+[15,1,3]:MoveForwardAction:1;
+[16,1,3]:TurnLeftAction:1;
+[16,1,0]:MoveForwardAction:1;
+[16,2,0]:MoveForwardAction:1;
+[16,3,0]:MoveForwardAction:1;
+[16,4,0]:MoveForwardAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+ENDTRAJ
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+ENDTRAJ
+[3,1,3]:MoveForwardAction:1;
+[4,1,3]:MoveForwardAction:1;
+[5,1,3]:MoveForwardAction:1;
+[6,1,3]:MoveForwardAction:1;
+[7,1,3]:MoveForwardAction:1;
+[8,1,3]:MoveForwardAction:1;
+[9,1,3]:MoveForwardAction:1;
+[10,1,3]:MoveForwardAction:1;
+[11,1,3]:MoveForwardAction:1;
+[12,1,3]:MoveForwardAction:1;
+[12,1,2]:TurnLeftAction:1;
+[12,1,3]:MoveForwardAction:1;
+[13,1,3]:MoveForwardAction:1;
+[14,1,3]:MoveForwardAction:1;
+[15,1,3]:MoveForwardAction:1;
+[16,1,3]:TurnLeftAction:1;
+[16,1,0]:MoveForwardAction:1;
+[16,2,0]:MoveForwardAction:1;
+[16,3,0]:MoveForwardAction:1;
+[16,4,0]:MoveForwardAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,5,2]:TurnLeftAction:1;
+[16,5,3]:TurnLeftAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+ENDTRAJ
+[0,7,1]:TurnLeftAction:1;
+[0,7,2]:MoveForwardAction:1;
+[0,6,2]:MoveForwardAction:1;
+[0,5,2]:MoveForwardAction:1;
+[0,4,2]:MoveForwardAction:1;
+[0,3,2]:MoveForwardAction:1;
+[0,2,2]:MoveForwardAction:1;
+[0,1,2]:TurnLeftAction:1;
+[0,1,3]:MoveForwardAction:1;
+[1,1,3]:MoveForwardAction:1;
+[1,1,0]:TurnRightAction:1;
+[1,1,3]:MoveForwardAction:1;
+[2,1,3]:MoveForwardAction:1;
+[3,1,3]:MoveForwardAction:1;
+[4,1,3]:MoveForwardAction:1;
+[5,1,3]:MoveForwardAction:1;
+[6,1,3]:MoveForwardAction:1;
+[7,1,3]:MoveForwardAction:1;
+[8,1,3]:MoveForwardAction:1;
+[9,1,3]:MoveForwardAction:1;
+[10,1,3]:MoveForwardAction:1;
+[11,1,3]:MoveForwardAction:1;
+[12,1,3]:MoveForwardAction:1;
+[13,1,3]:MoveForwardAction:1;
+[14,1,3]:MoveForwardAction:1;
+[15,1,3]:MoveForwardAction:1;
+[16,1,3]:TurnLeftAction:1;
+[16,1,0]:MoveForwardAction:1;
+[16,2,0]:MoveForwardAction:1;
+[16,3,0]:MoveForwardAction:1;
+[16,4,0]:MoveForwardAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+ENDTRAJ
+[16,1,0]:MoveForwardAction:1;
+[16,2,0]:MoveForwardAction:1;
+[16,3,0]:MoveForwardAction:1;
+[16,4,0]:MoveForwardAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+ENDTRAJ
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+ENDTRAJ
+[4,1,3]:MoveForwardAction:1;
+[5,1,3]:MoveForwardAction:1;
+[6,1,3]:MoveForwardAction:1;
+[7,1,3]:MoveForwardAction:1;
+[8,1,3]:MoveForwardAction:1;
+[9,1,3]:MoveForwardAction:1;
+[10,1,3]:MoveForwardAction:1;
+[11,1,3]:MoveForwardAction:1;
+[12,1,3]:MoveForwardAction:1;
+[13,1,3]:MoveForwardAction:1;
+[14,1,3]:MoveForwardAction:1;
+[15,1,3]:MoveForwardAction:1;
+[16,1,3]:TurnLeftAction:1;
+[16,1,0]:MoveForwardAction:1;
+[16,1,0]:MoveForwardAction:1;
+[16,1,0]:MoveForwardAction:1;
+[16,2,0]:MoveForwardAction:1;
+[16,3,0]:MoveForwardAction:1;
+[16,4,0]:MoveForwardAction:1;
+[16,5,0]:MoveForwardAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,6,1]:TurnLeftAction:1;
+[16,6,2]:TurnLeftAction:1;
+[16,6,3]:TurnLeftAction:1;
+[16,6,0]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+ENDTRAJ
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,8,3]:TurnLeftAction:1;
+[16,8,0]:TurnLeftAction:1;
+[16,8,1]:TurnLeftAction:1;
+[16,8,2]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+[16,7,1]:TurnLeftAction:1;
+[16,7,2]:TurnLeftAction:1;
+[16,7,3]:TurnLeftAction:1;
+[16,7,0]:TurnLeftAction:1;
+ENDTRAJ
+ENDDEMO
+[0, 1, 0]:MoveForwardAction:[0, 1, 0]:0
+[0, 1, 0]:MoveForwardAction:[0, 2, 0]:1
+[0, 1, 0]:TurnLeftAction:[0, 1, 0]:0
+[0, 1, 0]:TurnLeftAction:[0, 1, 1]:1
+[0, 1, 0]:TurnRightAction:[0, 1, 3]:1
+[0, 1, 0]:TurnRightAction:[0, 1, 0]:0
+[0, 1, 0]:StopAction:[0, 1, 0]:1
+[0, 1, 1]:MoveForwardAction:[0, 1, 1]:1
+[0, 1, 1]:TurnLeftAction:[0, 1, 1]:0
+[0, 1, 1]:TurnLeftAction:[0, 1, 2]:1
+[0, 1, 1]:TurnRightAction:[0, 1, 0]:1
+[0, 1, 1]:TurnRightAction:[0, 1, 1]:0
+[0, 1, 1]:StopAction:[0, 1, 1]:1
+[0, 1, 2]:MoveForwardAction:[0, 1, 2]:1
+[0, 1, 2]:TurnLeftAction:[0, 1, 3]:1
+[0, 1, 2]:TurnLeftAction:[0, 1, 2]:0
+[0, 1, 2]:TurnRightAction:[0, 1, 1]:1
+[0, 1, 2]:TurnRightAction:[0, 1, 2]:0
+[0, 1, 2]:StopAction:[0, 1, 2]:1
+[0, 1, 3]:MoveForwardAction:[0, 1, 3]:0
+[0, 1, 3]:MoveForwardAction:[1, 1, 3]:1
+[0, 1, 3]:TurnLeftAction:[0, 1, 3]:0
+[0, 1, 3]:TurnLeftAction:[0, 1, 0]:1
+[0, 1, 3]:TurnRightAction:[0, 1, 3]:0
+[0, 1, 3]:TurnRightAction:[0, 1, 2]:1
+[0, 1, 3]:StopAction:[0, 1, 3]:1
+[0, 2, 0]:MoveForwardAction:[0, 2, 0]:0
+[0, 2, 0]:MoveForwardAction:[0, 3, 0]:1
+[0, 2, 0]:TurnLeftAction:[0, 2, 0]:0
+[0, 2, 0]:TurnLeftAction:[0, 2, 1]:1
+[0, 2, 0]:TurnRightAction:[0, 2, 3]:1
+[0, 2, 0]:TurnRightAction:[0, 2, 0]:0
+[0, 2, 0]:StopAction:[0, 2, 0]:1
+[0, 2, 1]:MoveForwardAction:[0, 2, 1]:1
+[0, 2, 1]:TurnLeftAction:[0, 2, 2]:1
+[0, 2, 1]:TurnLeftAction:[0, 2, 1]:0
+[0, 2, 1]:TurnRightAction:[0, 2, 0]:1
+[0, 2, 1]:TurnRightAction:[0, 2, 1]:0
+[0, 2, 1]:StopAction:[0, 2, 1]:1
+[0, 2, 2]:MoveForwardAction:[0, 2, 2]:0
+[0, 2, 2]:MoveForwardAction:[0, 1, 2]:1
+[0, 2, 2]:TurnLeftAction:[0, 2, 2]:0
+[0, 2, 2]:TurnLeftAction:[0, 2, 3]:1
+[0, 2, 2]:TurnRightAction:[0, 2, 2]:0
+[0, 2, 2]:TurnRightAction:[0, 2, 1]:1
+[0, 2, 2]:StopAction:[0, 2, 2]:1
+[0, 2, 3]:MoveForwardAction:[0, 2, 3]:1
+[0, 2, 3]:TurnLeftAction:[0, 2, 3]:0
+[0, 2, 3]:TurnLeftAction:[0, 2, 0]:1
+[0, 2, 3]:TurnRightAction:[0, 2, 2]:1
+[0, 2, 3]:TurnRightAction:[0, 2, 3]:0
+[0, 2, 3]:StopAction:[0, 2, 3]:1
+[0, 3, 0]:MoveForwardAction:[0, 4, 0]:1
+[0, 3, 0]:MoveForwardAction:[0, 3, 0]:0
+[0, 3, 0]:TurnLeftAction:[0, 3, 1]:1
+[0, 3, 0]:TurnLeftAction:[0, 3, 0]:0
+[0, 3, 0]:TurnRightAction:[0, 3, 3]:1
+[0, 3, 0]:TurnRightAction:[0, 3, 0]:0
+[0, 3, 0]:StopAction:[0, 3, 0]:1
+[0, 3, 1]:MoveForwardAction:[0, 3, 1]:1
+[0, 3, 1]:TurnLeftAction:[0, 3, 1]:0
+[0, 3, 1]:TurnLeftAction:[0, 3, 2]:1
+[0, 3, 1]:TurnRightAction:[0, 3, 1]:0
+[0, 3, 1]:TurnRightAction:[0, 3, 0]:1
+[0, 3, 1]:StopAction:[0, 3, 1]:1
+[0, 3, 2]:MoveForwardAction:[0, 2, 2]:1
+[0, 3, 2]:MoveForwardAction:[0, 3, 2]:0
+[0, 3, 2]:TurnLeftAction:[0, 3, 2]:0
+[0, 3, 2]:TurnLeftAction:[0, 3, 3]:1
+[0, 3, 2]:TurnRightAction:[0, 3, 1]:1
+[0, 3, 2]:TurnRightAction:[0, 3, 2]:0
+[0, 3, 2]:StopAction:[0, 3, 2]:1
+[0, 3, 3]:MoveForwardAction:[0, 3, 3]:1
+[0, 3, 3]:TurnLeftAction:[0, 3, 3]:0
+[0, 3, 3]:TurnLeftAction:[0, 3, 0]:1
+[0, 3, 3]:TurnRightAction:[0, 3, 2]:1
+[0, 3, 3]:TurnRightAction:[0, 3, 3]:0
+[0, 3, 3]:StopAction:[0, 3, 3]:1
+[0, 4, 0]:MoveForwardAction:[0, 4, 0]:0
+[0, 4, 0]:MoveForwardAction:[0, 5, 0]:1
+[0, 4, 0]:TurnLeftAction:[0, 4, 0]:0
+[0, 4, 0]:TurnLeftAction:[0, 4, 1]:1
+[0, 4, 0]:TurnRightAction:[0, 4, 0]:0
+[0, 4, 0]:TurnRightAction:[0, 4, 3]:1
+[0, 4, 0]:StopAction:[0, 4, 0]:1
+[0, 4, 1]:MoveForwardAction:[0, 4, 1]:1
+[0, 4, 1]:TurnLeftAction:[0, 4, 1]:0
+[0, 4, 1]:TurnLeftAction:[0, 4, 2]:1
+[0, 4, 1]:TurnRightAction:[0, 4, 0]:1
+[0, 4, 1]:TurnRightAction:[0, 4, 1]:0
+[0, 4, 1]:StopAction:[0, 4, 1]:1
+[0, 4, 2]:MoveForwardAction:[0, 3, 2]:1
+[0, 4, 2]:MoveForwardAction:[0, 4, 2]:0
+[0, 4, 2]:TurnLeftAction:[0, 4, 2]:0
+[0, 4, 2]:TurnLeftAction:[0, 4, 3]:1
+[0, 4, 2]:TurnRightAction:[0, 4, 1]:1
+[0, 4, 2]:TurnRightAction:[0, 4, 2]:0
+[0, 4, 2]:StopAction:[0, 4, 2]:1
+[0, 4, 3]:MoveForwardAction:[0, 4, 3]:1
+[0, 4, 3]:TurnLeftAction:[0, 4, 0]:1
+[0, 4, 3]:TurnLeftAction:[0, 4, 3]:0
+[0, 4, 3]:TurnRightAction:[0, 4, 2]:1
+[0, 4, 3]:TurnRightAction:[0, 4, 3]:0
+[0, 4, 3]:StopAction:[0, 4, 3]:1
+[0, 5, 0]:MoveForwardAction:[0, 5, 0]:0
+[0, 5, 0]:MoveForwardAction:[0, 6, 0]:1
+[0, 5, 0]:TurnLeftAction:[0, 5, 0]:0
+[0, 5, 0]:TurnLeftAction:[0, 5, 1]:1
+[0, 5, 0]:TurnRightAction:[0, 5, 3]:1
+[0, 5, 0]:TurnRightAction:[0, 5, 0]:0
+[0, 5, 0]:StopAction:[0, 5, 0]:1
+[0, 5, 1]:MoveForwardAction:[0, 5, 1]:1
+[0, 5, 1]:TurnLeftAction:[0, 5, 1]:0
+[0, 5, 1]:TurnLeftAction:[0, 5, 2]:1
+[0, 5, 1]:TurnRightAction:[0, 5, 0]:1
+[0, 5, 1]:TurnRightAction:[0, 5, 1]:0
+[0, 5, 1]:StopAction:[0, 5, 1]:1
+[0, 5, 2]:MoveForwardAction:[0, 4, 2]:1
+[0, 5, 2]:MoveForwardAction:[0, 5, 2]:0
+[0, 5, 2]:TurnLeftAction:[0, 5, 3]:1
+[0, 5, 2]:TurnLeftAction:[0, 5, 2]:0
+[0, 5, 2]:TurnRightAction:[0, 5, 1]:1
+[0, 5, 2]:TurnRightAction:[0, 5, 2]:0
+[0, 5, 2]:StopAction:[0, 5, 2]:1
+[0, 5, 3]:MoveForwardAction:[0, 5, 3]:1
+[0, 5, 3]:TurnLeftAction:[0, 5, 3]:0
+[0, 5, 3]:TurnLeftAction:[0, 5, 0]:1
+[0, 5, 3]:TurnRightAction:[0, 5, 3]:0
+[0, 5, 3]:TurnRightAction:[0, 5, 2]:1
+[0, 5, 3]:StopAction:[0, 5, 3]:1
+[0, 6, 0]:MoveForwardAction:[0, 6, 0]:0
+[0, 6, 0]:MoveForwardAction:[0, 7, 0]:1
+[0, 6, 0]:TurnLeftAction:[0, 6, 0]:0
+[0, 6, 0]:TurnLeftAction:[0, 6, 1]:1
+[0, 6, 0]:TurnRightAction:[0, 6, 3]:1
+[0, 6, 0]:TurnRightAction:[0, 6, 0]:0
+[0, 6, 0]:StopAction:[0, 6, 0]:1
+[0, 6, 1]:MoveForwardAction:[0, 6, 1]:1
+[0, 6, 1]:TurnLeftAction:[0, 6, 2]:1
+[0, 6, 1]:TurnLeftAction:[0, 6, 1]:0
+[0, 6, 1]:TurnRightAction:[0, 6, 0]:1
+[0, 6, 1]:TurnRightAction:[0, 6, 1]:0
+[0, 6, 1]:StopAction:[0, 6, 1]:1
+[0, 6, 2]:MoveForwardAction:[0, 6, 2]:0
+[0, 6, 2]:MoveForwardAction:[0, 5, 2]:1
+[0, 6, 2]:TurnLeftAction:[0, 6, 2]:0
+[0, 6, 2]:TurnLeftAction:[0, 6, 3]:1
+[0, 6, 2]:TurnRightAction:[0, 6, 2]:0
+[0, 6, 2]:TurnRightAction:[0, 6, 1]:1
+[0, 6, 2]:StopAction:[0, 6, 2]:1
+[0, 6, 3]:MoveForwardAction:[0, 6, 3]:1
+[0, 6, 3]:TurnLeftAction:[0, 6, 3]:0
+[0, 6, 3]:TurnLeftAction:[0, 6, 0]:1
+[0, 6, 3]:TurnRightAction:[0, 6, 2]:1
+[0, 6, 3]:TurnRightAction:[0, 6, 3]:0
+[0, 6, 3]:StopAction:[0, 6, 3]:1
+[0, 7, 0]:MoveForwardAction:[0, 8, 0]:1
+[0, 7, 0]:MoveForwardAction:[0, 7, 0]:0
+[0, 7, 0]:TurnLeftAction:[0, 7, 1]:1
+[0, 7, 0]:TurnLeftAction:[0, 7, 0]:0
+[0, 7, 0]:TurnRightAction:[0, 7, 3]:1
+[0, 7, 0]:TurnRightAction:[0, 7, 0]:0
+[0, 7, 0]:StopAction:[0, 7, 0]:1
+[0, 7, 1]:MoveForwardAction:[0, 7, 1]:1
+[0, 7, 1]:TurnLeftAction:[0, 7, 1]:0
+[0, 7, 1]:TurnLeftAction:[0, 7, 2]:1
+[0, 7, 1]:TurnRightAction:[0, 7, 1]:0
+[0, 7, 1]:TurnRightAction:[0, 7, 0]:1
+[0, 7, 1]:StopAction:[0, 7, 1]:1
+[0, 7, 2]:MoveForwardAction:[0, 6, 2]:1
+[0, 7, 2]:MoveForwardAction:[0, 7, 2]:0
+[0, 7, 2]:TurnLeftAction:[0, 7, 2]:0
+[0, 7, 2]:TurnLeftAction:[0, 7, 3]:1
+[0, 7, 2]:TurnRightAction:[0, 7, 1]:1
+[0, 7, 2]:TurnRightAction:[0, 7, 2]:0
+[0, 7, 2]:StopAction:[0, 7, 2]:1
+[0, 7, 3]:MoveForwardAction:[0, 7, 3]:1
+[0, 7, 3]:TurnLeftAction:[0, 7, 3]:0
+[0, 7, 3]:TurnLeftAction:[0, 7, 0]:1
+[0, 7, 3]:TurnRightAction:[0, 7, 2]:1
+[0, 7, 3]:TurnRightAction:[0, 7, 3]:0
+[0, 7, 3]:StopAction:[0, 7, 3]:1
+[0, 8, 0]:MoveForwardAction:[0, 8, 0]:1
+[0, 8, 0]:TurnLeftAction:[0, 8, 0]:0
+[0, 8, 0]:TurnLeftAction:[0, 8, 1]:1
+[0, 8, 0]:TurnRightAction:[0, 8, 0]:0
+[0, 8, 0]:TurnRightAction:[0, 8, 3]:1
+[0, 8, 0]:StopAction:[0, 8, 0]:1
+[0, 8, 1]:MoveForwardAction:[0, 8, 1]:1
+[0, 8, 1]:TurnLeftAction:[0, 8, 1]:0
+[0, 8, 1]:TurnLeftAction:[0, 8, 2]:1
+[0, 8, 1]:TurnRightAction:[0, 8, 0]:1
+[0, 8, 1]:TurnRightAction:[0, 8, 1]:0
+[0, 8, 1]:StopAction:[0, 8, 1]:1
+[0, 8, 2]:MoveForwardAction:[0, 7, 2]:1
+[0, 8, 2]:MoveForwardAction:[0, 8, 2]:0
+[0, 8, 2]:TurnLeftAction:[0, 8, 2]:0
+[0, 8, 2]:TurnLeftAction:[0, 8, 3]:1
+[0, 8, 2]:TurnRightAction:[0, 8, 1]:1
+[0, 8, 2]:TurnRightAction:[0, 8, 2]:0
+[0, 8, 2]:StopAction:[0, 8, 2]:1
+[0, 8, 3]:MoveForwardAction:[0, 8, 3]:1
+[0, 8, 3]:TurnLeftAction:[0, 8, 0]:1
+[0, 8, 3]:TurnLeftAction:[0, 8, 3]:0
+[0, 8, 3]:TurnRightAction:[0, 8, 2]:1
+[0, 8, 3]:TurnRightAction:[0, 8, 3]:0
+[0, 8, 3]:StopAction:[0, 8, 3]:1
+[1, 1, 0]:MoveForwardAction:[1, 1, 0]:1
+[1, 1, 0]:TurnLeftAction:[1, 1, 0]:0
+[1, 1, 0]:TurnLeftAction:[1, 1, 1]:1
+[1, 1, 0]:TurnRightAction:[1, 1, 3]:1
+[1, 1, 0]:TurnRightAction:[1, 1, 0]:0
+[1, 1, 0]:StopAction:[1, 1, 0]:1
+[1, 1, 1]:MoveForwardAction:[0, 1, 1]:1
+[1, 1, 1]:MoveForwardAction:[1, 1, 1]:0
+[1, 1, 1]:TurnLeftAction:[1, 1, 2]:1
+[1, 1, 1]:TurnLeftAction:[1, 1, 1]:0
+[1, 1, 1]:TurnRightAction:[1, 1, 0]:1
+[1, 1, 1]:TurnRightAction:[1, 1, 1]:0
+[1, 1, 1]:StopAction:[1, 1, 1]:1
+[1, 1, 2]:MoveForwardAction:[1, 1, 2]:1
+[1, 1, 2]:TurnLeftAction:[1, 1, 2]:0
+[1, 1, 2]:TurnLeftAction:[1, 1, 3]:1
+[1, 1, 2]:TurnRightAction:[1, 1, 2]:0
+[1, 1, 2]:TurnRightAction:[1, 1, 1]:1
+[1, 1, 2]:StopAction:[1, 1, 2]:1
+[1, 1, 3]:MoveForwardAction:[1, 1, 3]:0
+[1, 1, 3]:MoveForwardAction:[2, 1, 3]:1
+[1, 1, 3]:TurnLeftAction:[1, 1, 3]:0
+[1, 1, 3]:TurnLeftAction:[1, 1, 0]:1
+[1, 1, 3]:TurnRightAction:[1, 1, 2]:1
+[1, 1, 3]:TurnRightAction:[1, 1, 3]:0
+[1, 1, 3]:StopAction:[1, 1, 3]:1
+[2, 1, 0]:MoveForwardAction:[2, 1, 0]:1
+[2, 1, 0]:TurnLeftAction:[2, 1, 1]:1
+[2, 1, 0]:TurnLeftAction:[2, 1, 0]:0
+[2, 1, 0]:TurnRightAction:[2, 1, 3]:1
+[2, 1, 0]:TurnRightAction:[2, 1, 0]:0
+[2, 1, 0]:StopAction:[2, 1, 0]:1
+[2, 1, 1]:MoveForwardAction:[2, 1, 1]:0
+[2, 1, 1]:MoveForwardAction:[1, 1, 1]:1
+[2, 1, 1]:TurnLeftAction:[2, 1, 1]:0
+[2, 1, 1]:TurnLeftAction:[2, 1, 2]:1
+[2, 1, 1]:TurnRightAction:[2, 1, 1]:0
+[2, 1, 1]:TurnRightAction:[2, 1, 0]:1
+[2, 1, 1]:StopAction:[2, 1, 1]:1
+[2, 1, 2]:MoveForwardAction:[2, 1, 2]:1
+[2, 1, 2]:TurnLeftAction:[2, 1, 2]:0
+[2, 1, 2]:TurnLeftAction:[2, 1, 3]:1
+[2, 1, 2]:TurnRightAction:[2, 1, 1]:1
+[2, 1, 2]:TurnRightAction:[2, 1, 2]:0
+[2, 1, 2]:StopAction:[2, 1, 2]:1
+[2, 1, 3]:MoveForwardAction:[2, 1, 3]:0
+[2, 1, 3]:MoveForwardAction:[3, 1, 3]:1
+[2, 1, 3]:TurnLeftAction:[2, 1, 3]:0
+[2, 1, 3]:TurnLeftAction:[2, 1, 0]:1
+[2, 1, 3]:TurnRightAction:[2, 1, 2]:1
+[2, 1, 3]:TurnRightAction:[2, 1, 3]:0
+[2, 1, 3]:StopAction:[2, 1, 3]:1
+[3, 1, 0]:MoveForwardAction:[3, 1, 0]:1
+[3, 1, 0]:TurnLeftAction:[3, 1, 0]:0
+[3, 1, 0]:TurnLeftAction:[3, 1, 1]:1
+[3, 1, 0]:TurnRightAction:[3, 1, 0]:0
+[3, 1, 0]:TurnRightAction:[3, 1, 3]:1
+[3, 1, 0]:StopAction:[3, 1, 0]:1
+[3, 1, 1]:MoveForwardAction:[2, 1, 1]:1
+[3, 1, 1]:MoveForwardAction:[3, 1, 1]:0
+[3, 1, 1]:TurnLeftAction:[3, 1, 1]:0
+[3, 1, 1]:TurnLeftAction:[3, 1, 2]:1
+[3, 1, 1]:TurnRightAction:[3, 1, 0]:1
+[3, 1, 1]:TurnRightAction:[3, 1, 1]:0
+[3, 1, 1]:StopAction:[3, 1, 1]:1
+[3, 1, 2]:MoveForwardAction:[3, 1, 2]:1
+[3, 1, 2]:TurnLeftAction:[3, 1, 2]:0
+[3, 1, 2]:TurnLeftAction:[3, 1, 3]:1
+[3, 1, 2]:TurnRightAction:[3, 1, 1]:1
+[3, 1, 2]:TurnRightAction:[3, 1, 2]:0
+[3, 1, 2]:StopAction:[3, 1, 2]:1
+[3, 1, 3]:MoveForwardAction:[4, 1, 3]:1
+[3, 1, 3]:MoveForwardAction:[3, 1, 3]:0
+[3, 1, 3]:TurnLeftAction:[3, 1, 0]:1
+[3, 1, 3]:TurnLeftAction:[3, 1, 3]:0
+[3, 1, 3]:TurnRightAction:[3, 1, 2]:1
+[3, 1, 3]:TurnRightAction:[3, 1, 3]:0
+[3, 1, 3]:StopAction:[3, 1, 3]:1
+[4, 1, 0]:MoveForwardAction:[4, 1, 0]:1
+[4, 1, 0]:TurnLeftAction:[4, 1, 0]:0
+[4, 1, 0]:TurnLeftAction:[4, 1, 1]:1
+[4, 1, 0]:TurnRightAction:[4, 1, 3]:1
+[4, 1, 0]:TurnRightAction:[4, 1, 0]:0
+[4, 1, 0]:StopAction:[4, 1, 0]:1
+[4, 1, 1]:MoveForwardAction:[3, 1, 1]:1
+[4, 1, 1]:MoveForwardAction:[4, 1, 1]:0
+[4, 1, 1]:TurnLeftAction:[4, 1, 1]:0
+[4, 1, 1]:TurnLeftAction:[4, 1, 2]:1
+[4, 1, 1]:TurnRightAction:[4, 1, 0]:1
+[4, 1, 1]:TurnRightAction:[4, 1, 1]:0
+[4, 1, 1]:StopAction:[4, 1, 1]:1
+[4, 1, 2]:MoveForwardAction:[4, 1, 2]:1
+[4, 1, 2]:TurnLeftAction:[4, 1, 3]:1
+[4, 1, 2]:TurnLeftAction:[4, 1, 2]:0
+[4, 1, 2]:TurnRightAction:[4, 1, 1]:1
+[4, 1, 2]:TurnRightAction:[4, 1, 2]:0
+[4, 1, 2]:StopAction:[4, 1, 2]:1
+[4, 1, 3]:MoveForwardAction:[4, 1, 3]:0
+[4, 1, 3]:MoveForwardAction:[5, 1, 3]:1
+[4, 1, 3]:TurnLeftAction:[4, 1, 3]:0
+[4, 1, 3]:TurnLeftAction:[4, 1, 0]:1
+[4, 1, 3]:TurnRightAction:[4, 1, 3]:0
+[4, 1, 3]:TurnRightAction:[4, 1, 2]:1
+[4, 1, 3]:StopAction:[4, 1, 3]:1
+[5, 1, 0]:MoveForwardAction:[5, 1, 0]:1
+[5, 1, 0]:TurnLeftAction:[5, 1, 0]:0
+[5, 1, 0]:TurnLeftAction:[5, 1, 1]:1
+[5, 1, 0]:TurnRightAction:[5, 1, 3]:1
+[5, 1, 0]:TurnRightAction:[5, 1, 0]:0
+[5, 1, 0]:StopAction:[5, 1, 0]:1
+[5, 1, 1]:MoveForwardAction:[4, 1, 1]:1
+[5, 1, 1]:MoveForwardAction:[5, 1, 1]:0
+[5, 1, 1]:TurnLeftAction:[5, 1, 2]:1
+[5, 1, 1]:TurnLeftAction:[5, 1, 1]:0
+[5, 1, 1]:TurnRightAction:[5, 1, 0]:1
+[5, 1, 1]:TurnRightAction:[5, 1, 1]:0
+[5, 1, 1]:StopAction:[5, 1, 1]:1
+[5, 1, 2]:MoveForwardAction:[5, 1, 2]:1
+[5, 1, 2]:TurnLeftAction:[5, 1, 2]:0
+[5, 1, 2]:TurnLeftAction:[5, 1, 3]:1
+[5, 1, 2]:TurnRightAction:[5, 1, 2]:0
+[5, 1, 2]:TurnRightAction:[5, 1, 1]:1
+[5, 1, 2]:StopAction:[5, 1, 2]:1
+[5, 1, 3]:MoveForwardAction:[5, 1, 3]:0
+[5, 1, 3]:MoveForwardAction:[6, 1, 3]:1
+[5, 1, 3]:TurnLeftAction:[5, 1, 3]:0
+[5, 1, 3]:TurnLeftAction:[5, 1, 0]:1
+[5, 1, 3]:TurnRightAction:[5, 1, 2]:1
+[5, 1, 3]:TurnRightAction:[5, 1, 3]:0
+[5, 1, 3]:StopAction:[5, 1, 3]:1
+[6, 1, 0]:MoveForwardAction:[6, 1, 0]:1
+[6, 1, 0]:TurnLeftAction:[6, 1, 1]:1
+[6, 1, 0]:TurnLeftAction:[6, 1, 0]:0
+[6, 1, 0]:TurnRightAction:[6, 1, 3]:1
+[6, 1, 0]:TurnRightAction:[6, 1, 0]:0
+[6, 1, 0]:StopAction:[6, 1, 0]:1
+[6, 1, 1]:MoveForwardAction:[6, 1, 1]:0
+[6, 1, 1]:MoveForwardAction:[5, 1, 1]:1
+[6, 1, 1]:TurnLeftAction:[6, 1, 1]:0
+[6, 1, 1]:TurnLeftAction:[6, 1, 2]:1
+[6, 1, 1]:TurnRightAction:[6, 1, 1]:0
+[6, 1, 1]:TurnRightAction:[6, 1, 0]:1
+[6, 1, 1]:StopAction:[6, 1, 1]:1
+[6, 1, 2]:MoveForwardAction:[6, 1, 2]:1
+[6, 1, 2]:TurnLeftAction:[6, 1, 2]:0
+[6, 1, 2]:TurnLeftAction:[6, 1, 3]:1
+[6, 1, 2]:TurnRightAction:[6, 1, 1]:1
+[6, 1, 2]:TurnRightAction:[6, 1, 2]:0
+[6, 1, 2]:StopAction:[6, 1, 2]:1
+[6, 1, 3]:MoveForwardAction:[6, 1, 3]:0
+[6, 1, 3]:MoveForwardAction:[7, 1, 3]:1
+[6, 1, 3]:TurnLeftAction:[6, 1, 3]:0
+[6, 1, 3]:TurnLeftAction:[6, 1, 0]:1
+[6, 1, 3]:TurnRightAction:[6, 1, 2]:1
+[6, 1, 3]:TurnRightAction:[6, 1, 3]:0
+[6, 1, 3]:StopAction:[6, 1, 3]:1
+[7, 1, 0]:MoveForwardAction:[7, 1, 0]:1
+[7, 1, 0]:TurnLeftAction:[7, 1, 0]:0
+[7, 1, 0]:TurnLeftAction:[7, 1, 1]:1
+[7, 1, 0]:TurnRightAction:[7, 1, 0]:0
+[7, 1, 0]:TurnRightAction:[7, 1, 3]:1
+[7, 1, 0]:StopAction:[7, 1, 0]:1
+[7, 1, 1]:MoveForwardAction:[6, 1, 1]:1
+[7, 1, 1]:MoveForwardAction:[7, 1, 1]:0
+[7, 1, 1]:TurnLeftAction:[7, 1, 1]:0
+[7, 1, 1]:TurnLeftAction:[7, 1, 2]:1
+[7, 1, 1]:TurnRightAction:[7, 1, 0]:1
+[7, 1, 1]:TurnRightAction:[7, 1, 1]:0
+[7, 1, 1]:StopAction:[7, 1, 1]:1
+[7, 1, 2]:MoveForwardAction:[7, 1, 2]:1
+[7, 1, 2]:TurnLeftAction:[7, 1, 2]:0
+[7, 1, 2]:TurnLeftAction:[7, 1, 3]:1
+[7, 1, 2]:TurnRightAction:[7, 1, 1]:1
+[7, 1, 2]:TurnRightAction:[7, 1, 2]:0
+[7, 1, 2]:StopAction:[7, 1, 2]:1
+[7, 1, 3]:MoveForwardAction:[8, 1, 3]:1
+[7, 1, 3]:MoveForwardAction:[7, 1, 3]:0
+[7, 1, 3]:TurnLeftAction:[7, 1, 0]:1
+[7, 1, 3]:TurnLeftAction:[7, 1, 3]:0
+[7, 1, 3]:TurnRightAction:[7, 1, 2]:1
+[7, 1, 3]:TurnRightAction:[7, 1, 3]:0
+[7, 1, 3]:StopAction:[7, 1, 3]:1
+[8, 1, 0]:MoveForwardAction:[8, 1, 0]:1
+[8, 1, 0]:TurnLeftAction:[8, 1, 0]:0
+[8, 1, 0]:TurnLeftAction:[8, 1, 1]:1
+[8, 1, 0]:TurnRightAction:[8, 1, 3]:1
+[8, 1, 0]:TurnRightAction:[8, 1, 0]:0
+[8, 1, 0]:StopAction:[8, 1, 0]:1
+[8, 1, 1]:MoveForwardAction:[7, 1, 1]:1
+[8, 1, 1]:MoveForwardAction:[8, 1, 1]:0
+[8, 1, 1]:TurnLeftAction:[8, 1, 1]:0
+[8, 1, 1]:TurnLeftAction:[8, 1, 2]:1
+[8, 1, 1]:TurnRightAction:[8, 1, 0]:1
+[8, 1, 1]:TurnRightAction:[8, 1, 1]:0
+[8, 1, 1]:StopAction:[8, 1, 1]:1
+[8, 1, 2]:MoveForwardAction:[8, 1, 2]:1
+[8, 1, 2]:TurnLeftAction:[8, 1, 3]:1
+[8, 1, 2]:TurnLeftAction:[8, 1, 2]:0
+[8, 1, 2]:TurnRightAction:[8, 1, 1]:1
+[8, 1, 2]:TurnRightAction:[8, 1, 2]:0
+[8, 1, 2]:StopAction:[8, 1, 2]:1
+[8, 1, 3]:MoveForwardAction:[8, 1, 3]:0
+[8, 1, 3]:MoveForwardAction:[9, 1, 3]:1
+[8, 1, 3]:TurnLeftAction:[8, 1, 3]:0
+[8, 1, 3]:TurnLeftAction:[8, 1, 0]:1
+[8, 1, 3]:TurnRightAction:[8, 1, 3]:0
+[8, 1, 3]:TurnRightAction:[8, 1, 2]:1
+[8, 1, 3]:StopAction:[8, 1, 3]:1
+[9, 1, 0]:MoveForwardAction:[9, 1, 0]:1
+[9, 1, 0]:TurnLeftAction:[9, 1, 0]:0
+[9, 1, 0]:TurnLeftAction:[9, 1, 1]:1
+[9, 1, 0]:TurnRightAction:[9, 1, 3]:1
+[9, 1, 0]:TurnRightAction:[9, 1, 0]:0
+[9, 1, 0]:StopAction:[9, 1, 0]:1
+[9, 1, 1]:MoveForwardAction:[8, 1, 1]:1
+[9, 1, 1]:MoveForwardAction:[9, 1, 1]:0
+[9, 1, 1]:TurnLeftAction:[9, 1, 2]:1
+[9, 1, 1]:TurnLeftAction:[9, 1, 1]:0
+[9, 1, 1]:TurnRightAction:[9, 1, 0]:1
+[9, 1, 1]:TurnRightAction:[9, 1, 1]:0
+[9, 1, 1]:StopAction:[9, 1, 1]:1
+[9, 1, 2]:MoveForwardAction:[9, 1, 2]:1
+[9, 1, 2]:TurnLeftAction:[9, 1, 2]:0
+[9, 1, 2]:TurnLeftAction:[9, 1, 3]:1
+[9, 1, 2]:TurnRightAction:[9, 1, 2]:0
+[9, 1, 2]:TurnRightAction:[9, 1, 1]:1
+[9, 1, 2]:StopAction:[9, 1, 2]:1
+[9, 1, 3]:MoveForwardAction:[9, 1, 3]:0
+[9, 1, 3]:MoveForwardAction:[10, 1, 3]:1
+[9, 1, 3]:TurnLeftAction:[9, 1, 3]:0
+[9, 1, 3]:TurnLeftAction:[9, 1, 0]:1
+[9, 1, 3]:TurnRightAction:[9, 1, 2]:1
+[9, 1, 3]:TurnRightAction:[9, 1, 3]:0
+[9, 1, 3]:StopAction:[9, 1, 3]:1
+[10, 1, 0]:MoveForwardAction:[10, 1, 0]:1
+[10, 1, 0]:TurnLeftAction:[10, 1, 1]:1
+[10, 1, 0]:TurnLeftAction:[10, 1, 0]:0
+[10, 1, 0]:TurnRightAction:[10, 1, 3]:1
+[10, 1, 0]:TurnRightAction:[10, 1, 0]:0
+[10, 1, 0]:StopAction:[10, 1, 0]:1
+[10, 1, 1]:MoveForwardAction:[10, 1, 1]:0
+[10, 1, 1]:MoveForwardAction:[9, 1, 1]:1
+[10, 1, 1]:TurnLeftAction:[10, 1, 1]:0
+[10, 1, 1]:TurnLeftAction:[10, 1, 2]:1
+[10, 1, 1]:TurnRightAction:[10, 1, 1]:0
+[10, 1, 1]:TurnRightAction:[10, 1, 0]:1
+[10, 1, 1]:StopAction:[10, 1, 1]:1
+[10, 1, 2]:MoveForwardAction:[10, 1, 2]:1
+[10, 1, 2]:TurnLeftAction:[10, 1, 2]:0
+[10, 1, 2]:TurnLeftAction:[10, 1, 3]:1
+[10, 1, 2]:TurnRightAction:[10, 1, 1]:1
+[10, 1, 2]:TurnRightAction:[10, 1, 2]:0
+[10, 1, 2]:StopAction:[10, 1, 2]:1
+[10, 1, 3]:MoveForwardAction:[10, 1, 3]:0
+[10, 1, 3]:MoveForwardAction:[11, 1, 3]:1
+[10, 1, 3]:TurnLeftAction:[10, 1, 3]:0
+[10, 1, 3]:TurnLeftAction:[10, 1, 0]:1
+[10, 1, 3]:TurnRightAction:[10, 1, 2]:1
+[10, 1, 3]:TurnRightAction:[10, 1, 3]:0
+[10, 1, 3]:StopAction:[10, 1, 3]:1
+[11, 1, 0]:MoveForwardAction:[11, 1, 0]:1
+[11, 1, 0]:TurnLeftAction:[11, 1, 0]:0
+[11, 1, 0]:TurnLeftAction:[11, 1, 1]:1
+[11, 1, 0]:TurnRightAction:[11, 1, 0]:0
+[11, 1, 0]:TurnRightAction:[11, 1, 3]:1
+[11, 1, 0]:StopAction:[11, 1, 0]:1
+[11, 1, 1]:MoveForwardAction:[10, 1, 1]:1
+[11, 1, 1]:MoveForwardAction:[11, 1, 1]:0
+[11, 1, 1]:TurnLeftAction:[11, 1, 1]:0
+[11, 1, 1]:TurnLeftAction:[11, 1, 2]:1
+[11, 1, 1]:TurnRightAction:[11, 1, 0]:1
+[11, 1, 1]:TurnRightAction:[11, 1, 1]:0
+[11, 1, 1]:StopAction:[11, 1, 1]:1
+[11, 1, 2]:MoveForwardAction:[11, 1, 2]:1
+[11, 1, 2]:TurnLeftAction:[11, 1, 2]:0
+[11, 1, 2]:TurnLeftAction:[11, 1, 3]:1
+[11, 1, 2]:TurnRightAction:[11, 1, 1]:1
+[11, 1, 2]:TurnRightAction:[11, 1, 2]:0
+[11, 1, 2]:StopAction:[11, 1, 2]:1
+[11, 1, 3]:MoveForwardAction:[12, 1, 3]:1
+[11, 1, 3]:MoveForwardAction:[11, 1, 3]:0
+[11, 1, 3]:TurnLeftAction:[11, 1, 0]:1
+[11, 1, 3]:TurnLeftAction:[11, 1, 3]:0
+[11, 1, 3]:TurnRightAction:[11, 1, 2]:1
+[11, 1, 3]:TurnRightAction:[11, 1, 3]:0
+[11, 1, 3]:StopAction:[11, 1, 3]:1
+[12, 1, 0]:MoveForwardAction:[12, 1, 0]:1
+[12, 1, 0]:TurnLeftAction:[12, 1, 0]:0
+[12, 1, 0]:TurnLeftAction:[12, 1, 1]:1
+[12, 1, 0]:TurnRightAction:[12, 1, 3]:1
+[12, 1, 0]:TurnRightAction:[12, 1, 0]:0
+[12, 1, 0]:StopAction:[12, 1, 0]:1
+[12, 1, 1]:MoveForwardAction:[11, 1, 1]:1
+[12, 1, 1]:MoveForwardAction:[12, 1, 1]:0
+[12, 1, 1]:TurnLeftAction:[12, 1, 1]:0
+[12, 1, 1]:TurnLeftAction:[12, 1, 2]:1
+[12, 1, 1]:TurnRightAction:[12, 1, 0]:1
+[12, 1, 1]:TurnRightAction:[12, 1, 1]:0
+[12, 1, 1]:StopAction:[12, 1, 1]:1
+[12, 1, 2]:MoveForwardAction:[12, 1, 2]:1
+[12, 1, 2]:TurnLeftAction:[12, 1, 3]:1
+[12, 1, 2]:TurnLeftAction:[12, 1, 2]:0
+[12, 1, 2]:TurnRightAction:[12, 1, 1]:1
+[12, 1, 2]:TurnRightAction:[12, 1, 2]:0
+[12, 1, 2]:StopAction:[12, 1, 2]:1
+[12, 1, 3]:MoveForwardAction:[12, 1, 3]:0
+[12, 1, 3]:MoveForwardAction:[13, 1, 3]:1
+[12, 1, 3]:TurnLeftAction:[12, 1, 3]:0
+[12, 1, 3]:TurnLeftAction:[12, 1, 0]:1
+[12, 1, 3]:TurnRightAction:[12, 1, 3]:0
+[12, 1, 3]:TurnRightAction:[12, 1, 2]:1
+[12, 1, 3]:StopAction:[12, 1, 3]:1
+[13, 1, 0]:MoveForwardAction:[13, 1, 0]:1
+[13, 1, 0]:TurnLeftAction:[13, 1, 0]:0
+[13, 1, 0]:TurnLeftAction:[13, 1, 1]:1
+[13, 1, 0]:TurnRightAction:[13, 1, 3]:1
+[13, 1, 0]:TurnRightAction:[13, 1, 0]:0
+[13, 1, 0]:StopAction:[13, 1, 0]:1
+[13, 1, 1]:MoveForwardAction:[12, 1, 1]:1
+[13, 1, 1]:MoveForwardAction:[13, 1, 1]:0
+[13, 1, 1]:TurnLeftAction:[13, 1, 2]:1
+[13, 1, 1]:TurnLeftAction:[13, 1, 1]:0
+[13, 1, 1]:TurnRightAction:[13, 1, 0]:1
+[13, 1, 1]:TurnRightAction:[13, 1, 1]:0
+[13, 1, 1]:StopAction:[13, 1, 1]:1
+[13, 1, 2]:MoveForwardAction:[13, 1, 2]:1
+[13, 1, 2]:TurnLeftAction:[13, 1, 2]:0
+[13, 1, 2]:TurnLeftAction:[13, 1, 3]:1
+[13, 1, 2]:TurnRightAction:[13, 1, 2]:0
+[13, 1, 2]:TurnRightAction:[13, 1, 1]:1
+[13, 1, 2]:StopAction:[13, 1, 2]:1
+[13, 1, 3]:MoveForwardAction:[13, 1, 3]:0
+[13, 1, 3]:MoveForwardAction:[14, 1, 3]:1
+[13, 1, 3]:TurnLeftAction:[13, 1, 3]:0
+[13, 1, 3]:TurnLeftAction:[13, 1, 0]:1
+[13, 1, 3]:TurnRightAction:[13, 1, 2]:1
+[13, 1, 3]:TurnRightAction:[13, 1, 3]:0
+[13, 1, 3]:StopAction:[13, 1, 3]:1
+[14, 1, 0]:MoveForwardAction:[14, 1, 0]:1
+[14, 1, 0]:TurnLeftAction:[14, 1, 1]:1
+[14, 1, 0]:TurnLeftAction:[14, 1, 0]:0
+[14, 1, 0]:TurnRightAction:[14, 1, 3]:1
+[14, 1, 0]:TurnRightAction:[14, 1, 0]:0
+[14, 1, 0]:StopAction:[14, 1, 0]:1
+[14, 1, 1]:MoveForwardAction:[14, 1, 1]:0
+[14, 1, 1]:MoveForwardAction:[13, 1, 1]:1
+[14, 1, 1]:TurnLeftAction:[14, 1, 1]:0
+[14, 1, 1]:TurnLeftAction:[14, 1, 2]:1
+[14, 1, 1]:TurnRightAction:[14, 1, 1]:0
+[14, 1, 1]:TurnRightAction:[14, 1, 0]:1
+[14, 1, 1]:StopAction:[14, 1, 1]:1
+[14, 1, 2]:MoveForwardAction:[14, 1, 2]:1
+[14, 1, 2]:TurnLeftAction:[14, 1, 2]:0
+[14, 1, 2]:TurnLeftAction:[14, 1, 3]:1
+[14, 1, 2]:TurnRightAction:[14, 1, 1]:1
+[14, 1, 2]:TurnRightAction:[14, 1, 2]:0
+[14, 1, 2]:StopAction:[14, 1, 2]:1
+[14, 1, 3]:MoveForwardAction:[14, 1, 3]:0
+[14, 1, 3]:MoveForwardAction:[15, 1, 3]:1
+[14, 1, 3]:TurnLeftAction:[14, 1, 3]:0
+[14, 1, 3]:TurnLeftAction:[14, 1, 0]:1
+[14, 1, 3]:TurnRightAction:[14, 1, 2]:1
+[14, 1, 3]:TurnRightAction:[14, 1, 3]:0
+[14, 1, 3]:StopAction:[14, 1, 3]:1
+[15, 1, 0]:MoveForwardAction:[15, 1, 0]:1
+[15, 1, 0]:TurnLeftAction:[15, 1, 0]:0
+[15, 1, 0]:TurnLeftAction:[15, 1, 1]:1
+[15, 1, 0]:TurnRightAction:[15, 1, 0]:0
+[15, 1, 0]:TurnRightAction:[15, 1, 3]:1
+[15, 1, 0]:StopAction:[15, 1, 0]:1
+[15, 1, 1]:MoveForwardAction:[14, 1, 1]:1
+[15, 1, 1]:MoveForwardAction:[15, 1, 1]:0
+[15, 1, 1]:TurnLeftAction:[15, 1, 1]:0
+[15, 1, 1]:TurnLeftAction:[15, 1, 2]:1
+[15, 1, 1]:TurnRightAction:[15, 1, 0]:1
+[15, 1, 1]:TurnRightAction:[15, 1, 1]:0
+[15, 1, 1]:StopAction:[15, 1, 1]:1
+[15, 1, 2]:MoveForwardAction:[15, 1, 2]:1
+[15, 1, 2]:TurnLeftAction:[15, 1, 2]:0
+[15, 1, 2]:TurnLeftAction:[15, 1, 3]:1
+[15, 1, 2]:TurnRightAction:[15, 1, 1]:1
+[15, 1, 2]:TurnRightAction:[15, 1, 2]:0
+[15, 1, 2]:StopAction:[15, 1, 2]:1
+[15, 1, 3]:MoveForwardAction:[16, 1, 3]:1
+[15, 1, 3]:MoveForwardAction:[15, 1, 3]:0
+[15, 1, 3]:TurnLeftAction:[15, 1, 0]:1
+[15, 1, 3]:TurnLeftAction:[15, 1, 3]:0
+[15, 1, 3]:TurnRightAction:[15, 1, 2]:1
+[15, 1, 3]:TurnRightAction:[15, 1, 3]:0
+[15, 1, 3]:StopAction:[15, 1, 3]:1
+[16, 1, 0]:MoveForwardAction:[16, 1, 0]:0
+[16, 1, 0]:MoveForwardAction:[16, 2, 0]:1
+[16, 1, 0]:TurnLeftAction:[16, 1, 0]:0
+[16, 1, 0]:TurnLeftAction:[16, 1, 1]:1
+[16, 1, 0]:TurnRightAction:[16, 1, 3]:1
+[16, 1, 0]:TurnRightAction:[16, 1, 0]:0
+[16, 1, 0]:StopAction:[16, 1, 0]:1
+[16, 1, 1]:MoveForwardAction:[15, 1, 1]:1
+[16, 1, 1]:MoveForwardAction:[16, 1, 1]:0
+[16, 1, 1]:TurnLeftAction:[16, 1, 1]:0
+[16, 1, 1]:TurnLeftAction:[16, 1, 2]:1
+[16, 1, 1]:TurnRightAction:[16, 1, 0]:1
+[16, 1, 1]:TurnRightAction:[16, 1, 1]:0
+[16, 1, 1]:StopAction:[16, 1, 1]:1
+[16, 1, 2]:MoveForwardAction:[16, 1, 2]:1
+[16, 1, 2]:TurnLeftAction:[16, 1, 3]:1
+[16, 1, 2]:TurnLeftAction:[16, 1, 2]:0
+[16, 1, 2]:TurnRightAction:[16, 1, 1]:1
+[16, 1, 2]:TurnRightAction:[16, 1, 2]:0
+[16, 1, 2]:StopAction:[16, 1, 2]:1
+[16, 1, 3]:MoveForwardAction:[16, 1, 3]:1
+[16, 1, 3]:TurnLeftAction:[16, 1, 3]:0
+[16, 1, 3]:TurnLeftAction:[16, 1, 0]:1
+[16, 1, 3]:TurnRightAction:[16, 1, 3]:0
+[16, 1, 3]:TurnRightAction:[16, 1, 2]:1
+[16, 1, 3]:StopAction:[16, 1, 3]:1
+[16, 2, 0]:MoveForwardAction:[16, 2, 0]:0
+[16, 2, 0]:MoveForwardAction:[16, 3, 0]:1
+[16, 2, 0]:TurnLeftAction:[16, 2, 0]:0
+[16, 2, 0]:TurnLeftAction:[16, 2, 1]:1
+[16, 2, 0]:TurnRightAction:[16, 2, 3]:1
+[16, 2, 0]:TurnRightAction:[16, 2, 0]:0
+[16, 2, 0]:StopAction:[16, 2, 0]:1
+[16, 2, 1]:MoveForwardAction:[16, 2, 1]:1
+[16, 2, 1]:TurnLeftAction:[16, 2, 2]:1
+[16, 2, 1]:TurnLeftAction:[16, 2, 1]:0
+[16, 2, 1]:TurnRightAction:[16, 2, 0]:1
+[16, 2, 1]:TurnRightAction:[16, 2, 1]:0
+[16, 2, 1]:StopAction:[16, 2, 1]:1
+[16, 2, 2]:MoveForwardAction:[16, 2, 2]:0
+[16, 2, 2]:MoveForwardAction:[16, 1, 2]:1
+[16, 2, 2]:TurnLeftAction:[16, 2, 2]:0
+[16, 2, 2]:TurnLeftAction:[16, 2, 3]:1
+[16, 2, 2]:TurnRightAction:[16, 2, 2]:0
+[16, 2, 2]:TurnRightAction:[16, 2, 1]:1
+[16, 2, 2]:StopAction:[16, 2, 2]:1
+[16, 2, 3]:MoveForwardAction:[16, 2, 3]:1
+[16, 2, 3]:TurnLeftAction:[16, 2, 3]:0
+[16, 2, 3]:TurnLeftAction:[16, 2, 0]:1
+[16, 2, 3]:TurnRightAction:[16, 2, 2]:1
+[16, 2, 3]:TurnRightAction:[16, 2, 3]:0
+[16, 2, 3]:StopAction:[16, 2, 3]:1
+[16, 3, 0]:MoveForwardAction:[16, 4, 0]:1
+[16, 3, 0]:MoveForwardAction:[16, 3, 0]:0
+[16, 3, 0]:TurnLeftAction:[16, 3, 1]:1
+[16, 3, 0]:TurnLeftAction:[16, 3, 0]:0
+[16, 3, 0]:TurnRightAction:[16, 3, 3]:1
+[16, 3, 0]:TurnRightAction:[16, 3, 0]:0
+[16, 3, 0]:StopAction:[16, 3, 0]:1
+[16, 3, 1]:MoveForwardAction:[16, 3, 1]:1
+[16, 3, 1]:TurnLeftAction:[16, 3, 1]:0
+[16, 3, 1]:TurnLeftAction:[16, 3, 2]:1
+[16, 3, 1]:TurnRightAction:[16, 3, 1]:0
+[16, 3, 1]:TurnRightAction:[16, 3, 0]:1
+[16, 3, 1]:StopAction:[16, 3, 1]:1
+[16, 3, 2]:MoveForwardAction:[16, 2, 2]:1
+[16, 3, 2]:MoveForwardAction:[16, 3, 2]:0
+[16, 3, 2]:TurnLeftAction:[16, 3, 2]:0
+[16, 3, 2]:TurnLeftAction:[16, 3, 3]:1
+[16, 3, 2]:TurnRightAction:[16, 3, 1]:1
+[16, 3, 2]:TurnRightAction:[16, 3, 2]:0
+[16, 3, 2]:StopAction:[16, 3, 2]:1
+[16, 3, 3]:MoveForwardAction:[16, 3, 3]:1
+[16, 3, 3]:TurnLeftAction:[16, 3, 3]:0
+[16, 3, 3]:TurnLeftAction:[16, 3, 0]:1
+[16, 3, 3]:TurnRightAction:[16, 3, 2]:1
+[16, 3, 3]:TurnRightAction:[16, 3, 3]:0
+[16, 3, 3]:StopAction:[16, 3, 3]:1
+[16, 4, 0]:MoveForwardAction:[16, 4, 0]:0
+[16, 4, 0]:MoveForwardAction:[16, 5, 0]:1
+[16, 4, 0]:TurnLeftAction:[16, 4, 0]:0
+[16, 4, 0]:TurnLeftAction:[16, 4, 1]:1
+[16, 4, 0]:TurnRightAction:[16, 4, 0]:0
+[16, 4, 0]:TurnRightAction:[16, 4, 3]:1
+[16, 4, 0]:StopAction:[16, 4, 0]:1
+[16, 4, 1]:MoveForwardAction:[16, 4, 1]:1
+[16, 4, 1]:TurnLeftAction:[16, 4, 1]:0
+[16, 4, 1]:TurnLeftAction:[16, 4, 2]:1
+[16, 4, 1]:TurnRightAction:[16, 4, 0]:1
+[16, 4, 1]:TurnRightAction:[16, 4, 1]:0
+[16, 4, 1]:StopAction:[16, 4, 1]:1
+[16, 4, 2]:MoveForwardAction:[16, 3, 2]:1
+[16, 4, 2]:MoveForwardAction:[16, 4, 2]:0
+[16, 4, 2]:TurnLeftAction:[16, 4, 2]:0
+[16, 4, 2]:TurnLeftAction:[16, 4, 3]:1
+[16, 4, 2]:TurnRightAction:[16, 4, 1]:1
+[16, 4, 2]:TurnRightAction:[16, 4, 2]:0
+[16, 4, 2]:StopAction:[16, 4, 2]:1
+[16, 4, 3]:MoveForwardAction:[16, 4, 3]:1
+[16, 4, 3]:TurnLeftAction:[16, 4, 0]:1
+[16, 4, 3]:TurnLeftAction:[16, 4, 3]:0
+[16, 4, 3]:TurnRightAction:[16, 4, 2]:1
+[16, 4, 3]:TurnRightAction:[16, 4, 3]:0
+[16, 4, 3]:StopAction:[16, 4, 3]:1
+[16, 5, 0]:MoveForwardAction:[16, 5, 0]:0
+[16, 5, 0]:MoveForwardAction:[16, 6, 0]:1
+[16, 5, 0]:TurnLeftAction:[16, 5, 0]:0
+[16, 5, 0]:TurnLeftAction:[16, 5, 1]:1
+[16, 5, 0]:TurnRightAction:[16, 5, 3]:1
+[16, 5, 0]:TurnRightAction:[16, 5, 0]:0
+[16, 5, 0]:StopAction:[16, 5, 0]:1
+[16, 5, 1]:MoveForwardAction:[16, 5, 1]:1
+[16, 5, 1]:TurnLeftAction:[16, 5, 1]:0
+[16, 5, 1]:TurnLeftAction:[16, 5, 2]:1
+[16, 5, 1]:TurnRightAction:[16, 5, 0]:1
+[16, 5, 1]:TurnRightAction:[16, 5, 1]:0
+[16, 5, 1]:StopAction:[16, 5, 1]:1
+[16, 5, 2]:MoveForwardAction:[16, 4, 2]:1
+[16, 5, 2]:MoveForwardAction:[16, 5, 2]:0
+[16, 5, 2]:TurnLeftAction:[16, 5, 3]:1
+[16, 5, 2]:TurnLeftAction:[16, 5, 2]:0
+[16, 5, 2]:TurnRightAction:[16, 5, 1]:1
+[16, 5, 2]:TurnRightAction:[16, 5, 2]:0
+[16, 5, 2]:StopAction:[16, 5, 2]:1
+[16, 5, 3]:MoveForwardAction:[16, 5, 3]:1
+[16, 5, 3]:TurnLeftAction:[16, 5, 3]:0
+[16, 5, 3]:TurnLeftAction:[16, 5, 0]:1
+[16, 5, 3]:TurnRightAction:[16, 5, 3]:0
+[16, 5, 3]:TurnRightAction:[16, 5, 2]:1
+[16, 5, 3]:StopAction:[16, 5, 3]:1
+[16, 6, 0]:MoveForwardAction:[16, 6, 0]:0
+[16, 6, 0]:MoveForwardAction:[16, 7, 0]:1
+[16, 6, 0]:TurnLeftAction:[16, 6, 0]:0
+[16, 6, 0]:TurnLeftAction:[16, 6, 1]:1
+[16, 6, 0]:TurnRightAction:[16, 6, 3]:1
+[16, 6, 0]:TurnRightAction:[16, 6, 0]:0
+[16, 6, 0]:StopAction:[16, 6, 0]:1
+[16, 6, 1]:MoveForwardAction:[16, 6, 1]:1
+[16, 6, 1]:TurnLeftAction:[16, 6, 2]:1
+[16, 6, 1]:TurnLeftAction:[16, 6, 1]:0
+[16, 6, 1]:TurnRightAction:[16, 6, 0]:1
+[16, 6, 1]:TurnRightAction:[16, 6, 1]:0
+[16, 6, 1]:StopAction:[16, 6, 1]:1
+[16, 6, 2]:MoveForwardAction:[16, 6, 2]:0
+[16, 6, 2]:MoveForwardAction:[16, 5, 2]:1
+[16, 6, 2]:TurnLeftAction:[16, 6, 2]:0
+[16, 6, 2]:TurnLeftAction:[16, 6, 3]:1
+[16, 6, 2]:TurnRightAction:[16, 6, 2]:0
+[16, 6, 2]:TurnRightAction:[16, 6, 1]:1
+[16, 6, 2]:StopAction:[16, 6, 2]:1
+[16, 6, 3]:MoveForwardAction:[16, 6, 3]:1
+[16, 6, 3]:TurnLeftAction:[16, 6, 3]:0
+[16, 6, 3]:TurnLeftAction:[16, 6, 0]:1
+[16, 6, 3]:TurnRightAction:[16, 6, 2]:1
+[16, 6, 3]:TurnRightAction:[16, 6, 3]:0
+[16, 6, 3]:StopAction:[16, 6, 3]:1
+[16, 7, 0]:MoveForwardAction:[16, 8, 0]:1
+[16, 7, 0]:MoveForwardAction:[16, 7, 0]:0
+[16, 7, 0]:TurnLeftAction:[16, 7, 1]:1
+[16, 7, 0]:TurnLeftAction:[16, 7, 0]:0
+[16, 7, 0]:TurnRightAction:[16, 7, 3]:1
+[16, 7, 0]:TurnRightAction:[16, 7, 0]:0
+[16, 7, 0]:StopAction:[16, 7, 0]:1
+[16, 7, 1]:MoveForwardAction:[16, 7, 1]:1
+[16, 7, 1]:TurnLeftAction:[16, 7, 1]:0
+[16, 7, 1]:TurnLeftAction:[16, 7, 2]:1
+[16, 7, 1]:TurnRightAction:[16, 7, 1]:0
+[16, 7, 1]:TurnRightAction:[16, 7, 0]:1
+[16, 7, 1]:StopAction:[16, 7, 1]:1
+[16, 7, 2]:MoveForwardAction:[16, 6, 2]:1
+[16, 7, 2]:MoveForwardAction:[16, 7, 2]:0
+[16, 7, 2]:TurnLeftAction:[16, 7, 2]:0
+[16, 7, 2]:TurnLeftAction:[16, 7, 3]:1
+[16, 7, 2]:TurnRightAction:[16, 7, 1]:1
+[16, 7, 2]:TurnRightAction:[16, 7, 2]:0
+[16, 7, 2]:StopAction:[16, 7, 2]:1
+[16, 7, 3]:MoveForwardAction:[16, 7, 3]:1
+[16, 7, 3]:TurnLeftAction:[16, 7, 3]:0
+[16, 7, 3]:TurnLeftAction:[16, 7, 0]:1
+[16, 7, 3]:TurnRightAction:[16, 7, 2]:1
+[16, 7, 3]:TurnRightAction:[16, 7, 3]:0
+[16, 7, 3]:StopAction:[16, 7, 3]:1
+[16, 8, 0]:MoveForwardAction:[16, 8, 0]:1
+[16, 8, 0]:TurnLeftAction:[16, 8, 0]:0
+[16, 8, 0]:TurnLeftAction:[16, 8, 1]:1
+[16, 8, 0]:TurnRightAction:[16, 8, 0]:0
+[16, 8, 0]:TurnRightAction:[16, 8, 3]:1
+[16, 8, 0]:StopAction:[16, 8, 0]:1
+[16, 8, 1]:MoveForwardAction:[16, 8, 1]:1
+[16, 8, 1]:TurnLeftAction:[16, 8, 1]:0
+[16, 8, 1]:TurnLeftAction:[16, 8, 2]:1
+[16, 8, 1]:TurnRightAction:[16, 8, 0]:1
+[16, 8, 1]:TurnRightAction:[16, 8, 1]:0
+[16, 8, 1]:StopAction:[16, 8, 1]:1
+[16, 8, 2]:MoveForwardAction:[16, 7, 2]:1
+[16, 8, 2]:MoveForwardAction:[16, 8, 2]:0
+[16, 8, 2]:TurnLeftAction:[16, 8, 2]:0
+[16, 8, 2]:TurnLeftAction:[16, 8, 3]:1
+[16, 8, 2]:TurnRightAction:[16, 8, 1]:1
+[16, 8, 2]:TurnRightAction:[16, 8, 2]:0
+[16, 8, 2]:StopAction:[16, 8, 2]:1
+[16, 8, 3]:MoveForwardAction:[16, 8, 3]:1
+[16, 8, 3]:TurnLeftAction:[16, 8, 0]:1
+[16, 8, 3]:TurnLeftAction:[16, 8, 3]:0
+[16, 8, 3]:TurnRightAction:[16, 8, 2]:1
+[16, 8, 3]:TurnRightAction:[16, 8, 3]:0
+[16, 8, 3]:StopAction:[16, 8, 3]:1
+ENDT
+[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+2
+[0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+[0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
