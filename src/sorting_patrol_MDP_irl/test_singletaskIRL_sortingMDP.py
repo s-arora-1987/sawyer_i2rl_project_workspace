@@ -636,10 +636,10 @@ if __name__ == "__main__":
 		print(lineFoundWeights)
 
 		# print("input to meirl \n")
-		f_input_IRL = open(get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/data_singleTaskIRL_sorting.log", "w")
+		f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRL_sorting.log", "w")
 		f_input_IRL.write("")
 		f_input_IRL.close()
-		f_input_IRL = open(get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/data_singleTaskIRL_sorting.log", "a")
+		f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRL_sorting.log", "a")
 		f_input_IRL.write(outtraj)
 		f_input_IRL.close()
 

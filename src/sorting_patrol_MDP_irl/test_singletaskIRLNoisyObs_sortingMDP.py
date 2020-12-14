@@ -40,15 +40,15 @@ def get_home():
 dummy_states = []
 dict_stateEnum = {}
 dict_actEnum = {}
-f_st_BIRLcode = open(get_home() + "/BIRL_MLIRL_data/traj_states.log", "w")
+f_st_BIRLcode = open(get_home() + "/catkin_ws/src/BIRL_MLIRL_data/traj_states.log", "w")
 f_st_BIRLcode.write("")
 f_st_BIRLcode.close()
-f_ac_BIRLcode = open(get_home() + "/BIRL_MLIRL_data/traj_actions.log", "w")
+f_ac_BIRLcode = open(get_home() + "/catkin_ws/src/BIRL_MLIRL_data/traj_actions.log", "w")
 f_ac_BIRLcode.write("")
 f_ac_BIRLcode.close()
 
-f_st_BIRLcode = open(get_home() + "/BIRL_MLIRL_data/traj_states.log", "a")
-f_ac_BIRLcode = open(get_home() + "/BIRL_MLIRL_data/traj_actions.log", "a")
+f_st_BIRLcode = open(get_home() + "/catkin_ws/src/BIRL_MLIRL_data/traj_states.log", "a")
+f_ac_BIRLcode = open(get_home() + "/catkin_ws/src/BIRL_MLIRL_data/traj_actions.log", "a")
 
 def printTrajectoriesWPredScores(trajs,range_scores):
 	outtraj = ""
@@ -370,12 +370,12 @@ def saveDataForBaseline():
 	f_st_BIRLcode.close()
 	f_ac_BIRLcode.close()
 
-	f_TM_BIRLcode = open(get_home() + "/BIRL_MLIRL_data/transition_matrix.txt", "w")
+	f_TM_BIRLcode = open(get_home() + "/catkin_ws/src/BIRL_MLIRL_data/transition_matrix.txt", "w")
 	f_TM_BIRLcode.write("")
 	f_TM_BIRLcode.close()
 	tuple_res = sortingMDP.generate_matrix(dict_stateEnum,dict_actEnum)
 	dict_tr = tuple_res[0]
-	f_TM_BIRLcode = open(get_home() + "/BIRL_MLIRL_data/transition_matrix.txt", "a")
+	f_TM_BIRLcode = open(get_home() + "/catkin_ws/src/BIRL_MLIRL_data/transition_matrix.txt", "a")
 	for ind1 in range(1,len(dict_actEnum)+1):
 		acArray2d = np.empty((len(dict_stateEnum),len(dict_stateEnum)))
 
@@ -391,10 +391,10 @@ def saveDataForBaseline():
 
 	f_TM_BIRLcode.close()
 
-	f_Phis_BIRLcode = open(get_home() + "/BIRL_MLIRL_data/features_matrix.txt", "w")
+	f_Phis_BIRLcode = open(get_home() + "/catkin_ws/src/BIRL_MLIRL_data/features_matrix.txt", "w")
 	f_Phis_BIRLcode.write("")
 	f_Phis_BIRLcode.close()
-	f_Phis_BIRLcode = open(get_home() + "/BIRL_MLIRL_data/features_matrix.txt", "a")
+	f_Phis_BIRLcode = open(get_home() + "/catkin_ws/src/BIRL_MLIRL_data/features_matrix.txt", "a")
 	for inda in range(1,len(dict_actEnum)+1):
 		a = dict_actEnum[inda] 
 		for inds in range(1,len(dict_stateEnum)+1):
@@ -413,10 +413,10 @@ def saveDataForBaseline():
 			wts_experts_array[i][j] = List_TrueWeights[wt_ind][i]
 		j += 1
 
-	f_wts_BIRLcode = open(get_home() + "/BIRL_MLIRL_data/weights_experts.log", "w")
+	f_wts_BIRLcode = open(get_home() + "/catkin_ws/src/BIRL_MLIRL_data/weights_experts.log", "w")
 	f_wts_BIRLcode.write("") 
 	f_wts_BIRLcode.close() 
-	f_wts_BIRLcode = open(get_home() + "/BIRL_MLIRL_data/weights_experts.log", "a")
+	f_wts_BIRLcode = open(get_home() + "/catkin_ws/src/BIRL_MLIRL_data/weights_experts.log", "a")
 	for i in range(0,wts_experts_array.shape[0]):
 		for e in range(0,wts_experts_array.shape[1]):
 			f_wts_BIRLcode.write(str(wts_experts_array[i][e])+",")
@@ -589,8 +589,8 @@ if __name__ == "__main__":
 	# threshold for convergence of gibbs sampling for robust-irl 
 	# by Shervin 
 	# 0.025 not giving expected trend
-	# conv_threshold_gibbs = 0.015
-	conv_threshold_gibbs = 0.0075
+	conv_threshold_gibbs = 0.015
+	# conv_threshold_gibbs = 0.01
 
 	# which kind of sampling method is being used?
 	use_ImpSampling = 0
@@ -616,12 +616,12 @@ if __name__ == "__main__":
 
 	ranges_pred_scores = [range_pred_scores1, range_pred_scores2, range_pred_scores3, range_pred_scores4, range_pred_scores5]
 
-	print("writing result of calls to noisyObsRobustSamplingMeirl to file Downloads/noisyObsRobustSamplingMeirl_LBA_data.csv") 
+	print("writing result of calls to noisyObsRobustSamplingMeirl to file catkin_ws/src/navigation_irl/noisyObsRobustSamplingMeirl_LBA_data.csv") 
 	# output LBA to file
-	f_input_IRL = open(get_home() +'/Downloads/noisyObsRobustSamplingMeirl_LBA_data.csv', "a")
-	f_input_IRL.write("\n")
+	f_input_IRL = open(get_home() +'/catkin_ws/src/navigation_irl/noisyObsRobustSamplingMeirl_LBA_data.csv', "w")
+	f_input_IRL.write("")
 	f_input_IRL.close()
-	f_rec = open(get_home()+'/Downloads/noisyObsRobustSamplingMeirl_LBA_data.csv','a') 
+	f_rec = open(get_home()+'/catkin_ws/src/navigation_irl/noisyObsRobustSamplingMeirl_LBA_data.csv','a') 
 	csvstring = "\n" 
 
 	for range_sc in ranges_pred_scores: 
@@ -679,10 +679,10 @@ if __name__ == "__main__":
 			outtraj += lineFoundWeights+lineFeatureExpec+ str(num_Trajsofar)+"\n"  
 
 			# input data to file
-			f_input_IRL = open(get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/data_singleTaskIRLNoisyObs_sorting.log", "w")
+			f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRLNoisyObs_sorting.log", "w")
 			f_input_IRL.write("")
 			f_input_IRL.close()
-			f_input_IRL = open(get_home() + "/catkin_ws/src/sorting_patrol_MDP_irl/data_singleTaskIRLNoisyObs_sorting.log", "a")
+			f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRLNoisyObs_sorting.log", "a")
 			f_input_IRL.write(outtraj)
 			f_input_IRL.close()
 
@@ -718,6 +718,12 @@ if __name__ == "__main__":
 		# LBA should be read after last session 
 		# print("re.findall('LBA(.[\s\S]+?)ENDLBA', stdout) ",re.findall('LBA(.[\s\S]+?)ENDLBA', stdout))
 		LBA = re.findall('LBA(.[\s\S]+?)ENDLBA', stdout)[0]
+		print("LBA:",LBA) 
+
+		hatphi_Diff_wrt_wonoise = re.findall('DIFF1(.[\s\S]+?)ENDDIFF1', stdout)[0]
+		print("LBA:",LBA) 
+
+		hatphi_Diff_wrt_scores1 = re.findall('DIFF2(.[\s\S]+?)ENDDIFF2', stdout)[0]
 		print("LBA:",LBA) 
 
 		################################ Simulating learned policy #################################
