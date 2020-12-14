@@ -1,5 +1,5 @@
 import mdp;
-import irlWithoutLBFGS;
+import irl;
 import std.stdio;
 import std.format;
 import std.string;
@@ -25,37 +25,7 @@ import boydmdp;
     Solve method for easy understanding: 
     Inputs: Model class instaance, initial distribution over states, list of sequences of state-action pairs,
     length of a trajectory, initial weights of all clusters, best likelihood value, learned weights of all clusters,
-    
-    1 - initialize weights and policy for each cluster (random for batch irl, previous weights for i2rl) 
-    2 - initialize assignment distribution as uniform
-    3 - Generate trajectories. as the trajectories used for computing E[phi] is different in every iteration, vdms will change in
-        each iteration. 
-        a - sample an assignment value c_m from assignment distribution and then sample a 
-        trajectory from policy of cluster c_m. Compute f_k(X_m) for this trajectory.
-        b - For the trajectory, make vdm=1 for cluster indexed d=c_m and vdm=0 for other values of d. 
-        c - Keep repeating above two steps until m == n_samples. 
-        d - For each trajectory in demonstration, 
-        find a f_k(X_m) in traj_space that is close to f_k(X_m) of input trajectory (may be normed diff between two). 
-        Assign corresponding vdm of matching trajectory from traj_space to that demonstration trajectory.
-    4 - concatenate exp(gradients) values in a matrix form. we can not concatenate gradients directly if we are 
-        using exponentiated gradient ascent. 
-    5 - implement gradient ascent for thetad's
-        a - For each cluster d, compute hatd(phi) using vdms specific to f_k(X_m) in demonstration.
-        b - For each cluster d, implement ascent update on theta_d
-        c - if diff for D x K weights or cumulative likelihood is not converged, go back to b) 
-    5 - update in all vdms corresponding to one d is same (do update within solve())
-        a - Compute second term of gradient as input
-        a - For each d, compute gradient using non-updated values of vdm
-        b - implement ascent/descent on vdm using update equation
-        c - if not converged, go back to a)
-        d - update vdms_demonstration acc to new vdm_trajs
-    6 - update (sum_m vdm)/n_samples and therefore DPM's assignment distribution. If 
-    not converged (assignments vary), go to step 3. 
-
-    ...........................................................................
-
-    CHANGE 
-
+  
     After every policy update, for next cycle, sample new assignment variables and 
     new trajectories simulating trajectory space. Append the demonstration and 
     updated corresponding assignment variables to sample set. Use them to 
@@ -353,8 +323,8 @@ class NonParamMTIRL : MaxEntIrlZiebartApprox {
                     //writeln("mu_Eds[q]: ",mu_Eds[q]);
 
                     // trying IRL without restarts + populate corresponding Ed_Phis values
-                    //theta_ds[q] = SingleAgentExponentiatedGradient(theta_ds[q].dup, 0.25, error, q);
-                    //theta_ds[q] = SingleAgentExponentiatedGradient(theta_ds[q].dup, desc_step_size, error, q);
+                    //theta_ds[q] = SingleAgentAdaptiveExponentiatedGradient(theta_ds[q].dup, 0.25, error, q);
+                    //theta_ds[q] = SingleAgentAdaptiveExponentiatedGradient(theta_ds[q].dup, desc_step_size, error, q);
 
                     // as algorithm is fast with timed value iteration, try random restarts 
                     optLL_val = -double.max;
@@ -363,7 +333,7 @@ class NonParamMTIRL : MaxEntIrlZiebartApprox {
                         temp_weights_restarts = theta_ds[q].dup;
                         auto starttime = Clock.currTime();
                         
-                        //temp_weights_restarts = SingleAgentExponentiatedGradient(temp_weights_restarts.dup, this.gradient_descent_step_size, 
+                        //temp_weights_restarts = SingleAgentAdaptiveExponentiatedGradient(temp_weights_restarts.dup, this.gradient_descent_step_size, 
                         //error, q, this.Ephi_thresh, grad_val, this.descent_duration_thresh_secs);
                         //writeln("restarts ",restarts);
                         temp_weights_restarts = singleTaskUnconstrainedAdaptiveExponentiatedStochasticGradientDescent(
@@ -690,7 +660,7 @@ class NonParamMTIRL : MaxEntIrlZiebartApprox {
 
     }
     
-    double [] SingleAgentExponentiatedGradient(double [] w, double c, double err, int q,
+    double [] SingleAgentAdaptiveExponentiatedGradient(double [] w, double c, double err, int q,
         double Ephi_thresh, out double gradient_val, int dur_thresh_secs) {
 
         debug {
@@ -928,7 +898,7 @@ class NonParamMTIRL : MaxEntIrlZiebartApprox {
         return w_prev;
     }
 
-    double [] SingleAgentExpectedEdgeFrequencyFeatures(double [] w, double threshold) {
+    override double [] SingleAgentExpectedEdgeFrequencyFeatures(double [] w, double threshold) {
         // approximate feature expectations to avoid computing partition function
         debug {
             //writeln("SingleAgentExpectedEdgeFrequencyFeatures started");
@@ -1042,7 +1012,7 @@ class NonParamMTIRL : MaxEntIrlZiebartApprox {
         return returnval;
     } 
 
-    double computeLBA(MapAgent agent1, MapAgent agent2) {
+    override double computeLBA(MapAgent agent1, MapAgent agent2) {
         double totalsuccess = 0.0;
         double totalstates = 0.0;
         // Mapagent is a deterministic policy by definition

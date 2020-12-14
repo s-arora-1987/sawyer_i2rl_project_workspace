@@ -65,7 +65,8 @@ int main() {
 
 
         debug {
-                writeln(V);
+            //writeln("States\n",model.S(),"\n\n");
+            //writeln(V);
         }
         a = vi.createPolicy(model, V);
 

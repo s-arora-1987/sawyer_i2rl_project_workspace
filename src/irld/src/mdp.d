@@ -701,8 +701,8 @@ public sar [] simulate(Model model, Agent agent, double[State] initial, size_t t
 		temp.a = a;
 		temp.r = r;
 		returnval[t] = temp;
-//		returnval ~= temp;
 		
+		//writeln("simulate: s ",s," a ",a," model.T(s, a) ",model.T(s, a));
 		s = Distr!State.sample(model.T(s, a));
 		t += 1;
 	}

@@ -170,13 +170,11 @@ int main() {
 }
 
 
-
-
 class MaxEntUnknownTPenaltyMethod : MaxEntIrl {
 
 	private int[][] E; // E is a set of subsets, each subset contains the number of a feature
 	private double[] Q; // Q is the failure rate of each E
-	private int[][] S; // the coursest partition of the feature space induced by the Es
+	private int[][] S; // the `coursest partition of the feature space induced by the Es
 	private int[][] P; // M x N matrix, each row contains the vector of v's corresponding to a given P
 	    	
     private double [] v;
@@ -251,8 +249,8 @@ class MaxEntUnknownTPenaltyMethod : MaxEntIrl {
 	
 //	        opt_weights.length = init_weights.length;
 //	        nelmin ( &evaluate_nelder_mead, init_weights.length, init_weights.ptr, p.ptr, &opt_value, reqmin, step.ptr, konvge, kcount, &icount, &numres, &ifault );
-        
-        	ret = lbfgs(cast(int)(2*S.length), p, &finalValue, &evaluate_maxent, &progress, &this, &param);
+        	auto temp = this;
+        	ret = lbfgs(cast(int)(2*S.length), p, &finalValue, &evaluate_maxent2, &progress, &temp, &param);
 	        foreach(j; 0..(2*S.length)) {
 	        	weights[j] = p[j];
 	        }

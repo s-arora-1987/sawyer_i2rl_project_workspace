@@ -52,19 +52,37 @@ add_executable(boydattacker src/mdp.d src/boydmdp.d src/attacker.d src/BoydSolve
 add_executable(solveboydpatroller src/mdp.d src/boydmdp.d src/solvePatrolMdp.d)
 
 
-add_executable(boydirl src/mdp.d src/boydmdp.d src/irl.d src/BoydIRL.d src/irlgraveyard.d src/sortingMDP.d)
-target_link_libraries(boydirl
-   asa047 lbfgs
-)
-add_dependencies(boydirl liblbfgs)
-
-add_executable(meirl src/mdp.d src/boydmdp.d src/irlWithoutLBFGS.d src/singleTaskIRL.d src/sortingMDP.d)
-#target_link_libraries(meirl
+#add_executable(boydirl src/mdp.d src/boydmdp.d src/irl.d src/BoydIRL.d src/irlgraveyard.d src/sortingMDP.d)
+#target_link_libraries(boydirl
 #   asa047 lbfgs
 #)
-#add_dependencies(meirl liblbfgs)
+#add_dependencies(boydirl liblbfgs)
 
-add_executable(noisyObsRobustSamplingMeirl src/mdp.d src/boydmdp.d src/irlWithoutLBFGS.d src/singleTaskIRLNoisyObs.d src/sortingMDP.d)
+add_executable(meirl src/mdp.d src/boydmdp.d src/irl.d src/singleTaskIRL.d src/sortingMDP.d)
+target_link_libraries(meirl
+   asa047 lbfgs
+)
+add_dependencies(meirl liblbfgs)
+
+add_executable(noisyObsRobustSamplingMeirl src/mdp.d src/boydmdp.d src/irl.d src/singleTaskIRLNoisyObs.d src/sortingMDP.d)
+target_link_libraries(noisyObsRobustSamplingMeirl
+   asa047 lbfgs
+)
+add_dependencies(noisyObsRobustSamplingMeirl liblbfgs)
+
+add_executable(noisyObsRobustSamplingMeirlPatrol src/mdp.d src/boydmdp.d src/singleTaskIRLNoisyObs_patrolMDP.d src/irl.d)
+target_link_libraries(noisyObsRobustSamplingMeirlPatrol
+   asa047 lbfgs
+)
+add_dependencies(noisyObsRobustSamplingMeirlPatrol liblbfgs)
+
+
+add_executable(computeObsModelpatrolToyMDP src/mdp.d src/boydmdp.d src/computeObsModelpatrolToyMDP.d src/irl.d)
+target_link_libraries(computeObsModelpatrolToyMDP
+   asa047 lbfgs
+)
+add_dependencies(computeObsModelpatrolToyMDP liblbfgs)
+
 
 #add_executable(testdeb src/testdebug.d)
 
@@ -110,11 +128,11 @@ add_executable(boydsimple_t src/mdp.d src/boydmdp.d src/BoydSimpleT.d)
 
 add_executable(solveSortingMDP src/sortingMDP.d src/mdp.d src/solveSortingMDP.d)
 
-add_executable(dpmMEIRL src/multitaskIRL.d src/sortingMDP.d src/mdp.d src/irlWithoutLBFGS.d src/boydmdp.d)
-#target_link_libraries(dpmMEIRL
-#   asa047 lbfgs
-#)
-#add_dependencies(dpmMEIRL liblbfgs)
+add_executable(dpmMEIRL src/multitaskIRL.d src/sortingMDP.d src/mdp.d src/irl.d src/boydmdp.d)
+target_link_libraries(dpmMEIRL
+   asa047 lbfgs
+)
+add_dependencies(dpmMEIRL liblbfgs)
 
 add_executable(sortingMDPILE src/ileSortingMDP.d src/mdp.d src/sortingMDP.d) 
 
@@ -123,5 +141,5 @@ add_executable(code_test src/code_test.d)
 # set_target_properties(boydpatroller boydattacker boydirl boyd_t boydsimple_t gridworld boyd_em_t boydt toytest boydemirl waterloorun boydlmeirl sortingMDP PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
 # set_target_properties(boydpatroller boydattacker boydirl boydsimple_t boydile PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
 # set_target_properties(boydpatroller boydattacker boydsimple_t boydile sortingMDP PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
-#set_target_properties(boydirl boydpatroller boydattacker dpmMEIRL boydsimple_t boydile solveSortingMDP sortingMDPILE solveboydpatroller PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
-set_target_properties(boydirl meirl noisyObsRobustSamplingMeirl boydpatroller boydattacker dpmMEIRL boydsimple_t boydile solveSortingMDP sortingMDPILE solveboydpatroller code_test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
+#set_target_properties(boydirl boydpatroller boydsimple_t dpmMEIRL boydsimple_t boydile solveSortingMDP sortingMDPILE solveboydpatroller PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
+set_target_properties(meirl noisyObsRobustSamplingMeirl solveSortingMDP sortingMDPILE code_test boydpatroller boydsimple_t noisyObsRobustSamplingMeirlPatrol computeObsModelpatrolToyMDP PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 

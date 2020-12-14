@@ -7,7 +7,6 @@ import std.string;
 import std.math;
 import std.random;
 import std.algorithm;
-import sortingMDP;
 import core.stdc.stdlib : exit;
 import std.datetime;
 import std.numeric;
@@ -16,10 +15,11 @@ int main() {
 	
 	sac [][] SAC;
     sac [][] SACfull;
+	string mapToUse;
+
     int num_Trajsofar;
     string st;
 	double last_val;
-	string mapToUse;
 	string buf;
 	string algorithm;
 	int length_subtrajectory;
@@ -40,55 +40,57 @@ int main() {
 	formattedRead(buf, "%s", &mapToUse);
 	mapToUse = strip(mapToUse);
 	
-	buf = readln();
-	formattedRead(buf, "%s", &algorithm);
-	algorithm = strip(algorithm);
+	double[State][Action][State][] T;
+	int curT = 0;
+	T.length = 1;	
+	while ((buf = readln()) != null) {
+    	buf = strip(buf);
+    	
+    	if (buf == "ENDT") {
+			break;
+    	}
+    	
+    	State s;
+    	Action a;
+    	State s_prime;
+    	double p;
+    	
+    	debug {
+    		writeln("buf ",buf);
+    	}
+
+        p = parse_transitions(mapToUse, buf, s, a, s_prime);
+
+    	T[curT][s][a][s_prime] = p;
+    }
+
+    debug{
+    	writeln("read Tran ");
+    }
 
 	byte[][] map;
 	LinearReward reward;
     Model model;
 
-	if (mapToUse == "sorting") {
-		//models ~= new sortingModel(0.05,null);
-		//models ~= new sortingModel(0.05,null);
-		//models ~= new sortingModel2(0.05,null);
-		//models ~= new sortingModel2(0.05,null);
-		//models ~= new sortingModelbyPSuresh(0.05,null);
-		//models ~= new sortingModelbyPSuresh(0.05,null);
-		//models ~= new sortingModelbyPSuresh2(0.05,null);
-		//models ~= new sortingModelbyPSuresh2(0.05,null);
-		//models ~= new sortingModelbyPSuresh3(0.05,null);
-		//models ~= new sortingModelbyPSuresh3(0.05,null);
-		//models ~= new sortingModelbyPSuresh4(0.05,null);
-		//model = new sortingModelbyPSuresh4(0.05,null);
-		model = new sortingModelbyPSuresh2WOPlaced(0.05,null);
-		//model = new sortingModelbyPSuresh3multipleInit(0.05,null);
-		
-	} 
+	map = boyd2PatrollerMap();
+	model = new BoydModel(null, map, T[0], 1, &simplefeatures);
+
+    //model = new BoydModel2(null, map, 0.05);
+
+	buf = readln();
+	formattedRead(buf, "%s", &algorithm);
+	algorithm = strip(algorithm);
 
 	double [] reward_weights;
 	int dim;
-	if (mapToUse == "sorting") {
-		// Which reward type is it? 
-		//dim = 8;
-		//reward = new sortingReward2(models[i],dim); 
-		//dim = 10;
-		//reward = new sortingReward3(models[i],dim); 
-		//reward = new sortingReward4(models[i],dim); 
-		//reward = new sortingReward5(models[i],dim); 
-		dim = 11;
-		//reward = new sortingReward6(models[i],dim); 
-		//reward = new sortingReward7WPlaced(models[i],dim); 
-		reward = new sortingReward7(model,dim); 
-
-		reward_weights = new double[reward.dim()];
-		reward_weights[] = 0;
-		reward.setParams(reward_weights);
-	}
+    reward = new Boyd2RewardGroupedFeatures(model);
+    reward_weights = new double[reward.dim()];
+    reward_weights[] = 0;
+	reward.setParams(reward_weights);
 
 	model.setReward(reward);
 	model.setGamma(0.99);
-	model.setGamma(0.999);
+	//model.setGamma(0.999);
 
 	debug {
 		writeln("started reading trajectories");
@@ -116,42 +118,33 @@ int main() {
     			
    				formattedRead(percept, "%s:%s:%s", &state, &action, &p);
    				
-   				if (mapToUse == "sorting") {
+   				int x;
+   				int y;
+   				int z;
+   				int cg;
 
-	                int ol;
-	                int pr;
-	                int el;
-	                int ls;
+				state = state[1..state.length];
+   				formattedRead(state, "%s, %s, %s]", &x, &y, &z);
 
-					state = state[1..state.length];
-	                formattedRead(state, " %s, %s, %s, %s]", &ol, &pr, &el, &ls);
+   				Action a;
+   				if (action == "MoveForwardAction") {
+   					a = new MoveForwardAction();
+   				} else if (action == "StopAction") {
+   					a = new StopAction();
+   				} else if (action == "TurnLeftAction") {
+   					a = new TurnLeftAction();
+   				} else if (action == "TurnAroundAction") {
+   					a = new TurnAroundAction();
+   				} else {
+   					a = new TurnRightAction();
+   				}
+   				
+   				newtraj ~= sac(new BoydState([x, y, z]), a, p);
 
-	   				Action a;
-	   				if (action == "InspectAfterPicking") {
-	   					a = new InspectAfterPicking();
-	   				} else if (action == "InspectWithoutPicking" ) {
-	   					a = new InspectWithoutPicking();
-	                } else if (action == "Pick" ) {
-	                    a = new Pick();
-	                } else if (action == "PlaceOnConveyor" ) {
-	                    a = new PlaceOnConveyor();
-	                } else if (action == "PlaceInBin" ) {
-	                    a = new PlaceInBin();
-	                } else if (action == "ClaimNewOnion" ) {
-	                    a = new ClaimNewOnion();
-	   				} else if (action == "PlaceInBinClaimNextInList") {
-	   					a = new PlaceInBinClaimNextInList();
-	                } else {
-	                    a = new ClaimNextInList();
-	   				}
-	   				
-	   				newtraj ~= sac(new sortingState([ol, pr, el, ls]),a,p);
+			    debug {
+			    	writeln("finished reading ",[x, y, z], a, p);
+			    }
 
-				    debug {
-				    	//writeln("finished reading ",[ol, pr, el, ls],action);
-				    }
-
-   				} 
     		}
     		
     		SAC ~= newtraj;
@@ -264,26 +257,10 @@ int main() {
     }
 
 	double[State] initial;
-    // START FROm  0,2,0,2
-    // sortingState iss = new sortingState([0,2,0,2]);
-    sortingState iss = new sortingState([0,2,0,0]);
-	if (mapToUse == "sorting") {
-
-	    //initial[iss] = 1.0;
-		foreach (s; model.S()) {
-			sortingState ss = cast(sortingState)s;
-			//if (ss._onion_location == 0 && ss._prediction == 2 && ss._listIDs_status == 0) initial[ss] = 1.0;
-			if (ss._onion_location == 0 && ss._listIDs_status == 0) initial[ss] = 1.0;
-		}
-		writeln("D code number of initial states ",initial.length);
-		Distr!State.normalize(initial); 
-
-	} else {
-		foreach (s; model.S()) {
-			initial[s] = 1.0;
-		}
-		Distr!State.normalize(initial);
+	foreach (s; model.S()) {
+		initial[s] = 1.0;
 	}
+	Distr!State.normalize(initial); 
 	
 	sac [][] samples = SAC;
     
@@ -301,13 +278,13 @@ int main() {
 
 	debug {
 		// testing to get stochastic policy
-		writeln(" stochastic policy for true weights ");
+		writeln(" stochastic policy for true weights ",trueWeights);
 		reward.setParams(trueWeights);
 		double qval_thresh = 0.01;
 		ulong max_iter_QSolve = 100;
 		double[StateAction] Q_value = QValueSoftMaxSolve(model, qval_thresh, max_iter_QSolve);        
 		Agent trueStochPolicy = CreateStochasticPolicyFromQValue(model, Q_value);
-		//writeln("\nSimulation:");
+		writeln("\nSimulation:");
 		sar [] trajsim;
 		for(int i = 0; i < 5; i++) {
 			trajsim = simulate(model, trueStochPolicy, initial, 20);
@@ -385,30 +362,12 @@ int main() {
     } 
 	
 	writeln("BEGPARSING");
+
 	foreach (State s; model.S()) {
 		foreach (Action a, double chance; policy.actions(s)) {
 
-            sortingState ps = cast(sortingState)s;
+            BoydState ps = cast(BoydState)s;
             writeln( ps.toString(), " = ", a);
-            string str_s="";
-			if (ps._onion_location == 0) str_s=str_s~"Onconveyor,";
-			if (ps._onion_location == 1) str_s=str_s~"Infront,";
-			if (ps._onion_location == 2) str_s=str_s~"Inbin,";
-			if (ps._onion_location == 3) str_s=str_s~"Picked/AtHomePose,";
-			if (ps._onion_location == 4) str_s=str_s~"Placed,";
-
-			if (ps._prediction == 0) str_s=str_s~"bad,";
-			if (ps._prediction == 1) str_s=str_s~"good,";
-			if (ps._prediction == 2) str_s=str_s~"unknown,";
-
-			if (ps._EE_location == 0) str_s=str_s~"Onconveyor,";
-			if (ps._EE_location == 1) str_s=str_s~"Infront,";
-			if (ps._EE_location == 2) str_s=str_s~"Inbin,";
-			if (ps._EE_location == 3) str_s=str_s~"Picked/AtHomePose,";
-
-			if (ps._listIDs_status == 0) str_s=str_s~"Empty";
-			if (ps._listIDs_status == 1) str_s=str_s~"NotEmpty"; 
-			if (ps._listIDs_status == 2) str_s=str_s~"Unavailable";
 
             //writeln(str_s," = ", a);
 
@@ -417,9 +376,9 @@ int main() {
 	
 	writeln("ENDPOLICY");
 
-   writeln(foundWeightsGlbl);
-   writeln(featureExpecExpert);
-   writeln(num_Trajsofar);
+    writeln(foundWeightsGlbl);
+    writeln(featureExpecExpert);
+    writeln(num_Trajsofar);
 
 	debug {
 		writeln("\nSimulation for 1:");

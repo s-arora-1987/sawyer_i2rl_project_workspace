@@ -6,6 +6,7 @@ import std.math;
 import std.stdio;
 import std.string;
 
+
 byte [][] boyd2PatrollerMap() {
 	return [[0, 1, 1, 1, 1, 1, 1, 1, 1], 
 			     [0, 1, 0, 0, 0, 0, 0, 0, 0],
@@ -1057,6 +1058,71 @@ class BoydModel : mdp.Model {
 		return l[0] >= 0 && l[0] < map.length && l[1] >= 0 && l[1] < map[0].length && map[l[0]][l[1]] == 1; 
 	}
 }
+
+class BoydModelWdObsFeatures : BoydModel {
+	// This class takes as input observation feature function for estimating observation model
+	int [] function(State, Action) of;
+	int numObFeatures;
+	// observation model to be estimated 
+	double [StateAction][StateAction] obsMod;
+
+	public this( State terminal, byte [][] themap, double [State][Action][State] newT, int inpNumObFeatures, int [] function(State, Action) of) {
+		super(terminal, null, newT, 1, &simplefeatures);
+
+		this.t = newT;
+		this.terminal = terminal;
+		this.map = themap;
+		// transitin features
+		//this.numFeatures = 1;
+		//this.ff = simplefeatures;
+		// observation features
+		this.numObFeatures = inpNumObFeatures;
+		this.of = of;
+		
+		this.actions ~= new MoveForwardAction();
+		this.actions ~= new TurnLeftAction();
+		this.actions ~= new TurnRightAction();
+		this.actions ~= new StopAction();
+
+
+		for (int i = 0; i < map.length; i ++) {
+			
+			for (int j = 0; j < map[i].length; j ++) {
+				if (map[i][j] == 1) {
+					//writeln("adding 4 states for i,j ",i," ",j);
+					states ~= new BoydState([i, j, 0]);
+					states ~= new BoydState([i, j, 1]);
+					states ~= new BoydState([i, j, 2]);
+					states ~= new BoydState([i, j, 3]);
+				}
+			}
+		}
+		
+		
+		foreach (s; states) {
+			uniform[s] = 1.0/states.length;
+		}
+		  
+	}
+
+	public void setNumObFeatures(int inpNumObFeatures) {
+		this.numObFeatures = inpNumObFeatures;
+	}
+
+	public int getNumObFeatures() {
+		return numObFeatures;
+	}
+		
+	public int [] obFeatures(State state, Action action) {
+		return of(state, action);
+	}
+
+	public void setObsMod(double [StateAction][StateAction] newObsMod) {
+		obsMod = newObsMod;
+	}
+
+}
+
 
 class BoydExtendedModel : mdp.Model {
 
