@@ -120,4 +120,5 @@ email: sa08751@uga.edu
 
 ## Acknowledgements
 - [KBogert](https://scholar.google.com/citations?user=HYCHbSUAAAAJ&hl=en)
+- [Simulation Repo by PSuresh](https://github.com/prasuchit/sawyer_irl_project)
 - [lab-mates](http://thinc.cs.uga.edu/#person) 
