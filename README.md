@@ -71,7 +71,7 @@ The code is partially built upon the version of IRL code developed in Thinc lab 
 ### Domains 
 The Python frontend and D-code backend have MDP models and MDP solvers for two domains
 
-1 - stage suimulation for ground navigation (patrol) domain in paper [PaperI2RL](http://www.ifaamas.org/Proceedings/aamas2019/pdfs/p1170.pdf), coded in files src/navigation_irl/patrol/*.py and src/irld/src/boydmdp.d. 
+1 - stage suimulation for ground navigation (patrol) domain in paper [PaperI2RL](http://www.ifaamas.org/Proceedings/aamas2019/pdfs/p1170.pdf), coded in files src/navigation_irl/patrol/*.py and src/irld/src/boydmdp.d. Python frontend in src/navigation_irl/ros_ctrl.py calls the backend src/irld/src/boydirl.d in backend, which forwards call to chosen IRL solver.
 For running this simulation, 
 
 -- git clone this project in your home directory
@@ -82,11 +82,12 @@ For running this simulation,
 
 -- set parameters in callruniteratively_varyObvty_LBAILEAnalysis.sh and run it
 
-2 - vegetable sorting domain in paper [PaperME-MTIRL](https://arxiv.org/abs/2004.12873), coded in files src/navigation_irl/sortingMDP/*, src/irld/src/solveSortingMDP.d, and src/irld/src/sortingMDP.d 
+2 - vegetable sorting domain in paper [PaperME-MTIRL](https://arxiv.org/abs/2004.12873), coded in files src/sorting_patrol_MDP_irl/sortingMDP/*, src/irld/src/solveSortingMDP.d, and src/irld/src/sortingMDP.d 
+Python frontend in src/sorting_patrol_MDP_irl/move_sawyer.py calls the D backend. src/irld/src/solveSortingMDP.d solved sortingMDP and computes a policy. src/irld/src/multitaskIRL.d implements multi task IRL algorithm.
 
 The instructions for launching a Gazebo simulation of second domain can be found in [here](https://github.com/s-arora-1987/sawyer_irl_project)
 
-Python frontend in src/navigation_irl/ros_ctrl.py calls the backend src/irld/src/boydirl.d in backend, which forwards call to chosen IRL solver. Note: There are many mdp classes defined for each of the two domains. Therefore, while running the code, the choice of MDP model in frontend should match with backend. 
+ Note: There are many mdp classes defined for each of the two domains. Therefore, while running the code, the choice of MDP model in frontend should match with backend. 
 
 ### Solvers
 Some of the IRL solver classes in src/irld/src/irl.d are modified to work in online / incremental fashion in which learner updates the weights learned in preivous sessions and generate new weights and feature expectations as outputs. Bogert's version of UncontrainedAdaptiveGradientDescent has been modified in terms of stopping criterion. Current descent stops when the standard deviation in moving window of diff-feature-expectation is lower than a threshold. 
