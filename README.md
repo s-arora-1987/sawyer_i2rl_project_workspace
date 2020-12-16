@@ -57,6 +57,13 @@ sudo python setup.py install
 
 - Do rosdep update
 
+cd into catkin_ws and install all dependencies for these packages:
+
+rosdep install --from-paths src --ignore-src --rosdistro=<YOUR ROS DISTRO> -y -i --verbose
+
+If you see any uninstalled dependencies, you might have to manually install them using apt-get install or pip install.
+
+
 ## Files
 
 The code is partially built upon the version of IRL code developed in Thinc lab at UGA, by Kenneth Bogert before the original code got modified and got uploaded in github. [librirl-by-kbogert](https://github.com/kbogert/libirl)
