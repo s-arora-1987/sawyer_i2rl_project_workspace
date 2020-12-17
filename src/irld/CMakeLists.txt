@@ -110,7 +110,7 @@ add_executable(boydsimple_t src/mdp.d src/boydmdp.d src/BoydSimpleT.d)
 
 add_executable(solveSortingMDP src/sortingMDP.d src/mdp.d src/solveSortingMDP.d)
 
-add_executable(dpmMEIRL src/multitaskIRL.d src/sortingMDP.d src/mdp.d src/irlWithoutLBFGS.d src/boydmdp.d)
+add_executable(dpmMEIRL src/multitaskIRL.d src/sortingMDP.d src/mdp.d src/irl.d src/boydmdp.d)
 #target_link_libraries(dpmMEIRL
 #   asa047 lbfgs
 #)
