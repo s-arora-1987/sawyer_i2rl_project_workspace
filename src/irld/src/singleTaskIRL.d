@@ -1,6 +1,6 @@
 import mdp;
 import boydmdp;
-import irlWithoutLBFGS;
+import irl;
 import std.stdio;
 import std.format;
 import std.string;

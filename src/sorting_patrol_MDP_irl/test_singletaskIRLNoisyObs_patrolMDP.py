@@ -10,19 +10,9 @@ import operator
 import time
 import numpy as np
 import util.classes
-# from patrol.model import boyd2MapParams, OGMap, PatrolModel 
-from sortingMDP.model import sortingModel,InspectAfterPicking,\
-PlaceOnConveyor,PlaceInBin,Pick,ClaimNewOnion,InspectWithoutPicking,\
-ClaimNextInList,sortingState 
-from sortingMDP.model import sortingModel2,\
-PlaceInBinClaimNextInList,sortingModelbyPSuresh,\
-sortingModelbyPSuresh2,sortingModelbyPSuresh3,\
-sortingModelbyPSuresh4,sortingModelbyPSuresh2WOPlaced,\
-sortingModelbyPSuresh3multipleInit
-
-from sortingMDP.reward import sortingReward2,\
-sortingReward3,sortingReward4,sortingReward5,\
-sortingReward6,sortingReward7,sortingReward7WPlaced
+from patrol.model import boyd2MapParams, OGMap, PatrolModel 
+import patrol
+from test_singletaskIRL import printTs
 
 from mdp.solvers import *
 import mdp.agent
@@ -36,6 +26,52 @@ def get_home():
 
 ##############################################################
 ##############################################################
+
+
+def parseTs(stdout):
+
+	t = []
+	weights = []
+	transitions = stdout.split("\n")
+	counter = 0
+	for transition in transitions:
+		counter += 1		
+		if transition == "ENDT":
+			break
+		temp = transition.split(":")
+		if temp[0] == "WEIGHTS":
+			weights.append(temp[1])
+			continue
+		if len(temp) < 4: continue
+		state = temp[0]
+		action = temp[1]
+		state_prime = temp[2]
+		prob = float(temp[3])
+
+
+		state = state[1 : len(state) - 1]
+		state_prime = state_prime[1 : len(state_prime) - 1]
+		pieces = state.split(",")	
+
+		ps = [int(pieces[0]), int(pieces[1]), int(pieces[2])]
+
+		pieces = state_prime.split(",")	
+		ps_prime = [int(pieces[0]), int(pieces[1]), int(pieces[2])]
+
+		if action == "MoveForwardAction":
+			a = 0
+		elif action == "TurnLeftAction":
+			a = 1
+		elif action == "TurnRightAction":
+			a = 2
+		elif action == "TurnAroundAction":
+			a = 3
+		else:
+			a = 4
+			
+		t.append( (ps, a, ps_prime, prob))
+	
+	return (t, weights)
 
 dummy_states = []
 dict_stateEnum = {}
@@ -57,44 +93,25 @@ def printTrajectoriesWPredScores(trajs,range_scores):
 		for sap in patroller: 
 			if (sap is not None): 
 				s = sap[0]
-				outtraj += "[ "+str(s._onion_location)+", "\
-				+str(s._prediction)+", "+\
-				str(s._EE_location)+", "+\
-				str(s._listIDs_status)+"]:"
-
-				if sap[1].__class__.__name__ == "InspectAfterPicking":
-					act_str = "InspectAfterPicking"
-					 
-				elif sap[1].__class__.__name__ == "InspectWithoutPicking":
-					act_str = "InspectWithoutPicking"
-					 
-				elif sap[1].__class__.__name__ == "Pick":
-					act_str = "Pick"
-					 
-				elif sap[1].__class__.__name__ == "PlaceOnConveyor":
-					act_str = "PlaceOnConveyor"
-					 
-				elif sap[1].__class__.__name__ == "PlaceInBin":
-					act_str = "PlaceInBin"
-					 
-				elif sap[1].__class__.__name__ == "ClaimNewOnion":
-					act_str = "ClaimNewOnion"
-					 
-				elif sap[1].__class__.__name__ == "ClaimNextInList":
-					act_str = "ClaimNextInList"
-
-				elif sap[1].__class__.__name__ == "PlaceInBinClaimNextInList":
-					act_str = "PlaceInBinClaimNextInList"
-
+				outtraj += "["
+				outtraj += str(int(sap[0].location[0]))
+				outtraj += ", "
+				outtraj += str(int(sap[0].location[1]))
+				outtraj += ", "
+				outtraj += str(int(sap[0].location[2]))
+				outtraj += "]:"
+				if sap[1].__class__.__name__ == "PatrolActionMoveForward":
+					outtraj += "MoveForwardAction"
+				elif sap[1].__class__.__name__ == "PatrolActionTurnLeft":
+					outtraj += "TurnLeftAction"
+				elif sap[1].__class__.__name__ == "PatrolActionTurnRight":
+					outtraj += "TurnRightAction"
+				elif sap[1].__class__.__name__ == "PatrolActionTurnAround":
+					outtraj += "TurnAroundAction"
 				else:
-					act_str = "ActionInvalid"
+					outtraj += "StopAction"
 					
-				outtraj += act_str
-				
-			else:
-				outtraj += "None"
-				
-			outtraj += ":"+str(random.uniform(range_scores[0],range_scores[1]))+";\n"
+				outtraj += ":"+str(random.uniform(range_scores[0],range_scores[1]))+";\n"
 			
 		outtraj += "ENDTRAJ\n"
 
@@ -107,29 +124,16 @@ def enumerateForBIRLsortingModel1(trajs):
 		if (sap is not None): 
 			s = sap[0]
 
-			if sap[1].__class__.__name__ == "InspectAfterPicking":
-				test_act = InspectAfterPicking()
-				 
-			elif sap[1].__class__.__name__ == "InspectWithoutPicking":
-				test_act = InspectWithoutPicking()
-				 
-			elif sap[1].__class__.__name__ == "Pick":
-				test_act = Pick()
-				 
-			elif sap[1].__class__.__name__ == "PlaceOnConveyor":
-				test_act = PlaceOnConveyor()
-				 
-			elif sap[1].__class__.__name__ == "PlaceInBin":
-				test_act = PlaceInBin()
-				 
-			elif sap[1].__class__.__name__ == "ClaimNewOnion":
-				test_act = ClaimNewOnion()
-				 
-			elif sap[1].__class__.__name__ == "ClaimNextInList":
-				test_act = ClaimNextInList()
-
+			if sap[1].__class__.__name__ == "PatrolActionMoveForward":
+				test_act = patrol.model.PatrolActionMoveForward()
+			elif sap[1].__class__.__name__ == "PatrolActionTurnLeft":
+				test_act = patrol.model.PatrolActionTurnLeft()
+			elif sap[1].__class__.__name__ == "PatrolActionTurnRight":
+				test_act = patrol.model.PatrolActionTurnRight()
+			elif sap[1].__class__.__name__ == "PatrolActionTurnAround":
+				test_act = patrol.model.PatrolActionTurnAround()
 			else:
-				print("can't enumerate ",sap[1])
+				test_act = patrol.model.PatrolActionStop()
 
 			# adding data for BIRL MLIRL
 			inds = dict_stateEnum.keys()[dict_stateEnum.values().index(s)]
@@ -158,29 +162,20 @@ def parse_sorting_policy(buf):
 		state = state[1 : len(state) - 1]
 		pieces = state.split(",")	
 		
-		ss = sortingState(int(pieces[0]), int(pieces[1]), int(pieces[2]), int(pieces[3]))
-
-		if action == "InspectAfterPicking":
-			act = InspectAfterPicking()
-		elif action == "InspectWithoutPicking":
-			act = InspectWithoutPicking()
-		elif action == "Pick":
-			act = Pick()
-		elif action == "PlaceOnConveyor":
-			act = PlaceOnConveyor()
-		elif action == "PlaceInBin":
-			act = PlaceInBin()
-		elif action == "ClaimNewOnion":
-			act = ClaimNewOnion()
-		elif action == "ClaimNextInList":
-			act = ClaimNextInList()
-		elif action == "PlaceInBinClaimNextInList":
-			act = PlaceInBinClaimNextInList()
+		ps = patrol.model.PatrolState(np.array([int(pieces[0]), int(pieces[1]), int(pieces[2])]))
+	
+		if action == "MoveForwardAction":
+			a = patrol.model.PatrolActionMoveForward()
+		elif action == "TurnLeftAction":
+			a = patrol.model.PatrolActionTurnLeft()
+		elif action == "TurnRightAction":
+			a = patrol.model.PatrolActionTurnRight()
+		elif action == "TurnAroundAction":
+			a = patrol.model.PatrolActionTurnAround()
 		else:
-			print("Invalid input policy to parse_sorting_policy")
-			exit(0)
-		
-		p[ss] = act
+			a = patrol.model.PatrolActionStop()
+				
+		p[ps] = act
 		# print("parsed ss {} a {}".format(ss,act))
 
 	from mdp.agent import MapAgent
@@ -208,30 +203,20 @@ def parsePolicies(stdout, lineFoundWeights, lineFeatureExpec, \
 
 		state = state[1 : len(state) - 1]
 		pieces = state.split(",")	
-		ss = sortingState(int(pieces[0]), int(pieces[1]), int(pieces[2]), int(pieces[3]))
-		# print((state,pieces,ss))
-
-		if action == "InspectAfterPicking":
-			act = InspectAfterPicking()
-		elif action == "InspectWithoutPicking":
-			act = InspectWithoutPicking()
-		elif action == "Pick":
-			act = Pick()
-		elif action == "PlaceOnConveyor":
-			act = PlaceOnConveyor()
-		elif action == "PlaceInBin":
-			act = PlaceInBin()
-		elif action == "ClaimNewOnion":
-			act = ClaimNewOnion()
-		elif action == "ClaimNextInList":
-			act = ClaimNextInList()
-		elif action == "PlaceInBinClaimNextInList":
-			act = PlaceInBinClaimNextInList()
+		ps = patrol.model.PatrolState(np.array([int(pieces[0]), int(pieces[1]), int(pieces[2])]))
+	
+		if action == "MoveForwardAction":
+			a = patrol.model.PatrolActionMoveForward()
+		elif action == "TurnLeftAction":
+			a = patrol.model.PatrolActionTurnLeft()
+		elif action == "TurnRightAction":
+			a = patrol.model.PatrolActionTurnRight()
+		elif action == "TurnAroundAction":
+			a = patrol.model.PatrolActionTurnAround()
 		else:
-			print("Invalid input policy to parse_sorting_policy")
-			exit(0)
-			
-		p[ss] = act
+			a = patrol.model.PatrolActionStop()
+				
+		p[ps] = act
 
 	returnval = [mdp.agent.MapAgent(p)]
 
@@ -280,31 +265,21 @@ def computeLBA(fileTruePolicy,model,mapAgentLrndPolicy):
 		state = state[1 : len(state) - 1]
 		pieces = state.split(",")	
 		
-		ss = (int(pieces[0]), int(pieces[1]), int(pieces[2]), int(pieces[3]))
-
-		if action == "InspectAfterPicking":
-			act = InspectAfterPicking()
-		elif action == "InspectWithoutPicking":
-			act = InspectWithoutPicking()
-		elif action == "Pick":
-			act = Pick()
-		elif action == "PlaceOnConveyor":
-			act = PlaceOnConveyor()
-		elif action == "PlaceInBin":
-			act = PlaceInBin()
-		elif action == "ClaimNewOnion":
-			act = ClaimNewOnion()
-		elif action == "ClaimNextInList":
-			act = ClaimNextInList()
-		elif action == "Pickpip":
-			act = Pickpip()
-		elif action == "PlaceInBinpip":
-			act = PlaceInBinpip()
+		ps = patrol.model.PatrolState(np.array([int(pieces[0]), int(pieces[1]), int(pieces[2])]))
+	
+		if action == "MoveForwardAction":
+			a = patrol.model.PatrolActionMoveForward()
+		elif action == "TurnLeftAction":
+			a = patrol.model.PatrolActionTurnLeft()
+		elif action == "TurnRightAction":
+			a = patrol.model.PatrolActionTurnRight()
+		elif action == "TurnAroundAction":
+			a = patrol.model.PatrolActionTurnAround()
 		else:
-			print("Invalid input policy to parse_sorting_policy")
-			exit(0)
+			a = patrol.model.PatrolActionStop()
+				
 		
-		truePol[ss] = act
+		truePol[ps] = a
 	
 	# print("number of keys for truePolicy ", len(truePol))
 	# print("number of keys in leaerned policy ",len(mapAgentLrndPolicy._policy))
@@ -434,106 +409,40 @@ if __name__ == "__main__":
 
 
 	# D code for single task IRL uses 0.95 success rate of transitions
-	p_fail = 0.05
-	m = "sorting"
-	# model = sortingModel(p_fail) 
-	# model = sortingModel2(p_fail) 
-	# model = sortingModelbyPSuresh(p_fail)
-	# model = sortingModelbyPSuresh2(p_fail)
-	# model = sortingModelbyPSuresh3(p_fail) 
-	# model = sortingModelbyPSuresh4(p_fail) 
-	model = sortingModelbyPSuresh2WOPlaced(p_fail)
-	# model = sortingModelbyPSuresh3multipleInit(p_fail) 
+	p_fail = 0.0
+	m = "boyd2"
+	mapparams = boyd2MapParams(False)
+	ogmap = OGMap(*mapparams)
 
-	# print(sortingModelbyPSuresh._p_fail) 
-
+	## Create Model 
+	model = PatrolModel(p_fail, None, ogmap.theMap())
 	model.gamma = 0.99
-	# sortingReward = sortingReward2(8) 
-	# sortingReward = sortingReward3(10) 
-	# sortingReward = sortingReward4(10) 
-	# sortingReward = sortingReward5(8) 
-	# sortingReward = sortingReward6(11) 
-	# sortingReward = sortingReward7WPlaced(11) 
-	sortingReward = sortingReward7(11) 
 
-	reward_dim = sortingReward._dim
-	print("reward_dim ",reward_dim)
-
-	model.reward_function = sortingReward 
-
-	params_manualTuning_rolling_reward3 = [0.15, -0.08, -0.11, 0.3, -0.3, -0.15, 0.6, -0.15, 0.6, -0.2]
-	params_manualTuning_rolling_reward4 = [0.0, 0.6, 0.0, 0.95, 0.8, 0.0, 0.9, 0.15, 0.9, 0.4]
-
-	params_manualTuning_pickinspectplace_reward3 = [ 0.10, 0.0, 0.0, 0.22, -0.12, 0.44, 0.0, -0.12, 0.0, -0.2]
-	params_manualTuning_pickinspectplace_reward4 = [ 0.10, 0.0, 0.0, 0.22, 0.12, 0.44, 0.0, 0.12, 0.0, 0.2]
-	'''
-	reward 4
-	// good placed on belt
-	// not placing bad on belt
-	// not placing good in bin
-	// bad placed in bin
-	// not staying still
-	// classify after picking
-	// create the list 
-	// not picking a placed one
-	// classify without picking
-	// not placing uninspected in bin
-
-	'''
-	# params_manualTuning_pickinspectplace_reward5 =[1,-1,-1,1,-0.2,1,0,1]
-	params_rolling_reward5 =[0,4,0,4,0.2,0,8,0]
-	params_pickinspectplace_reward5 =[2,1,2,1,0.2,1,0,4]
-	params_rolling_reward6 =[0,4,0,4,0.2,0,8,0,8,4,0]
-	params_pickinspectplace_reward6 =[2,1,2,1,0.2,1,0,4,0,0,4]
-	params_staystill_reward6 = [ 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  0.0, 0.0, 0.0] 
-	params_pickinspectplace_reward7woplacedmixedinit =[2,1,2,1,0.2,0.1,0,4,0,0,4]
 
 	#############################################################
 	# Needed for synchornizing BIRL input data
 	#############################################################
 
+	reward_dim = 6
 	List_TrueWeights = []
-	# index 0 for pick-inspect-place 
-	params = params_pickinspectplace_reward7woplacedmixedinit
+	params = [1, 0, 0, 0, 0.75, 0]
 	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
 	List_TrueWeights.append(norm_params)
-	# index 1 for roll-pick-place 
-	params = params_rolling_reward6
-	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
-	List_TrueWeights.append(norm_params)
-	# index 2 for stay-still 
-	params = params_staystill_reward6
-	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
-	List_TrueWeights.append(norm_params)
-
+	
 	#############################################################
 	# demonstration had two runs with one trajectory for each run 
-	true_assignments = [0,1,2]
+	true_assignments = [0]
 
-	# pick-inspect-place
 	params = List_TrueWeights[true_assignments[0]]
-	# roll-pick-place 
-	# params = List_TrueWeights[true_assignments[1]]
-
 	norm_params = [float(i)/sum(np.absolute(params)) for i in params]
 
-	initial = util.classes.NumMap()
-	
-	# ALWAYS START FROM 0,2,0,2 
-	# pick-inspect-place 
-	# s = sortingState(0,2,0,2)	
-	# roll-pick-place 
-	# s = sortingState(0,2,0,0)	
-	# initial[s] = 1.0 
-
-	# for multiple starting states 
+	# for multiple starting state
+	initial = util.classes.NumMap() 
 	count = 0
 	for s in model.S(): 
-		# initial[s] = 1.0
-		# if s._onion_location == 0 and s._prediction == 2 and s._listIDs_status == 0: 
-		if s._onion_location == 0 and s._listIDs_status == 0:
-			initial[s] = 1.0
-		# 	count+=1
+		if s.location[1] <= 5:
+			initial[s] = 1.0			
+			count+=1
 	print("number of initial states ", count)
 	initial = initial.normalize()
 
@@ -541,33 +450,76 @@ if __name__ == "__main__":
 	
 	#############################################################
 
-	# norm_params = [float(i)/sum(np.absolute(params)) for i in params]
-	args = [get_home() + "/catkin_ws/devel/bin/solveSortingMDP", ]
-	p = subprocess.Popen(args, stdin	=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	stdin = str(norm_params) 
-	print("input to solveSortingMDP ",stdin)
-	(stdout, stderr) = p.communicate(stdin) 
-	# print("output to solveSortingMDP ",stdout)
-	policy = parse_sorting_policy(stdout) 
+
+	# Call external solver here instead of Python based 
+	args = [get_home() +"/catkin_ws/devel/bin/"+"boydsimple_t", ]
+	import subprocess			
+
+	p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+	stdin = m + "\n"
+	stdin += "1.0\n"
+	# print("input to boydsimple_t ",stdin)
+	(transitionfunc, stderr) = p.communicate(stdin)
+	# print(" outputof call to boydsimple_t ")
+	# print(transitionfunc)
+
 	p.stdin.close()
 	p.stdout.close()
 	p.stderr.close()
+
+	args = [get_home() +"/catkin_ws/devel/bin/"+"boydpatroller", ]
+	p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+	
+	stdin = m + "\n"
+	useRegions = 0
+	stdin += str(useRegions)+"\n"
+	stdin += transitionfunc
+	# print("input to boydpatroller ",stdin)
+	(stdout, stderr) = p.communicate(stdin)
+	# print("output to boydpatroller\n ",stdout)
+	print("\n\n")
+	p.stdin.close()
+	p.stdout.close()
+	p.stderr.close()
+
+	#print(" lenght of output of call to boydpatroller ",len(stdout))
+	# print(stdout)
+	pol = {}
+
+	stateactions = stdout.split("\n")
+	for stateaction in stateactions:
+		temp = stateaction.split(" = ")
+		# print("temp ", temp)
+		if len(temp) < 2: 
+			continue
+		state = temp[0]
+		action = temp[1]
+		
+		state = state[1 : len(state) - 1]
+		pieces = state.split(",")	
+		ps = patrol.model.PatrolState(np.array([int(pieces[0]), int(pieces[1]), int(pieces[2])]))
+ 
+		if action == "MoveForwardAction":
+			a = patrol.model.PatrolActionMoveForward()
+		elif action == "TurnLeftAction":
+			a = patrol.model.PatrolActionTurnLeft()
+		elif action == "TurnAroundAction":
+			a = patrol.model.PatrolActionTurnAround()
+		elif action == "TurnRightAction":
+			a = patrol.model.PatrolActionTurnRight()
+		else:
+			a = patrol.model.PatrolActionStop()
+ 
+		pol[ps] = a
+	
+	from mdp.agent import MapAgent
+	policy = MapAgent(pol)
 	
 	n_samples = 1
 
 	# for each of two runs of irl, t_max will be divided into length_subtrajectory long trajs
-	# t_max = 200
-	# t_max = 300
-	# t_max = 400
-	# t_max = 2500
-	# length_subtrajectory = 2
-	# length_subtrajectory = 4
-	# length_subtrajectory = 8
 	# length_subtrajectory = 10
 	# length_subtrajectory = 15
-	# length_subtrajectory = 25
-	# length_subtrajectory = 30
-	# length_subtrajectory = 35
 	length_subtrajectory = 40
 	# length_subtrajectory = 50
 	# length_subtrajectory = 80
@@ -638,10 +590,14 @@ if __name__ == "__main__":
 				# print("\n")
 
 			outtraj = None
-			args = [get_home() +"/catkin_ws/devel/bin/"+ "noisyObsRobustSamplingMeirl", ]
+			args = [get_home() +"/catkin_ws/devel/bin/"+ "noisyObsRobustSamplingMeirlPatrol", ]
 			p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)				
 			outtraj = ""
-			outtraj += "sorting" + "\n"
+			outtraj += "boyd2" + "\n"
+
+			T =[]
+			(T, weights) = parseTs(transitionfunc)
+			outtraj += printTs([T])
 
 			# algorithm = "MAXENTZAPPROX" 
 			algorithm = "MAXENTZAPPROXNOISYOBS" 
@@ -649,6 +605,7 @@ if __name__ == "__main__":
 
 			# add prediction scores
 			outtraj += printTrajectoriesWPredScores(traj,range_sc)
+			# print(printTrajectoriesWPredScores(traj,range_sc))
 
 			# specific to sorting mdp 
 			outtraj += str(norm_params)+"\n"
@@ -679,10 +636,10 @@ if __name__ == "__main__":
 			outtraj += lineFoundWeights+lineFeatureExpec+ str(num_Trajsofar)+"\n"  
 
 			# input data to file
-			f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRLNoisyObs_sorting.log", "w")
+			f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRLNoisyObs_patrolling.log", "w")
 			f_input_IRL.write("")
 			f_input_IRL.close()
-			f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRLNoisyObs_sorting.log", "a")
+			f_input_IRL = open(get_home() + "/catkin_ws/src/navigation_irl/data_singleTaskIRLNoisyObs_patrolling.log", "a")
 			f_input_IRL.write(outtraj)
 			f_input_IRL.close()
 
@@ -721,10 +678,10 @@ if __name__ == "__main__":
 		print("LBA:",LBA) 
 
 		hatphi_Diff_wrt_wonoise = re.findall('DIFF1(.[\s\S]+?)ENDDIFF1', stdout)[0]
-		print("LBA:",LBA) 
+		print("hatphi_Diff_wrt_wonoise:",hatphi_Diff_wrt_wonoise) 
 
 		hatphi_Diff_wrt_scores1 = re.findall('DIFF2(.[\s\S]+?)ENDDIFF2', stdout)[0]
-		print("LBA:",LBA) 
+		print("hatphi_Diff_wrt_scores1:",hatphi_Diff_wrt_scores1) 
 
 		################################ Simulating learned policy #################################
 
@@ -745,7 +702,7 @@ if __name__ == "__main__":
 						print((s,a))
 					print("\n")
 
-		csvstring += str(LBA)+"," 
+		csvstring += str(hatphi_Diff_wrt_wonoise)+"," +str(hatphi_Diff_wrt_scores1)+","+str(LBA)+","
 
 	f_rec.write(csvstring)
 	f_rec.close()

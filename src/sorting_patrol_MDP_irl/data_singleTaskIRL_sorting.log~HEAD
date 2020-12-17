@@ -1,0 +1,58 @@
+sorting
+MAXENTZAPPROXI2RL
+[ 0, 2, 2, 0]:Pick:1;
+[ 3, 2, 3, 0]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 0, 2, 2, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 0, 2, 2, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 0, 2, 2, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 1, 1, 2]:PlaceOnConveyor:1;
+[ 0, 2, 0, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 0, 2, 2, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 0, 2, 2, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 1, 1, 2]:PlaceOnConveyor:1;
+[ 0, 2, 0, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 0, 2, 2, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 1, 1, 2]:PlaceOnConveyor:1;
+[ 0, 2, 0, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 1, 1, 2]:PlaceOnConveyor:1;
+[ 0, 2, 0, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 1, 1, 2]:PlaceOnConveyor:1;
+[ 0, 2, 0, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 1, 1, 2]:PlaceOnConveyor:1;
+[ 0, 2, 0, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+[ 2, 2, 2, 2]:ClaimNewOnion:1;
+[ 0, 2, 2, 2]:Pick:1;
+[ 3, 2, 3, 2]:InspectAfterPicking:1;
+[ 1, 0, 1, 2]:PlaceInBin:1;
+ENDTRAJ
+[0.13986013986013987, 0.069930069930069935, 0.13986013986013987, 0.069930069930069935, 0.013986013986013988, 0.0069930069930069939, 0.0, 0.27972027972027974, 0.0, 0.0, 0.27972027972027974]
+25
+[0.030264547479544063, 0.860688351575395, 0.2811420778031022, 0.6671801797950707, 0.6844564760931641, 0.8131227912879951, 0.9890959525908841, 0.5151789218628937, 0.6370815171364494, 0.6872284150834387, 0.09795109845401412]
+[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+0

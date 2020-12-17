@@ -63,16 +63,15 @@ extern(C) double evaluate_maxent(
     	w[0..n] = x[0..n];
 
     	for (int i = 0; i < n; i ++) {
-    		if (! isnormal(w[i])) {
+    		if (! isNormal(w[i])) {
     				return 0.0/0.0;
     			}
     	}
     	double [] _mu;
-    	
     	double ans = irl.evaluate(w, _mu, cast(double)step);
 
-    	debug(lbfgs) {    	
-	    	writeln(ans, " w: ", w, " ",  _mu, " ", step);
+    	debug {    	
+	    	//writeln(ans, " w: ", w, " ",  _mu, " ", step);
     	}
     	
         for (int i = 0; i < n; i ++) {
@@ -97,7 +96,7 @@ extern(C) int progress(
     int k,
     int ls
     ) {
-    	debug(lbfgs) {
+    	debug {
 	    	writeln("Iteration ", k);
 	    	writeln("  fx = ",fx,"  xnorm = ", xnorm,", gnorm = ",gnorm ,", step = ",step);
     	}
@@ -114,7 +113,7 @@ extern(C) double evaluate_nelder_mead(double * x, int n) {
     	w[0..n] = x[0..n];
 
     	for (int i = 0; i < n; i ++) {
-    		if (! isnormal(w[i])) {
+    		if (! isNormal(w[i])) {
     			return 0.0/0.0;
     		}
     	}
@@ -265,8 +264,8 @@ class MaxEntIrl : IRL {
 //        	x[i] = 1;
         
         double finalValue;
-        
-     	int ret = lbfgs(cast(int)opt_weights.length, x, &finalValue, &evaluate_maxent, &progress, &this, &param);
+        auto temp = this;
+     	int ret = lbfgs(cast(int)opt_weights.length, x, &finalValue, &evaluate_maxent, &progress, &temp, &param);
 
 
         for (int i = 0; i < opt_weights.length; i ++)
@@ -1321,7 +1320,8 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 	out double [] opt_weights, ref double [] featureExpecExpert, int num_Trajsofar,
 	double Ephi_thresh, double step_size, int descent_dur_thresh_secs, double [] trueWeights,
 	double conv_threshold_stddev_diff_moving_wdw, size_t moving_window_length_muE,
-	int use_ImpSampling, double conv_threshold_gibbs) {
+	int use_ImpSampling, double conv_threshold_gibbs, out double diff_wrt_muE_wo_sc, 
+	out double diff_wrt_muE_scores1) {
 
         this.model = model;
         this.initial = initial;
@@ -1440,13 +1440,12 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 				stdev_moving_window_diff_muE_norm = this.stddev(err_moving_window_muE);
 				writeln("stdev_moving_window_diff_muE_norm ",stdev_moving_window_diff_muE_norm);
 
-
 		        debug {
 
-		        	// Normalize all muE's to get realtive preferences
 		        	mu_E_copy = mu_E.dup;
-		        	mu_E_copy[] = mu_E_copy[]/sum(mu_E_copy);
-		        	mu_E_wo_sampling[] = mu_E_wo_sampling[]/sum(mu_E_wo_sampling);
+		        	// Normalize all muE's to get realtive preferences
+		        	//mu_E_copy[] = mu_E_copy[]/sum(mu_E_copy);
+		        	//mu_E_wo_sampling[] = mu_E_wo_sampling[]/sum(mu_E_wo_sampling);
 
 					//
 		        	//writeln("mu_E_copy: ", mu_E_copy);
@@ -1482,13 +1481,13 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 						mu_E_scores1[] += traj_fe[]; 
 					} 
 
-					mu_E_scores1[] = mu_E_scores1[]/sum(mu_E_scores1);
+					//mu_E_scores1[] = mu_E_scores1[]/sum(mu_E_scores1);
 		        	//writeln("mu_E_scores1",mu_E_scores1);
 		        	temp_diff_wrt_muE_scores1[] = mu_E_scores1[]-mu_E_copy[];
 		        	//writeln("diff w.r.t hat-phi with ALL scores 1 ",l1norm(temp_diff_wrt_muE_scores1));
 
-					tempdiff[] = leaned_muE[] - mu_E[];
-					diff_muE_norm = l1norm(tempdiff);
+					//tempdiff[] = leaned_muE[] - mu_E[];
+					//diff_muE_norm = l1norm(tempdiff);
 					//writeln("diff mu_E - learnedmuE  ",diff_muE_norm);
 		        }
 
@@ -1527,6 +1526,10 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 
 	    } while (iterations < max_iter);
         
+        debug {
+        	diff_wrt_muE_wo_sc = l1norm(temp_diff_wrt_muE_wo_sc);
+        	diff_wrt_muE_scores1 = l1norm(temp_diff_wrt_muE_scores1);
+        }
 	    
      	Agent returnval;
         r.setParams(opt_weights);        
@@ -1567,6 +1570,12 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 			GT_trajs ~= GT_traj;
 		}
 
+
+		int total_sa_pairs = 0;
+		foreach(s;model.S()) {
+			foreach(a; model.A(s)) total_sa_pairs += 1;
+		}
+
 		// each sac pair in observation correspond to one distribution over groundtruth s-a pairs 
 		// Should we take into consideration all the scores before we used 
 		// observation model Pr(obs-s-a|s,a) distribution? 
@@ -1574,6 +1583,27 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 		// each time step is a node defining a separate distribution. 
 		// But does that justify a separate observation model distribution for each time step? 
 		// We didn't use averaged obs model for Imp Sampling. So we won't do it for Gibbs. 
+
+		// We need to do it. how?  
+		// for each s-a pair, iterate through observations . record a list of probabilities corresponding to each pair
+		// then for each pair, compute average of list if a list exists else distribute remaining mass evenly.
+
+		double[StateAction] avg_probs_sa_score;
+		foreach(s;model.S()) {
+			foreach(a; model.A(s)) {
+				double sum = 0.0;
+				int count = 0;
+				foreach (sac[] obs_traj2; trajs) {
+					foreach(e_sac; obs_traj2){
+						if ((s == e_sac.s) && (a == e_sac.a)) {
+							sum += e_sac.c;
+							count += 1;
+						}
+					}
+				}
+				if (sum != 0) avg_probs_sa_score[new StateAction(s,a)] = sum/cast(double)count;
+			}
+		}
 
 		// Then the algorithm is as follows. 
 		// 
@@ -1605,10 +1635,6 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 		sar[] GT_traj;
 		int iter_count = 0;
 		double perce_diff_wrt_last_muE_sampled = double.max;
-		int total_sa_pairs = 0;
-		foreach(s;model.S()) {
-			foreach(a; model.A(s)) total_sa_pairs += 1;
-		}
 
 		while (perce_diff_wrt_last_muE_sampled>conv_threshold_gibbs) {
 
@@ -1619,6 +1645,8 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 					// because GT_traj changes with every j increment
 					GT_traj = GT_trajs[i].dup;
 					sac e_sac = obs_traj[j];
+					StateAction temp_sa = new StateAction(e_sac.s,e_sac.a);
+					if (temp_sa in avg_probs_sa_score) e_sac.c = avg_probs_sa_score[temp_sa];
 
 					// define distribution for current node
 					foreach(s;model.S()) {
@@ -1648,9 +1676,12 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 							} else P_nexts_s_a = 0.0;
 
 							debug {
-								//writeln("P_nexts_s_a ",P_nexts_s_a);
-							}
+								//writeln("P_nexts_s_a ",P_nexts_s_a); 
+							} 
 
+							// P(obs-s-a|GT s,a) is prediction score if GT s-a is same as obs s-a 
+							// But what if GT s-a is never seen? GT s-a isn't same as obs s-a 
+							// Mistake: assume uniform distribution among rest s-a pairs 
 							if ((s == e_sac.s) && (a == e_sac.a)) P_obssa_GTsa = e_sac.c; 
 							else P_obssa_GTsa = (1-e_sac.c)/cast(double)(total_sa_pairs-1); 
 
@@ -5356,7 +5387,8 @@ class LatentMaxEntIrlZiebartApproxMultipleAgentsMultiTimestepBlockedGibbs : Late
     		}
 			
 			
-			return returnval.reverse;
+			reverse(returnval);
+			return returnval;
 			
 		} 
 				
@@ -5808,7 +5840,8 @@ class LatentMaxEntIrlZiebartApproxMultipleAgentsMultiTimestepSingleAgentBlockedG
     			writeln("Backward");
     		}
 			
-			return returnval.reverse;
+			reverse(returnval);
+			return returnval;
 			
 		} 
 				
@@ -7494,8 +7527,8 @@ class MaxEntIrlExact : MaxEntIrl {
         for (int i = 0; i < opt_weights.length; i ++) 
         	x[i] = temp_init_weights[i];
         
-        
-     	int ret = lbfgs(cast(int)opt_weights.length, x, &opt_value, &evaluate_maxent, &progress, &this, &param);
+        auto temp = this;
+     	int ret = lbfgs(cast(int)opt_weights.length, x, &opt_value, &evaluate_maxent, &progress, &temp, &param);
 
 
         for (int i = 0; i < opt_weights.length; i ++)
@@ -7584,8 +7617,8 @@ public Agent solve_exact(Model model, double[State] initial, double[] policy_dis
 	        for (int i = 0; i < opt_weights.length; i ++) 
 	        	x[i] = temp_init_weights[i];
 	        
-	        
-	     	int ret = lbfgs(cast(int)opt_weights.length, x, &opt_value, &evaluate_maxent, &progress, &this, &param);
+	        auto temp = this;
+	     	int ret = lbfgs(cast(int)opt_weights.length, x, &opt_value, &evaluate_maxent, &progress, &temp, &param);
 	
 	
 	        for (int i = 0; i < opt_weights.length; i ++)
