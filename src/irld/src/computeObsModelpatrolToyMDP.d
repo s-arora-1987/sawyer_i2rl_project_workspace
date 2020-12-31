@@ -11,11 +11,14 @@ import std.format;
 import std.algorithm;
 import std.string;
 import core.stdc.stdlib : exit;
+import std.file;
+import std.conv;
 
 byte [][] patrolToyMap() {
-	return [[1,1]]; 
+	//return [[1,1]]; 
+	return [[1,1],
+			[0,1]]; 
 }
-
 
 
 class keepTurning : LinearReward {
@@ -84,9 +87,9 @@ int main() {
 	byte[][] map;
 
 	map = patrolToyMap();
-    BoydModelWdObsFeatures model = new BoydModelWdObsFeatures(null, map, null, 0, &patrolObsFeatures);
+    BoydModelWdObsFeatures model = new BoydModelWdObsFeatures(null, map, null, 0);
     State ts = model.S()[0];
-    int numObFeatures = cast(int)(patrolObsFeatures(ts,model.A(ts)[0]).length);
+    int numObFeatures = cast(int)(model.obsFeatures(ts,model.A(ts)[0]).length);
     model.setNumObFeatures(numObFeatures);
 
 	debug {
@@ -118,19 +121,19 @@ int main() {
 		}
 	}
 	model.setT(T);
+	int totalSA_pairs = 0;
 	debug {
 		writeln("number of states ",(model.S()).length);
-		//writeln("number of actions ",(model.A()).length);
-		int count = 0;
+		writeln("number of actions ",(model.A()).length);
 		//writeln("created trans function");
 		foreach(s;model.S()) {
 			foreach(a;model.A(s)){
 				//writeln(model.T(s,a));
 				//writeln("\n");
-				count +=1;
+				totalSA_pairs +=1;
 			}
 		}
-		//writeln("# valid sa pairs ",count);
+		writeln("# valid sa pairs ",totalSA_pairs);
 	}
 
 	// Generate samples with random prediction scores
@@ -176,33 +179,172 @@ int main() {
 		//}
 	}
 
+	sar [][] GT_trajs;
 	sac [][] obs_trajs;
 	int num_trajs = 1;
+	int size_traj = 3;
 	double [] noise_range = [0.8,0.99];
 	sar [] temp_traj;
 	sac [] obs_traj;
-	for(int i = 0; i < num_trajs; i++) {
-		temp_traj = simulate(model, policy, initial, 10);
-		obs_traj.length = 0; 
-		foreach(e_sar;temp_traj) {
-			obs_traj ~= sac(e_sar.s,e_sar.a,uniform(noise_range[0], noise_range[1]));
-		}
-		obs_trajs ~= obs_traj;
-	}
+	
+	// collect all possible values of arrays output of features function
 
-	debug{
-		writeln("observed trajectories ");
-		foreach(obstraj;obs_trajs) writeln("\n",obstraj);
+	// Option 1 for testing efficacy of approximation: Create random distr over features. assume multiplicative model for computing 
+	// the cumulative probs for all possible combinations of feature values
+	double [] trueDistr_obsfeatures = new double[model.getNumObFeatures()];
+	double totalmass_untilNw = 0.0;
+	double currp;
+	foreach (i; 0 .. model.getNumObFeatures()-1) {
+		currp = uniform(0.0,1-totalmass_untilNw);
+		trueDistr_obsfeatures[i] = currp;
+		totalmass_untilNw += currp;
+		
+	} 
+	trueDistr_obsfeatures[model.getNumObFeatures()-1] = 1-totalmass_untilNw;
+	debug { 
+		writeln("true distr obsfeatures ",trueDistr_obsfeatures); 
 		//exit(0);
 	}
-	
-	auto estimateObsMod = new MaxEntUnknownObsMod(100,new ValueIteration(), 2000, .00001, .1, .1);
-	double opt_val_Obj;
-	auto foundWeights = estimateObsMod.solve2(model, obs_trajs, opt_val_Obj);
+
+	// Option 2: HARDCODE the cumulative probs for all possible combinations of feature values
+	//cum_prob_fvs = [0.1,0.3,0.6];
+
+	double [] cum_prob_fvs;
+	int [][] possible_obs_fvs;
+	int [] obs_fv;
+	double prod;
+	//int idx_fv = 0;
+	foreach(s;model.S()) {
+		foreach(a;model.A(s)){
+			obs_fv = model.obsFeatures(s, a);
+			if (! possible_obs_fvs.canFind(obs_fv)) {
+				possible_obs_fvs ~= obs_fv;
+				prod = 1.0;
+				foreach(i,f;obs_fv) {
+					if (f==1) prod *= trueDistr_obsfeatures[i];
+				}
+				cum_prob_fvs ~= prod;
+				//idx_fv += 1;
+			}
+		}
+	} 
+
+	double[StateAction][StateAction] trueObsMod;
+	trueObsMod = createObsModel(model, trueDistr_obsfeatures); 
+
+	double [] learnedDistr_obsfeatures = new double[model.getNumObFeatures()]; 
+	// learned distribution incrementally averaged over sessions
+	double [] runAvg_learnedDistr_obsfeatures = new double[model.getNumObFeatures()]; 
+	runAvg_learnedDistr_obsfeatures[] = 0.0;
+	double numSessionsSoFar = 0.0;
+	// arrays of error values for both metrics 
+	double [] arr_avg_cum_diff1, arr_avg_cum_diff2;
+	int num_sessions = 10;
+	int num_trials_perSession = 1;
+
 	debug {
-		writeln();
-		writeln("learned p mapped to obs features : ", foundWeights);
+		double [][] arr_arr_cum_diff1;
 	}
+
+	// For metric 1 to accommodate the new s-a pairs with every next session, the noise corrupted feature 
+	// arrays has to collected incrementally. That also avoids the chances of divide by 0 in computation of
+	// metric 1 below 
+	int [][] noiseCorrupted_obs_fvs;
+	noiseCorrupted_obs_fvs.length = 0;
+
+	foreach(idxs; 0..num_sessions) {
+		////////////////////////////////// Demonstration  /////////////////////////////
+
+
+		for(int i = 0; i < num_trajs; i++) {
+
+			temp_traj = simulate(model, policy, initial, size_traj);
+			GT_trajs ~= temp_traj;
+			obs_traj.length = 0; 
+
+			foreach(e_sar;temp_traj) {
+
+				//obs_traj ~= sac(e_sar.s,e_sar.a,uniform(noise_range[0], noise_range[1]));
+				// give specific prob value to each obs feature 
+				obs_fv = model.obsFeatures(e_sar.s,e_sar.a);
+
+				//// add meaningless noise: replace moveforward with turning ////
+
+				// single corrupted sa pair with one shared feature
+				//if (cast(MoveForwardAction)e_sar.a && (cast(BoydState)e_sar.s).getLocation()[1]==0) {
+				
+				// single corrupted sa pair with two shared features
+				//if (cast(MoveForwardAction)e_sar.a && (cast(BoydState)e_sar.s).getLocation()[1]==0
+				
+				// multiple corrupted sa pairs with two shared features
+				//	&& (cast(BoydState)e_sar.s).getLocation()[0]==0) {
+				if ( cast(MoveForwardAction)e_sar.a &&  ( (cast(BoydState)e_sar.s).getLocation()[1]==0
+					|| (cast(BoydState)e_sar.s).getLocation()[0]==0) ) {
+					// save to list of unseen combinations of tau values
+					if (! noiseCorrupted_obs_fvs.canFind(obs_fv)) noiseCorrupted_obs_fvs ~= obs_fv;
+
+					// introduce faulty input
+					e_sar.a = new TurnLeftAction();
+					obs_fv = model.obsFeatures(e_sar.s,new TurnLeftAction());
+				}
+
+				obs_traj ~= sac(e_sar.s,e_sar.a,cum_prob_fvs[countUntil(possible_obs_fvs,obs_fv)]);
+			}
+			obs_trajs ~= obs_traj;
+		}
+
+		debug{
+			writeln("observed trajectories ");
+			int actv;
+			foreach(obstraj;obs_trajs) {
+				writeln("\n",obstraj);
+				foreach(e_sac;obs_traj) {
+					actv = 0; 
+					foreach (f; model.obsFeatures(e_sac.s,e_sac.a)) {
+						if (f==1) actv += 1;
+					}
+					//writeln("num activated features in current s-a ",actv);
+				}
+			}
+			//exit(0);
+		}
+
+		////////////////////////////////// Session Starts /////////////////////////////
+		double avg_cum_diff1, avg_cum_diff2;
+		writeln("numSessionsSoFar ",numSessionsSoFar);
+		learnedDistr_obsfeatures = 
+		runAvgSessionLearnObsModel(num_trials_perSession, model,
+		trueDistr_obsfeatures, noiseCorrupted_obs_fvs, GT_trajs,
+		obs_trajs, trueObsMod, numSessionsSoFar,  runAvg_learnedDistr_obsfeatures,
+		avg_cum_diff1, avg_cum_diff2, arr_arr_cum_diff1);
+
+
+		arr_avg_cum_diff1 ~= avg_cum_diff1; 
+		arr_avg_cum_diff2 ~= avg_cum_diff2; 
+		writeln("arr_avg_cum_diff1 ",arr_avg_cum_diff1);
+
+		///////////////////////////////////////// Session Finished /////////////////////////////////////////////
+
+		// updating global variable for runing average
+		runAvg_learnedDistr_obsfeatures[] = (runAvg_learnedDistr_obsfeatures[] + learnedDistr_obsfeatures[]);
+		runAvg_learnedDistr_obsfeatures[] /= numSessionsSoFar; 
+
+	}
+
+	File file1 = File("/home/saurabharora/Downloads/resultsApproxObsModelMetric1.csv", "a"); 
+	string str_arr_avg_cum_diff1 = to!string(arr_avg_cum_diff1);
+	str_arr_avg_cum_diff1 = str_arr_avg_cum_diff1[1 .. (str_arr_avg_cum_diff1.length-1)];
+	file1.writeln(str_arr_avg_cum_diff1);
+	file1.close(); 
+
+	File file2 = File("/home/saurabharora/Downloads/resultsApproxObsModelMetric2.csv", "a"); 
+	string str_arr_avg_cum_diff2 = to!string(arr_avg_cum_diff2);
+	str_arr_avg_cum_diff2 = str_arr_avg_cum_diff2[1 .. (str_arr_avg_cum_diff2.length-1)];
+	file2.writeln(str_arr_avg_cum_diff2);
+	file2.close(); 
+
+	writeln(arr_avg_cum_diff1,arr_avg_cum_diff2);
+	writeln(runAvg_learnedDistr_obsfeatures);
 
 	writeln("BEGPARSING");
 
@@ -210,6 +352,295 @@ int main() {
 	writeln("ENDPARSING");
 	
 	return 0;
+}
+
+public double [] runAvgSessionLearnObsModel(int num_trials_perSession, Model model, 
+	double [] trueDistr_obsfeatures, int  [][] noiseCorrupted_obs_fvs, sar [][] GT_trajs,
+	sac [][] obs_trajs, double[StateAction][StateAction] trueObsMod,
+	ref double numSessionsSoFar, ref double [] runAvg_learnedDistr_obsfeatures, 
+	ref double avg_cum_diff1, ref double avg_cum_diff2, ref double [] [] arr_arr_cum_diff1) {
+		//////// For average over 10 runs with same trueObsFeatDistr and observations /////// 
+
+	
+	writeln("numSessionsSoFar ",numSessionsSoFar);
+	double [] arr_cum_diff1, arr_cum_diff2;
+	// array of outputs from trials within same session
+	double [] learnedDistr_obsfeatures;
+	double [][] arr_learnedDistr_obsfeatures;
+	arr_learnedDistr_obsfeatures.length = 0;
+	arr_cum_diff1.length = 0;
+	arr_cum_diff2.length = 0;
+	numSessionsSoFar += 1;  
+
+	foreach(tr; 0..num_trials_perSession) {
+
+		auto estimateObsMod = new MaxEntUnknownObsMod(100,new ValueIteration(), 2000, .00001, .1, .1);
+		double opt_val_Obj;
+		learnedDistr_obsfeatures = estimateObsMod.solve2(model, obs_trajs, opt_val_Obj);
+		learnedDistr_obsfeatures[] = learnedDistr_obsfeatures[]/cast(double)(sum(learnedDistr_obsfeatures));
+
+		// update the incrementally learned feature distribution 
+		// local substitute variable for incremental runing average
+		double [] temp_runAvg_learnedDistr_obsfeatures = new double[learnedDistr_obsfeatures.length];
+		writeln(runAvg_learnedDistr_obsfeatures);
+		writeln(learnedDistr_obsfeatures);
+		writeln("numSessionsSoFar ",numSessionsSoFar);
+
+		temp_runAvg_learnedDistr_obsfeatures[] = (runAvg_learnedDistr_obsfeatures[] + learnedDistr_obsfeatures[]);
+		temp_runAvg_learnedDistr_obsfeatures[] /= numSessionsSoFar; 
+
+		// for averaging over trials within session
+		arr_learnedDistr_obsfeatures ~= temp_runAvg_learnedDistr_obsfeatures;
+
+		// verify if this step is needed
+		//temp_runAvg_learnedDistr_obsfeatures = learnedDistr_obsfeatures;
+
+		writeln("true distr obsfeatures ",trueDistr_obsfeatures); 
+		//writeln("cum_prob_fvs ",cum_prob_fvs); 
+		writeln(); 
+		writeln("learned distr obsfeatures: ", temp_runAvg_learnedDistr_obsfeatures); 
+		writeln(); 
+		double[StateAction][StateAction] learnedObsMod;
+		learnedObsMod = createObsModel(model, temp_runAvg_learnedDistr_obsfeatures); 
+
+		// Metric 1a: estimation of the observation likelihood of s-a pairs misidentified due to noise 
+		// They happened in input but not in output of perception pipeline 
+		double diffprod, cum_diff1, cum_diff2, cum_diff1a, prod;
+		writeln("Divide by 0 check: number of s-a pairs with noise in current session ",cast(double)noiseCorrupted_obs_fvs.length);
+		cum_diff1a = 0.0;
+		foreach (obs_fv2; noiseCorrupted_obs_fvs) {
+
+			prod = 1.0;
+			foreach(i,f;obs_fv2) {
+				if (f==1) prod *= trueDistr_obsfeatures[i];
+			} 
+			diffprod = prod;
+
+			prod = 1.0;
+			foreach(i,f;obs_fv2) {
+				if (f==1) prod *= temp_runAvg_learnedDistr_obsfeatures[i];
+			}
+			diffprod -= prod;
+			//writeln("diff prod for unseen combination ",obs_fv2,": ",diffprod);
+			cum_diff1a += diffprod;
+		}
+		if (cast(double)noiseCorrupted_obs_fvs.length == 0) {
+			cum_diff1a = -double.max;
+		} else {
+			cum_diff1a= cum_diff1a/cast(double)noiseCorrupted_obs_fvs.length;				
+		}
+		//arr_cum_diff1 ~= cum_diff1a;
+
+		// Metric 1b: 
+		// Cumulative diff for P(obs-sa | GT-sa) distributions for only those GT-sa pairs that got corrupted in input to perception pipeline
+		StateAction[] corrupted_GT_SAs;
+		corrupted_GT_SAs.length = 0;
+		bool corrupted;
+		foreach(i,GT_traj;GT_trajs) {
+			sac[] ob_traj = obs_trajs[i];
+			foreach(j,e_sar;GT_traj) {
+				
+				sac e_sac = ob_traj[j];
+				if ((e_sar.s != e_sac.s) || (e_sar.a != e_sac.a)) {
+
+					StateAction corrupted_sa = new StateAction(e_sar.s,e_sar.a);
+					// not demonstrated
+					if (! corrupted_GT_SAs.canFind(corrupted_sa)) corrupted_GT_SAs ~= corrupted_sa;
+					//writeln("corrupted_GT_SAs ",corrupted_GT_SAs);
+				}
+			}
+		}
+		cum_diff1 = 0.0;
+		foreach(sa;corrupted_GT_SAs){
+			cum_diff1 += normedDiff_SA_Distr(trueObsMod[sa], learnedObsMod[sa]);
+		}
+		if (cast(double)corrupted_GT_SAs.length == 0) {
+			cum_diff1 = -double.max;
+		} else {
+			cum_diff1 = cum_diff1/cast(double)corrupted_GT_SAs.length;
+		}
+		arr_cum_diff1 ~= cum_diff1;
+		writeln("cumulative diff for observation likelihood of s-a pairs misidentified due to noise ",cum_diff1);
+		//exit(0);
+
+		// Metric 2: estimation of the observation likelihood of s-a pairs never present in input of perception pipeline 
+		// Cumulative diff for P(obs-sa | GT-sa) distributions for GT-sa pairs that never occured in input to perception pipeline
+		StateAction[] unseen_GT_SAs;
+		unseen_GT_SAs.length = 0;
+		bool inDemonsInpNeuralNet;
+		foreach(s;model.S()) {
+			foreach(a;model.A(s)){
+				inDemonsInpNeuralNet = false;
+				foreach(GT_traj;GT_trajs) {
+					foreach(e_sar;GT_traj) {
+
+						if (e_sar.s.opEquals(s) && e_sar.a.opEquals(a)) {
+							inDemonsInpNeuralNet = true;
+						} 
+					}
+				}
+
+				if (inDemonsInpNeuralNet == false) {
+					StateAction curr_gt_sa = new StateAction(s,a);
+					//writeln("e_sar",e_sar);
+					//writeln("s:",s," a:",a);
+					//writeln("unseen_GT_SAs ",unseen_GT_SAs);
+					// not demonstrated
+					if (! unseen_GT_SAs.canFind(curr_gt_sa)) unseen_GT_SAs ~= curr_gt_sa;
+				}
+			}
+		} 
+		cum_diff2 = 0.0;
+		foreach(sa;unseen_GT_SAs){
+			cum_diff2 += normedDiff_SA_Distr(trueObsMod[sa], learnedObsMod[sa]);
+		}
+		if (cast(double)unseen_GT_SAs.length == 0) {
+			cum_diff2 = -double.max;
+		} else {
+			cum_diff2 = cum_diff2/cast(double)unseen_GT_SAs.length;
+		}
+		
+		//writeln("total sa pairs with noise ",cast(double)noiseCorrupted_obs_fvs.length);
+		writeln("Divide by 0 check: number of sa pairs:",trueObsMod.length," number of unseen GT sa pairs:",unseen_GT_SAs.length);
+		writeln("cumulative diff for P(obs-sa | GT-sa) distributions for GT-sa pairs that never occured in input to perception pipeline ",cum_diff2);
+		arr_cum_diff2 ~= cum_diff2;
+
+	}
+
+	avg_cum_diff1 = (sum(arr_cum_diff1)+0.000001)/cast(double)num_trials_perSession;
+	avg_cum_diff2 = (sum(arr_cum_diff2)+0.000001)/cast(double)num_trials_perSession;
+
+	//writeln(arr_cum_diff1,arr_cum_diff2);
+	writeln("average cum_diff1 for ",num_trials_perSession," trials of this session ",avg_cum_diff1);
+	writeln("average cum_diff2 for ",num_trials_perSession," trials of this session ",avg_cum_diff2);
+	writeln("numSessionsSoFar ",numSessionsSoFar);
+
+
+	// average learned distribution from trials within session 
+	foreach(i; 0 .. arr_learnedDistr_obsfeatures[0].length ) {
+		learnedDistr_obsfeatures[i] = sum(arr_learnedDistr_obsfeatures.transversal(i))/cast(double)(arr_learnedDistr_obsfeatures.length);
+	}
+	// only for debugging 
+	debug {
+		arr_arr_cum_diff1 ~= arr_cum_diff1;
+	}
+
+	return learnedDistr_obsfeatures;
+}
+
+public double[StateAction][StateAction] createObsModel(Model model, double [] featureWeights) {
+
+	double p_success, tot_mass_obsSA_wd_sharedActvFeat, temp_total_mass;
+
+	int [] feaures_GT_sa, feaures_obs_sa;
+	double[StateAction][StateAction] returnedObModel;
+	double[StateAction] tempdict_gt_sa;
+	int totalSA_pairs, tot_obsSA_wo_sharedActvFeat;
+
+	totalSA_pairs = 0;
+	foreach(s; model.S()) { // for each state
+		foreach(a; model.A(s)){
+			totalSA_pairs += 1;
+		}
+	}
+	int total_keys_obsMod = 0;
+
+	foreach(s; model.S()) { // for each state
+		foreach(a; model.A(s)){
+			StateAction curr_gt_sa = new StateAction(s,a);
+
+			feaures_GT_sa = model.obsFeatures(s,a);
+			tot_mass_obsSA_wd_sharedActvFeat = 0.0;
+			tot_obsSA_wo_sharedActvFeat = 0;
+
+			foreach(obs_s; model.S()) { // for each obs state
+				foreach(obs_a; model.A(s)){ 
+					// use p_success of the features shared among GT and obs  
+					
+
+					p_success = 1.0;
+					feaures_obs_sa = model.obsFeatures(obs_s,obs_a);
+
+					foreach(i,f;feaures_obs_sa) {
+						if (feaures_GT_sa[i] == feaures_obs_sa[i] && f == 1) p_success *= featureWeights[i];
+					} 
+					
+					// if no features activated (p_success == 1.0) 
+					// or features could not capture the physical description in that s-a 
+					if (p_success == 1.0 || p_success == 0) tot_obsSA_wo_sharedActvFeat += 1;
+					else  tot_mass_obsSA_wd_sharedActvFeat += p_success;
+
+					if (p_success < 0) p_success = 0;
+					if (p_success > 1) p_success = 1;
+
+					returnedObModel[curr_gt_sa][new StateAction(obs_s,obs_a)] = p_success;
+				}
+			}
+			
+			if (tot_obsSA_wo_sharedActvFeat == totalSA_pairs) {
+				// if none of the features were activated, then features could not capture this s-a pair 
+				// Assign uniform distribution and tot_obsSA_wo_sharedActvFeat = 0
+				foreach(obs_s; model.S()) { // for each obs state
+					foreach(obs_a; model.A(s)){ // for each obs action
+						returnedObModel[curr_gt_sa][new StateAction(obs_s,obs_a)] = 1.0/cast(double)totalSA_pairs;
+						
+					}
+				}		
+				total_keys_obsMod += 1;
+				debug {
+					// writeln("features can't capture this s-a pair ");
+				}
+			} else {
+				if (tot_obsSA_wo_sharedActvFeat > 0 ) {
+					// for the cases where feature values were not shared (completely unobserved s-a pairs)
+					// distribute the remaining mass 
+					foreach(obs_s; model.S()) { // for each obs state
+						foreach(obs_a; model.A(s)){ // for each obs action
+							p_success = returnedObModel[curr_gt_sa][new StateAction(obs_s,obs_a)];
+							if (p_success == 1.0 || p_success == 0) {
+								returnedObModel[curr_gt_sa][new StateAction(obs_s,obs_a)] = 
+								(1.0-tot_mass_obsSA_wd_sharedActvFeat)/cast(double)(tot_obsSA_wo_sharedActvFeat); 
+							} 
+						} 
+					}
+					total_keys_obsMod += 1;
+				} else { } //writeln("createObsModel: tot_obsSA_wo_sharedActvFeat == 0 case"); 
+			}
+
+			Distr!StateAction.normalize(returnedObModel[curr_gt_sa]);
+
+			debug {
+				// writeln (returnedObModel[new StateAction(s,a)]); 
+				// test if you can sample from the distribution 
+				tempdict_gt_sa = returnedObModel[curr_gt_sa];
+				StateAction sampled_obs_sa = Distr!StateAction.sample(tempdict_gt_sa);
+				// writeln("test sampling observation ",sampled_obs_sa);
+			}
+		}
+	}
+
+	return returnedObModel;
+
+} 
+
+double normedDiff_SA_Distr (double[StateAction] distr1, double[StateAction] distr2) {
+
+	double[] sorted_arr1, sorted_arr2;
+
+	foreach (sa1,v1;distr1) {
+		foreach (sa2,v2;distr2) {
+			if (sa2 == sa1) {
+				sorted_arr1 ~= v1;
+				sorted_arr2 ~= v2;
+			}
+		}
+	}
+
+	double [] diff;
+	diff.length = sorted_arr1.length;
+	diff[] = sorted_arr1[] - sorted_arr2[];
+	return l1norm(diff)/l1norm(sorted_arr1);
+
 }
 
 string feature_vector_to_string(int [] features) {
@@ -220,38 +651,7 @@ string feature_vector_to_string(int [] features) {
 	return returnval;
 }
 
-
-int [] patrolObsFeatures(State state, Action action) {
-	
-	//if (cast(TurnRightAction)action) { 
-	//	return [0, 1, 1, 1];
-	//} 
-
-	//if (cast(TurnLeftAction)action) { 
-	//	return [1, 0, 1, 1];
-	//} 
-	
-	//if (cast(StopAction)action) {
-	//	return [1, 1, 0, 1];
-	//} 
-	//return [1, 1, 1, 1];
-
-	//if (cast(TurnLeftAction)action) { 
-	//	return [1,0];
-	//} 
-	//return [1,1];
-
-	if (cast(MoveForwardAction)action) { 
-		return [1,0,0];
-	} 
-	if (cast(TurnLeftAction)action && (cast(BoydState)state).getLocation()[1]==0) { 
-		return [0,1,0];
-	} 
-	return [0,0,1];
-
-}
-
-int[][] define_events(BoydModelWdObsFeatures model, sac[][] samples, out int[string] eventMapping) {
+int[][] define_events(Model model, sac[][] samples, out int[string] eventMapping) {
 
 	// create an associative array to hold the found events so far, 
 	// events are distinguished by the set of observation features attached to their state/action
@@ -265,7 +665,7 @@ int[][] define_events(BoydModelWdObsFeatures model, sac[][] samples, out int[str
 	foreach(sample; samples) {
 
 		foreach(e_sac; sample) {
-			auto feature_vector = model.obFeatures(e_sac.s, e_sac.a);
+			auto feature_vector = model.obsFeatures(e_sac.s, e_sac.a);
 
 			auto eID = feature_vector_to_string(feature_vector);
 			debug {
@@ -292,7 +692,57 @@ int[][] define_events(BoydModelWdObsFeatures model, sac[][] samples, out int[str
 }
 
 
-double [] calc_log_success_rate(sac[][] samples, int[string] eventMapping, BoydModelWdObsFeatures model) {
+int[][] define_events_obsMod(Model model, sac[][] samples, out int[string] eventMapping) {
+
+	
+	int[][] returnval;
+	int[string] eventIds;
+	
+
+	foreach(sample; samples) {
+
+		foreach(e_sac; sample) {
+			auto feaures_obs_sa = model.obsFeatures(e_sac.s, e_sac.a);
+
+			auto eID_prefix = feature_vector_to_string(feaures_obs_sa);
+			debug {
+				//writeln("define events: eID_prefix ",eID_prefix);
+			}
+
+			foreach(s; model.S()) { // for each state action pair
+				foreach(a; model.A(s)){
+					StateAction curr_gt_sa = new StateAction(s,a);
+
+					auto feaures_GT_sa = model.obsFeatures(s,a);
+
+					auto eID_suffix = feature_vector_to_string(feaures_GT_sa);
+
+					auto eID = eID_prefix ~ eID_suffix;
+
+					if (! ( eID in eventIds)) {
+						debug {
+							writeln("define events: eID  = eID_prefix ~ eID_suffix = ",eID);
+						}
+						eventIds[eID] = cast(int)returnval.length;
+						
+						int[] feature_numbers;
+						foreach(i,f;feaures_obs_sa) {
+							if (feaures_GT_sa[i] == feaures_obs_sa[i] && f == 1) feature_numbers ~= cast(int)i;
+						} 
+						returnval ~= feature_numbers;
+					}
+
+				}
+			}
+		}
+	}
+	//exit(0);
+	eventMapping = eventIds;
+	
+	return returnval;
+}
+
+double [] calc_log_success_rate_obsMod(sac[][] samples, int[string] eventMapping, Model model) {
 
 	double [] returnval = new double[eventMapping.length];
 	returnval[] = 0;
@@ -306,7 +756,65 @@ double [] calc_log_success_rate(sac[][] samples, int[string] eventMapping, BoydM
 	foreach(i,sample; samples) {
 
 		foreach(e_sac; sample) {
-			auto feature_vector = model.obFeatures(e_sac.s, e_sac.a);
+
+			auto feaures_obs_sa = model.obsFeatures(e_sac.s, e_sac.a);
+
+			auto eID_prefix = feature_vector_to_string(feaures_obs_sa);
+			debug {
+				//writeln("define events: eID_prefix ",eID_prefix);
+			}
+
+			foreach(s; model.S()) { // for each state action pair
+				foreach(a; model.A(s)){
+					StateAction curr_gt_sa = new StateAction(s,a);
+
+					auto feaures_GT_sa = model.obsFeatures(s,a);
+
+					auto eID_suffix = feature_vector_to_string(feaures_GT_sa);
+
+					auto eID = eID_prefix ~ eID_suffix;
+
+					totalCount[eID] += 1;
+					cumulativeScore[eID] += e_sac.c;
+
+				}
+			}
+
+		}
+		
+	}
+	
+	foreach (ID, num; eventMapping) {
+		if (ID in cumulativeScore && ID in totalCount) {
+			debug {
+				writeln("ID in cumulativeScore ",cumulativeScore[ID]," && ID in totalCount ",totalCount[ID]);
+				//exit(0);
+			}
+			returnval[num] = log(cast(double)(cumulativeScore[ID] ) / cast(double)(totalCount[ID] ) );
+		}
+		else {
+			returnval[num] = 0;
+		}
+	}
+	//exit(0);
+	return returnval;
+}
+
+double [] calc_log_success_rate(sac[][] samples, int[string] eventMapping, Model model) {
+
+	double [] returnval = new double[eventMapping.length];
+	returnval[] = 0;
+	
+	int[string] totalCount;
+	double[string] cumulativeScore;
+	debug {
+		//writeln("calc_log_success_rate: E len");
+	}
+	
+	foreach(i,sample; samples) {
+
+		foreach(e_sac; sample) {
+			auto feature_vector = model.obsFeatures(e_sac.s, e_sac.a);
 
 			auto eID = feature_vector_to_string(feature_vector);
 
@@ -391,7 +899,7 @@ double [] map_p_onto_features(double [] p, int [][] S, int num_obsfeatures) {
 class MaxEntUnknownObsMod : MaxEntIrl {
 
 	private int[][] E; // E is a set of subsets, each subset contains the number of a feature
-	private double[] Q; // Q is the failure rate of each E
+	private double[] Q; // Q is the success rate of each E
 	private int[][] S; // the `coursest partition of the feature space induced by the Es
 	private int[][] P; // M x N matrix, each row contains the vector of v's corresponding to a given P
 	    	
@@ -404,7 +912,7 @@ class MaxEntUnknownObsMod : MaxEntIrl {
 	}
 
 	
-	public double [] solve2(BoydModelWdObsFeatures model, sac[][] obsTraj_samples, out double opt_value) {
+	public double [] solve2(Model model, sac[][] obsTraj_samples, out double opt_value) {
 		
         // Compute feature expectations of agent = mu_E from samples
         lbfgs_parameter_t param;
@@ -418,12 +926,12 @@ class MaxEntUnknownObsMod : MaxEntIrl {
         this.sample_length = cast(int)obsTraj_samples.length;
         
         int[string] eventMapping;
-        E = define_events(model, obsTraj_samples, eventMapping); 
+        E = define_events_obsMod(model, obsTraj_samples, eventMapping); 
         debug {
         	writeln("E: ", E);
         }
         
-        Q = calc_log_success_rate(obsTraj_samples, eventMapping, model);
+        Q = calc_log_success_rate_obsMod(obsTraj_samples, eventMapping, model);
         foreach (ref q; Q) {
         	q = exp(q);
         }
@@ -435,7 +943,7 @@ class MaxEntUnknownObsMod : MaxEntIrl {
         S = coarsest_partition(E);
         
         debug {
-        	writeln("S: ", S);
+        	writeln("partitions S: ", S);
         }	
         
         // we need a lagrangian multiplier for each event, call it v
@@ -456,14 +964,12 @@ class MaxEntUnknownObsMod : MaxEntIrl {
         
         double finalValue;	
         double [] weights;	
-        //weights.length = 2*S.length;
-        weights.length = S.length;
+        weights.length = 2*S.length;
         int ret;	
         foreach (i; 0..30) {
 
         	auto temp =this;
-        	//ret = lbfgs(cast(int)(2*S.length), p, &finalValue, &evaluate_maxent, &progress, &temp, &param);
-        	ret = lbfgs(cast(int)(S.length), p, &finalValue, &evaluate_maxent, &progress, &temp, &param);
+        	ret = lbfgs(cast(int)(2*S.length), p, &finalValue, &evaluate_maxent, &progress, &temp, &param);
 	        foreach(j; 0..(2*S.length)) {
 	        	weights[j] = p[j];
 	        }
@@ -481,13 +987,7 @@ class MaxEntUnknownObsMod : MaxEntIrl {
         }	
 
         debug {
-        	writeln("\nE: ", E,"\nQ: ",Q,"\nS: ",S,"\n learned p ",weights,
-        		"\n cast(double)sum(Q) ",cast(double)sum(Q));
-        	double [] normed_Q = new double[Q.length]; 
-        	normed_Q[] = Q[]/cast(double)sum(Q);
-        	double [] normed_p = new double[weights.length]; 
-        	normed_p[] = weights[]/cast(double)sum(weights);
-        	writeln("\nE: ", E,"\nQ: ",normed_Q,"\nS: ",S,"\n learned p ",normed_p);
+        	writeln("\nE: ", E,"\nQ: ",Q,"\nS: ",S,"\n learned p ",weights);
         }
         
         opt_value = finalValue;

@@ -1,4 +1,3 @@
-
 import mdp;
 import std.array;
 import std.format;
@@ -65,7 +64,8 @@ class sortingState : mdp.State {
 	}
 
 
-/*	override int opCmp(Object o) const {
+	/*
+	override int opCmp(Object o) const {
 		sortingState p = cast(sortingState)o;
 
 		if (!p) 
@@ -82,7 +82,8 @@ class sortingState : mdp.State {
 		return 0;
 		
 	}
-*/		
+	*/		
+	
 }
 
 
@@ -2109,6 +2110,8 @@ class sortingReward7 : LinearReward { // corrected phi[0,1,2,3,5]
 		return result;
 	}
 }
+
+
 
 int print_FormattedOutput(sar pair) {
 	//s = pair.s;

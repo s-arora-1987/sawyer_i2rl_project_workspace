@@ -324,6 +324,15 @@ class Model {
 	public abstract bool is_terminal(State state);
 	
 	public abstract bool is_legal(State state);
+
+	public abstract int [] obsFeatures(State state, Action action);
+
+	public abstract void setNumObFeatures(int inpNumObFeatures);
+
+	public abstract int getNumObFeatures();
+
+	public abstract void setObsMod(double [StateAction][StateAction] newObsMod);
+
 	
 }
 

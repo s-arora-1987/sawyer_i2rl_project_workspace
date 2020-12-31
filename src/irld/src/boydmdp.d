@@ -267,7 +267,8 @@ class BoydState : mdp.State {
 
 
 	override hash_t toHash() const {
-		return location[0] + location[1] + location[2];
+		//return location[0] + location[1] + location[2];
+		return (location[0]*100 + location[1])*4 + location[2];
 	}	
 	
 	override bool opEquals(Object o) {
@@ -1060,64 +1061,83 @@ class BoydModel : mdp.Model {
 }
 
 class BoydModelWdObsFeatures : BoydModel {
-	// This class takes as input observation feature function for estimating observation model
-	int [] function(State, Action) of;
+	// This class takes has as its member an observation feature function 
+	// for estimating observation model
 	int numObFeatures;
 	// observation model to be estimated 
 	double [StateAction][StateAction] obsMod;
 
-	public this( State terminal, byte [][] themap, double [State][Action][State] newT, int inpNumObFeatures, int [] function(State, Action) of) {
-		super(terminal, null, newT, 1, &simplefeatures);
-
-		this.t = newT;
-		this.terminal = terminal;
-		this.map = themap;
-		// transitin features
-		//this.numFeatures = 1;
-		//this.ff = simplefeatures;
+	public this( State terminal, byte [][] themap, double [State][Action][State] newT, int inpNumObFeatures)
+	//, int [] function(State, Action) of) 
+		{
+		super(terminal, themap, newT, 1, &simplefeatures);
 		// observation features
 		this.numObFeatures = inpNumObFeatures;
-		this.of = of;
-		
-		this.actions ~= new MoveForwardAction();
-		this.actions ~= new TurnLeftAction();
-		this.actions ~= new TurnRightAction();
-		this.actions ~= new StopAction();
-
-
-		for (int i = 0; i < map.length; i ++) {
 			
-			for (int j = 0; j < map[i].length; j ++) {
-				if (map[i][j] == 1) {
-					//writeln("adding 4 states for i,j ",i," ",j);
-					states ~= new BoydState([i, j, 0]);
-					states ~= new BoydState([i, j, 1]);
-					states ~= new BoydState([i, j, 2]);
-					states ~= new BoydState([i, j, 3]);
-				}
-			}
-		}
-		
-		
-		foreach (s; states) {
-			uniform[s] = 1.0/states.length;
-		}
-		  
 	}
 
-	public void setNumObFeatures(int inpNumObFeatures) {
+	override public int [] obsFeatures(State state, Action action) {
+		
+		//if (cast(TurnRightAction)action) { 
+		//	return [0, 1, 1, 1];
+		//} 
+
+		//if (cast(TurnLeftAction)action) { 
+		//	return [1, 0, 1, 1];
+		//} 
+		
+		//if (cast(StopAction)action) {
+		//	return [1, 1, 0, 1];
+		//} 
+		//return [1, 1, 1, 1];
+
+		//if (cast(TurnLeftAction)action) { 
+		//	return [1,0];
+		//} 
+		//return [1,1];
+
+		//if (cast(MoveForwardAction)action && (cast(BoydState)state).getLocation()[1]==0) { 
+		//	return [1,0,0];
+		//} 
+		//if (cast(TurnLeftAction)action ) { 
+		//	return [0,1,0];
+		//} 
+
+		//return [0,0,1];
+
+		// location at y=0
+		
+		int [] result;
+
+		// This is where number of features is decided 
+		result.length = 4;
+		result[] = 0;
+
+		if (cast(MoveForwardAction)action) result[0] = 1;
+
+		if (cast(TurnLeftAction)action )  result[1] = 1;
+
+		if ((cast(BoydState)state).getLocation()[1]==0) result[2] = 1;
+
+		if ((cast(BoydState)state).getLocation()[0]==0) result[3] = 1;
+
+		return result;
+
+	}
+
+	override public void setNumObFeatures(int inpNumObFeatures) {
 		this.numObFeatures = inpNumObFeatures;
 	}
 
-	public int getNumObFeatures() {
+	override public int getNumObFeatures() {
 		return numObFeatures;
 	}
 		
-	public int [] obFeatures(State state, Action action) {
-		return of(state, action);
-	}
+	//public int [] obFeatures(State state, Action action) {
+	//	return of(state, action);
+	//}
 
-	public void setObsMod(double [StateAction][StateAction] newObsMod) {
+	override public void setObsMod(double [StateAction][StateAction] newObsMod) {
 		obsMod = newObsMod;
 	}
 
