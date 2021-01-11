@@ -1058,6 +1058,8 @@ class BoydModel : mdp.Model {
 		
 		return l[0] >= 0 && l[0] < map.length && l[1] >= 0 && l[1] < map[0].length && map[l[0]][l[1]] == 1; 
 	}
+
+
 }
 
 class BoydModelWdObsFeatures : BoydModel {
@@ -1076,7 +1078,7 @@ class BoydModelWdObsFeatures : BoydModel {
 			
 	}
 
-	override public int [] obsFeatures1(State state, Action action) {
+	public override int [] obsFeatures(State state, Action action) {
 		
 		//if (cast(TurnRightAction)action) { 
 		//	return [0, 1, 1, 1];
