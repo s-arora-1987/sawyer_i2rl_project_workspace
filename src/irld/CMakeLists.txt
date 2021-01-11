@@ -84,8 +84,8 @@ target_link_libraries(computeObsModelpatrolToyMDP
 add_dependencies(computeObsModelpatrolToyMDP liblbfgs)
 
 
-add_executable(computeObsModelsortingMDP src/mdp.d src/boydmdp.d src/computeObsModelpatrolToyMDP.d src/irl.d src/sortingMDP.d)
-target_link_libraries(computeObsModelpatrolToyMDP
+add_executable(computeObsModelsortingMDP src/computeObsModelsortingMDP.d src/mdp.d src/boydmdp.d src/solverApproximatingObsModel.d src/irl.d src/sortingMDP.d)
+target_link_libraries(computeObsModelsortingMDP
    asa047 lbfgs
 )
 add_dependencies(computeObsModelsortingMDP liblbfgs)

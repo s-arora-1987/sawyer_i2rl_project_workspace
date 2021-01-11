@@ -2122,167 +2122,167 @@ int print_FormattedOutput(sar pair) {
 	return 0;
 }
 
-int xyz() {
+//int xyz() {
 
-	// receives weights and returns sorting policy
-	// double [] params_manualTuning_pickinspectplace = [ 0.10, 0.0, 0.0, 0.22, -0.12, 0.44, 0.0, -0.12];
-	// double [] params_manualTuning_rolling = [0.15082956259426847, -0.075414781297134234, -0.11312217194570136, 
-	// 0.19607843137254902, -0.030165912518853699, 0.0, 0.28355957767722473, -0.15082956259426847]; 
-	// double [] params_neg_pickinpectplace = [ 0.0, 0.10, 0.22, 0.0, -0.12, 0.44, 0.0, -0.12];
+//	// receives weights and returns sorting policy
+//	// double [] params_manualTuning_pickinspectplace = [ 0.10, 0.0, 0.0, 0.22, -0.12, 0.44, 0.0, -0.12];
+//	// double [] params_manualTuning_rolling = [0.15082956259426847, -0.075414781297134234, -0.11312217194570136, 
+//	// 0.19607843137254902, -0.030165912518853699, 0.0, 0.28355957767722473, -0.15082956259426847]; 
+//	// double [] params_neg_pickinpectplace = [ 0.0, 0.10, 0.22, 0.0, -0.12, 0.44, 0.0, -0.12];
 
-	LinearReward reward;
-	Model model;
-	ValueIteration vi = new ValueIteration();
+//	LinearReward reward;
+//	Model model;
+//	ValueIteration vi = new ValueIteration();
 
-	Agent opt_policy1, opt_policy2, opt_policy3, opt_policy4;
+//	Agent opt_policy1, opt_policy2, opt_policy3, opt_policy4;
 
-	model = new sortingModel(0.05,null);
-	//int dim = 14;
-	//reward = new sortingReward1(model,dim); 
-	int dim = 8;
-	reward = new sortingReward2(model,dim); 
-	double [] params = new double[dim]; 
+//	model = new sortingModel(0.05,null);
+//	//int dim = 14;
+//	//reward = new sortingReward1(model,dim); 
+//	int dim = 8;
+//	reward = new sortingReward2(model,dim); 
+//	double [] params = new double[dim]; 
 
-	writeln("\n behavior method pick-inspect-place:");
-	double [] params_manualTuning_pickinspectplace = [ 0.10, 0.0, 0.0, 0.22, -0.12, 0.44, 0.0, -0.12];
-	// correct simulated trajs with last version of 8th reward feature 
-	params = params_manualTuning_pickinspectplace; 
+//	writeln("\n behavior method pick-inspect-place:");
+//	double [] params_manualTuning_pickinspectplace = [ 0.10, 0.0, 0.0, 0.22, -0.12, 0.44, 0.0, -0.12];
+//	// correct simulated trajs with last version of 8th reward feature 
+//	params = params_manualTuning_pickinspectplace; 
 
-	reward.setParams(params);
-    model.setReward(reward);
-    model.setGamma(0.99);
+//	reward.setParams(params);
+//    model.setReward(reward);
+//    model.setGamma(0.99);
 
-    //writeln("starting V = vi.solve");
-    double vi_threshold = 0.2;
-    double[State] V;
-    V = vi.solve(model, vi_threshold);
-    //writeln(V);
+//    //writeln("starting V = vi.solve");
+//    double vi_threshold = 0.2;
+//    double[State] V;
+//    V = vi.solve(model, vi_threshold);
+//    //writeln(V);
 
-    opt_policy1 = vi.createPolicy(model, V);
-    //writeln("finished V = vi.solve");
+//    opt_policy1 = vi.createPolicy(model, V);
+//    //writeln("finished V = vi.solve");
 
-    int ol, pr, el, ls;
+//    int ol, pr, el, ls;
 
-	foreach (State s; model.S()) {
-		foreach (Action act, double chance; opt_policy1.actions(s)) {
-            sortingState s = cast(sortingState)s;
-            string str_s="";
-			if (s._onion_location == 0) str_s=str_s~"Onconveyor,";
-			if (s._onion_location == 1) str_s=str_s~"Infront,";
-			if (s._onion_location == 2) str_s=str_s~"Inbin,";
-			if (s._onion_location == 3) str_s=str_s~"Picked/AtHomePose,";
-			if (s._onion_location == 4) str_s=str_s~"Placed,";
+//	foreach (State s; model.S()) {
+//		foreach (Action act, double chance; opt_policy1.actions(s)) {
+//            sortingState s = cast(sortingState)s;
+//            string str_s="";
+//			if (s._onion_location == 0) str_s=str_s~"Onconveyor,";
+//			if (s._onion_location == 1) str_s=str_s~"Infront,";
+//			if (s._onion_location == 2) str_s=str_s~"Inbin,";
+//			if (s._onion_location == 3) str_s=str_s~"Picked/AtHomePose,";
+//			if (s._onion_location == 4) str_s=str_s~"Placed,";
 
-			if (s._prediction == 0) str_s=str_s~"bad,";
-			if (s._prediction == 1) str_s=str_s~"good,";
-			if (s._prediction == 2) str_s=str_s~"unknown,";
+//			if (s._prediction == 0) str_s=str_s~"bad,";
+//			if (s._prediction == 1) str_s=str_s~"good,";
+//			if (s._prediction == 2) str_s=str_s~"unknown,";
 
-			if (s._EE_location == 0) str_s=str_s~"Onconveyor,";
-			if (s._EE_location == 1) str_s=str_s~"Infront,";
-			if (s._EE_location == 2) str_s=str_s~"Inbin,";
-			if (s._EE_location == 3) str_s=str_s~"Picked/AtHomePose,";
+//			if (s._EE_location == 0) str_s=str_s~"Onconveyor,";
+//			if (s._EE_location == 1) str_s=str_s~"Infront,";
+//			if (s._EE_location == 2) str_s=str_s~"Inbin,";
+//			if (s._EE_location == 3) str_s=str_s~"Picked/AtHomePose,";
 
-			if (s._listIDs_status == 0) str_s=str_s~"Empty";
-			if (s._listIDs_status == 1) str_s=str_s~"NotEmpty"; 
-			if (s._listIDs_status == 2) str_s=str_s~"Unavailable";
+//			if (s._listIDs_status == 0) str_s=str_s~"Empty";
+//			if (s._listIDs_status == 1) str_s=str_s~"NotEmpty"; 
+//			if (s._listIDs_status == 2) str_s=str_s~"Unavailable";
 
-            //writeln(str_s," = ", act);
-		}
-	}
+//            //writeln(str_s," = ", act);
+//		}
+//	}
 
-	double[State] initial;
-	foreach (State st ; model.S()) {
-		sortingState s = cast(sortingState)st;
-		//if (s._onion_location == 2 && s._prediction == 0 && s._EE_location == 2 && s._listIDs_status ==0) initial[s] = 1.0;		
-		initial[s] = 1.0;
-	}
-	Distr!State.normalize(initial);
+//	double[State] initial;
+//	foreach (State st ; model.S()) {
+//		sortingState s = cast(sortingState)st;
+//		//if (s._onion_location == 2 && s._prediction == 0 && s._EE_location == 2 && s._listIDs_status ==0) initial[s] = 1.0;		
+//		initial[s] = 1.0;
+//	}
+//	Distr!State.normalize(initial);
 
-	sar [] traj;
-	//writeln("\nSimulation behavior:");
-	//for(int i = 0; i < 15; i++) {
-	//	traj = simulate(model, opt_policy1, initial, 50);
-	//	foreach (sar pair ; traj) {
-	//		print_FormattedOutput(pair);
-			//writeln(pair.s, " ", pair.a, " ", pair.r);
-	//	}
-	//	writeln("ENDTRAJ");
-	//}
+//	sar [] traj;
+//	//writeln("\nSimulation behavior:");
+//	//for(int i = 0; i < 15; i++) {
+//	//	traj = simulate(model, opt_policy1, initial, 50);
+//	//	foreach (sar pair ; traj) {
+//	//		print_FormattedOutput(pair);
+//			//writeln(pair.s, " ", pair.a, " ", pair.r);
+//	//	}
+//	//	writeln("ENDTRAJ");
+//	//}
 
-	//writeln("\n behavior method roll-pick-place:");
-	double [] params_manualTuning_rolling = [0.15082956259426847, -0.075414781297134234, -0.11312217194570136, 
-	0.19607843137254902, -0.030165912518853699, 0.0, 0.28355957767722473, -0.15082956259426847]; 
-	// best simulated trajs with last version of 8th reward feature
-	params = params_manualTuning_rolling; 
+//	//writeln("\n behavior method roll-pick-place:");
+//	double [] params_manualTuning_rolling = [0.15082956259426847, -0.075414781297134234, -0.11312217194570136, 
+//	0.19607843137254902, -0.030165912518853699, 0.0, 0.28355957767722473, -0.15082956259426847]; 
+//	// best simulated trajs with last version of 8th reward feature
+//	params = params_manualTuning_rolling; 
 
-	reward.setParams(params);
+//	reward.setParams(params);
 
-    //writeln("starting V = vi.solve");
-    V = vi.solve(model, vi_threshold);
-    opt_policy2 = vi.createPolicy(model, V);
+//    //writeln("starting V = vi.solve");
+//    V = vi.solve(model, vi_threshold);
+//    opt_policy2 = vi.createPolicy(model, V);
 
-	foreach (State s; model.S()) {
-		foreach (Action act, double chance; opt_policy2.actions(s)) {
-            sortingState s = cast(sortingState)s;
-            string str_s="";
-			if (s._onion_location == 0) str_s=str_s~"Onconveyor,";
-			if (s._onion_location == 1) str_s=str_s~"Infront,";
-			if (s._onion_location == 2) str_s=str_s~"Inbin,";
-			if (s._onion_location == 3) str_s=str_s~"Picked/AtHomePose,";
-			if (s._onion_location == 4) str_s=str_s~"Placed,";
+//	foreach (State s; model.S()) {
+//		foreach (Action act, double chance; opt_policy2.actions(s)) {
+//            sortingState s = cast(sortingState)s;
+//            string str_s="";
+//			if (s._onion_location == 0) str_s=str_s~"Onconveyor,";
+//			if (s._onion_location == 1) str_s=str_s~"Infront,";
+//			if (s._onion_location == 2) str_s=str_s~"Inbin,";
+//			if (s._onion_location == 3) str_s=str_s~"Picked/AtHomePose,";
+//			if (s._onion_location == 4) str_s=str_s~"Placed,";
 
-			if (s._prediction == 0) str_s=str_s~"bad,";
-			if (s._prediction == 1) str_s=str_s~"good,";
-			if (s._prediction == 2) str_s=str_s~"unknown,";
+//			if (s._prediction == 0) str_s=str_s~"bad,";
+//			if (s._prediction == 1) str_s=str_s~"good,";
+//			if (s._prediction == 2) str_s=str_s~"unknown,";
 
-			if (s._EE_location == 0) str_s=str_s~"Onconveyor,";
-			if (s._EE_location == 1) str_s=str_s~"Infront,";
-			if (s._EE_location == 2) str_s=str_s~"Inbin,";
-			if (s._EE_location == 3) str_s=str_s~"Picked/AtHomePose,";
+//			if (s._EE_location == 0) str_s=str_s~"Onconveyor,";
+//			if (s._EE_location == 1) str_s=str_s~"Infront,";
+//			if (s._EE_location == 2) str_s=str_s~"Inbin,";
+//			if (s._EE_location == 3) str_s=str_s~"Picked/AtHomePose,";
 
-			if (s._listIDs_status == 0) str_s=str_s~"Empty";
-			if (s._listIDs_status == 1) str_s=str_s~"NotEmpty"; 
-			if (s._listIDs_status == 2) str_s=str_s~"Unavailable";
+//			if (s._listIDs_status == 0) str_s=str_s~"Empty";
+//			if (s._listIDs_status == 1) str_s=str_s~"NotEmpty"; 
+//			if (s._listIDs_status == 2) str_s=str_s~"Unavailable";
 
-            //writeln(str_s," = ", act);
-		}
-	}
+//            //writeln(str_s," = ", act);
+//		}
+//	}
 
-	//writeln("\nSimulation behavior :");	
-	//for(int i = 0; i < 15; i++) {
-	//	traj = simulate(model, opt_policy2, initial, 50);
-	//	foreach (sar pair ; traj) {
-	//		print_FormattedOutput(pair);
-			//writeln(pair.s, " ", pair.a, " ", pair.r);
-	//	}
-	//	writeln("ENDTRAJ");
-	//}
+//	//writeln("\nSimulation behavior :");	
+//	//for(int i = 0; i < 15; i++) {
+//	//	traj = simulate(model, opt_policy2, initial, 50);
+//	//	foreach (sar pair ; traj) {
+//	//		print_FormattedOutput(pair);
+//			//writeln(pair.s, " ", pair.a, " ", pair.r);
+//	//	}
+//	//	writeln("ENDTRAJ");
+//	//}
 
-	writeln("\n behavior method negative pick-inspect-place:");
-	double [] params_neg_pickinpectplace = [ 0.0, 0.10, 0.22, 0.0, -0.12, 0.44, 0.0, -0.12];
-	// correct simulated trajs with last version of 8th reward feature 
-	params = params_neg_pickinpectplace; 
+//	writeln("\n behavior method negative pick-inspect-place:");
+//	double [] params_neg_pickinpectplace = [ 0.0, 0.10, 0.22, 0.0, -0.12, 0.44, 0.0, -0.12];
+//	// correct simulated trajs with last version of 8th reward feature 
+//	params = params_neg_pickinpectplace; 
 
-	reward.setParams(params);
+//	reward.setParams(params);
 
-    //writeln("starting V = vi.solve");
-    V = vi.solve(model, vi_threshold);
-    //writeln(V);
+//    //writeln("starting V = vi.solve");
+//    V = vi.solve(model, vi_threshold);
+//    //writeln(V);
 
-    opt_policy3 = vi.createPolicy(model, V);
-    //writeln("finished V = vi.solve");
+//    opt_policy3 = vi.createPolicy(model, V);
+//    //writeln("finished V = vi.solve");
 
-	writeln("\nSimulation behavior :");	
-	for(int i = 0; i < 15; i++) {
-		traj = simulate(model, opt_policy3, initial, 50);
-		foreach (sar pair ; traj) {
-			print_FormattedOutput(pair);
-		}
-		writeln("ENDTRAJ");
-	}
+//	writeln("\nSimulation behavior :");	
+//	for(int i = 0; i < 15; i++) {
+//		traj = simulate(model, opt_policy3, initial, 50);
+//		foreach (sar pair ; traj) {
+//			print_FormattedOutput(pair);
+//		}
+//		writeln("ENDTRAJ");
+//	}
 
-	return 0;
-}
+//	return 0;
+//}
 /*
 	foreach (State s; model.S()) {
 		foreach (Action a; model.A(s)) {

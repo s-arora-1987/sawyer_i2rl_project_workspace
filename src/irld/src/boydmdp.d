@@ -1076,7 +1076,7 @@ class BoydModelWdObsFeatures : BoydModel {
 			
 	}
 
-	override public int [] obsFeatures(State state, Action action) {
+	override public int [] obsFeatures1(State state, Action action) {
 		
 		//if (cast(TurnRightAction)action) { 
 		//	return [0, 1, 1, 1];
@@ -1102,13 +1102,10 @@ class BoydModelWdObsFeatures : BoydModel {
 		//if (cast(TurnLeftAction)action ) { 
 		//	return [0,1,0];
 		//} 
-
 		//return [0,0,1];
 
-		// location at y=0
-		
+		// location at y=0		
 		int [] result;
-
 		// This is where number of features is decided 
 		result.length = 4;
 		result[] = 0;

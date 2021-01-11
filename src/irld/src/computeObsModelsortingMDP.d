@@ -1,6 +1,18 @@
-import computeObsModelpatrolToyMDP;
 import sortingMDP;
-
+import mdp;
+import std.stdio;
+import std.random;
+import std.math;
+import std.range;
+import std.traits;
+import std.numeric;
+import std.format;
+import std.algorithm;
+import std.string;
+import core.stdc.stdlib : exit;
+import std.file;
+import std.conv;
+import solverApproximatingObsModel;
 
 int main() {
 	
@@ -9,7 +21,7 @@ int main() {
 	LinearReward reward;
 	Model model;
 
-    sortingMDPWdObsFeatures model = new sortingMDPWdObsFeatures(0.05,null, 0);
+    model = new sortingMDPWdObsFeatures(0.05,null, 0);
     State ts = model.S()[0];
     int numObFeatures = cast(int)(model.obsFeatures(ts,model.A(ts)[0]).length);
     model.setNumObFeatures(numObFeatures);
@@ -17,7 +29,7 @@ int main() {
 	int dim = 11;
 	reward = new sortingReward7(model,dim); 
 	
-    reward_weights = new double[dim];
+    double [] reward_weights = new double[dim];
 	reward_weights[] = 0;
 	double [] params_pickinspectplace_reward7woplacedmixedinit = [0.13986013986013984, 
 	0.06993006993006992, 0.13986013986013984, 0.06993006993006992, 0.013986013986013986, 
@@ -31,13 +43,13 @@ int main() {
 	//ValueIteration vi = new ValueIteration();
 	int vi_duration_thresh_secs = 30;
 	TimedValueIteration vi = new TimedValueIteration(int.max,false,vi_duration_thresh_secs); 
-	Agent opt_policy; 
+	Agent policy; 
     double vi_threshold;
     vi_threshold = 0.25; 
 
     double[State] V; 
     V = vi.solve(model, vi_threshold); 
-    opt_policy = vi.createPolicy(model, V); 
+    policy = vi.createPolicy(model, V); 
 
 	double[State] initial;
 	foreach (s; model.S()) {
@@ -109,6 +121,9 @@ int main() {
 	double [] arr_avg_cum_diff1, arr_avg_cum_diff2;
 	int num_sessions = 10;
 	int num_trials_perSession = 1;
+	debug {
+		double [][] arr_arr_cum_diff1;
+	}
 
 	// For metric 1 to accommodate the new s-a pairs with every next session, the noise corrupted feature 
 	// arrays has to collected incrementally. That also avoids the chances of divide by 0 in computation of
@@ -144,8 +159,8 @@ int main() {
 						if (! noiseCorrupted_obs_fvs.canFind(obs_fv)) noiseCorrupted_obs_fvs ~= obs_fv;
 
 						// introduce faulty input
-						e_sar.s._prediction = 1;
-						obs_fv = model.obsFeatures(e_sar.s,e_sar.a); 
+						ss._prediction = 1;
+						obs_fv = model.obsFeatures(ss,e_sar.a); 
 					} 
 				} 
 
@@ -172,30 +187,8 @@ int main() {
 		}
 
 		////////////////////////////////// Session Starts /////////////////////////////
-		
-		
-
-
-
-		avg_cum_diff1 = (sum(arr_cum_diff1)+0.000001)/cast(double)num_trials_perSession;
-		avg_cum_diff2 = (sum(arr_cum_diff2)+0.000001)/cast(double)num_trials_perSession;
-
-		writeln("average cum_diff1 for ",num_trials_perSession," trials of this session ",avg_cum_diff1);
-		writeln("average cum_diff2 for ",num_trials_perSession," trials of this session ",avg_cum_diff2);
-		writeln("numSessionsSoFar ",numSessionsSoFar);
-
-		arr_avg_cum_diff1 ~= avg_cum_diff1; 
-		arr_avg_cum_diff2 ~= avg_cum_diff2; 
-
-		// average learned distribution from trials within session 
-		foreach(i; 0 .. arr_learnedDistr_obsfeatures[0].length ) {
-			learnedDistr_obsfeatures[i] = sum(arr_learnedDistr_obsfeatures.transversal(i))/cast(double)(arr_learnedDistr_obsfeatures.length);
-		}
-
-		///////////////////////////////////////// Session Finished /////////////////////////////////////////////
-		////////////////////////////////// Session Starts /////////////////////////////
 		double avg_cum_diff1, avg_cum_diff2;
-		writeln("numSessionsSoFar ",numSessionsSoFar);
+
 		learnedDistr_obsfeatures = 
 		runAvgSessionLearnObsModel(num_trials_perSession, model,
 		trueDistr_obsfeatures, noiseCorrupted_obs_fvs, GT_trajs,
@@ -306,6 +299,10 @@ class sortingMDPWdObsFeatures : sortingModelbyPSuresh3multipleInit {
 
 		return result;
 
+	}
+
+	override public void setNumObFeatures(int inpNumObFeatures) {
+		this.numObFeatures = inpNumObFeatures;
 	}
 
 	public override int getNumObFeatures() {
