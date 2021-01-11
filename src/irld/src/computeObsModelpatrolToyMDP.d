@@ -239,7 +239,7 @@ int main() {
 	double numSessionsSoFar = 0.0;
 	// arrays of error values for both metrics 
 	double [] arr_avg_cum_diff1, arr_avg_cum_diff2;
-	int num_sessions = 10;
+	int num_sessions = 1;
 	int num_trials_perSession = 1;
 
 	debug {
@@ -326,7 +326,7 @@ int main() {
 		///////////////////////////////////////// Session Finished /////////////////////////////////////////////
 
 		// updating global variable for runing average
-		runAvg_learnedDistr_obsfeatures[] = (runAvg_learnedDistr_obsfeatures[] + learnedDistr_obsfeatures[]);
+		runAvg_learnedDistr_obsfeatures[] = (runAvg_learnedDistr_obsfeatures[]*(numSessionsSoFar-1) + learnedDistr_obsfeatures[]);
 		runAvg_learnedDistr_obsfeatures[] /= numSessionsSoFar; 
 
 	}
@@ -382,11 +382,11 @@ public double [] runAvgSessionLearnObsModel(int num_trials_perSession, Model mod
 		// update the incrementally learned feature distribution 
 		// local substitute variable for incremental runing average
 		double [] temp_runAvg_learnedDistr_obsfeatures = new double[learnedDistr_obsfeatures.length];
-		writeln(runAvg_learnedDistr_obsfeatures);
-		writeln(learnedDistr_obsfeatures);
+		writeln("runAvg_learnedDistr_obsfeatures ",runAvg_learnedDistr_obsfeatures);
+		writeln("learnedDistr_obsfeatures ",learnedDistr_obsfeatures);
 		writeln("numSessionsSoFar ",numSessionsSoFar);
 
-		temp_runAvg_learnedDistr_obsfeatures[] = (runAvg_learnedDistr_obsfeatures[] + learnedDistr_obsfeatures[]);
+		temp_runAvg_learnedDistr_obsfeatures[] = (runAvg_learnedDistr_obsfeatures[]*(numSessionsSoFar-1) + learnedDistr_obsfeatures[]);
 		temp_runAvg_learnedDistr_obsfeatures[] /= numSessionsSoFar; 
 
 		// for averaging over trials within session
@@ -398,7 +398,7 @@ public double [] runAvgSessionLearnObsModel(int num_trials_perSession, Model mod
 		writeln("true distr obsfeatures ",trueDistr_obsfeatures); 
 		//writeln("cum_prob_fvs ",cum_prob_fvs); 
 		writeln(); 
-		writeln("learned distr obsfeatures: ", temp_runAvg_learnedDistr_obsfeatures); 
+		writeln("temp_runAvg_learnedDistr_obsfeatures: ", temp_runAvg_learnedDistr_obsfeatures); 
 		writeln(); 
 		double[StateAction][StateAction] learnedObsMod;
 		learnedObsMod = createObsModel(model, temp_runAvg_learnedDistr_obsfeatures); 
@@ -889,6 +889,7 @@ double [] map_p_onto_features(double [] p, int [][] S, int num_obsfeatures) {
 	foreach(i, si; S) {
 		foreach(subsi; si) {
 			returnval[subsi] = pow(p[i], 1.0 / S[i].length); 
+			writeln("i:",i,",p[i]: ",p[i],",S[i].length:",S[i].length,",returnval[subsi]:",returnval[subsi]);
 		}
 	}
 	

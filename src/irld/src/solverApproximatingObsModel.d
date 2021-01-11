@@ -44,7 +44,7 @@ public double [] runAvgSessionLearnObsModel(int num_trials_perSession, Model mod
 		writeln(learnedDistr_obsfeatures);
 		writeln("numSessionsSoFar ",numSessionsSoFar);
 
-		temp_runAvg_learnedDistr_obsfeatures[] = (runAvg_learnedDistr_obsfeatures[] + learnedDistr_obsfeatures[]);
+		temp_runAvg_learnedDistr_obsfeatures[] = (runAvg_learnedDistr_obsfeatures[]*(numSessionsSoFar-1) + learnedDistr_obsfeatures[]);
 		temp_runAvg_learnedDistr_obsfeatures[] /= numSessionsSoFar; 
 
 		// for averaging over trials within session

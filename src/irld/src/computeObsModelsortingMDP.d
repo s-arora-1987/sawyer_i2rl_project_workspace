@@ -203,7 +203,7 @@ int main() {
 		///////////////////////////////////////// Session Finished /////////////////////////////////////////////
 
 		// updating global variable for runing average
-		runAvg_learnedDistr_obsfeatures[] = (runAvg_learnedDistr_obsfeatures[] + learnedDistr_obsfeatures[]);
+		runAvg_learnedDistr_obsfeatures[] = (runAvg_learnedDistr_obsfeatures[]*(numSessionsSoFar-1) + learnedDistr_obsfeatures[]);
 		runAvg_learnedDistr_obsfeatures[] /= numSessionsSoFar; 
 
 	}
