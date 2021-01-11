@@ -325,7 +325,9 @@ class Model {
 	
 	public abstract bool is_legal(State state);
 
-	public abstract int [] obsFeatures(State state, Action action);
+	//public abstract int [] obsFeatures(State state, Action action);
+
+	public abstract int [] obsFeatures(State state, Action action, State obState, Action obAction);
 
 	public abstract void setNumObFeatures(int inpNumObFeatures);
 
@@ -1837,102 +1839,6 @@ public struct sac {
 	double c;
 	
 }
-
-
-public double[StateAction][StateAction] createObsModel(Model model, double [] featureWeights) {
-
-	double p_success, tot_mass_obsSA_wd_sharedActvFeat, temp_total_mass;
-
-	int [] feaures_GT_sa, feaures_obs_sa;
-	double[StateAction][StateAction] returnedObModel;
-	double[StateAction] tempdict_gt_sa;
-	int totalSA_pairs, tot_obsSA_wo_sharedActvFeat;
-
-	totalSA_pairs = 0;
-	foreach(s; model.S()) { // for each state
-		foreach(a; model.A(s)){
-			totalSA_pairs += 1;
-		}
-	}
-	int total_keys_obsMod = 0;
-
-	foreach(s; model.S()) { // for each state
-		foreach(a; model.A(s)){
-			StateAction curr_gt_sa = new StateAction(s,a);
-
-			feaures_GT_sa = model.obsFeatures(s,a);
-			tot_mass_obsSA_wd_sharedActvFeat = 0.0;
-			tot_obsSA_wo_sharedActvFeat = 0;
-
-			foreach(obs_s; model.S()) { // for each obs state
-				foreach(obs_a; model.A(s)){ 
-					// use p_success of the features shared among GT and obs  
-					
-
-					p_success = 1.0;
-					feaures_obs_sa = model.obsFeatures(obs_s,obs_a);
-
-					foreach(i,f;feaures_obs_sa) {
-						if (feaures_GT_sa[i] == feaures_obs_sa[i] && f == 1) p_success *= featureWeights[i];
-					} 
-					
-					// if no features activated (p_success == 1.0) 
-					// or features could not capture the physical description in that s-a 
-					if (p_success == 1.0 || p_success == 0) tot_obsSA_wo_sharedActvFeat += 1;
-					else  tot_mass_obsSA_wd_sharedActvFeat += p_success;
-
-					if (p_success < 0) p_success = 0;
-					if (p_success > 1) p_success = 1;
-
-					returnedObModel[curr_gt_sa][new StateAction(obs_s,obs_a)] = p_success;
-				}
-			}
-			
-			if (tot_obsSA_wo_sharedActvFeat == totalSA_pairs) {
-				// if none of the features were activated, then features could not capture this s-a pair 
-				// Assign uniform distribution and tot_obsSA_wo_sharedActvFeat = 0
-				foreach(obs_s; model.S()) { // for each obs state
-					foreach(obs_a; model.A(s)){ // for each obs action
-						returnedObModel[curr_gt_sa][new StateAction(obs_s,obs_a)] = 1.0/cast(double)totalSA_pairs;
-						
-					}
-				}		
-				total_keys_obsMod += 1;
-				debug {
-					// writeln("features can't capture this s-a pair ");
-				}
-			} else {
-				if (tot_obsSA_wo_sharedActvFeat > 0 ) {
-					// for the cases where feature values were not shared (completely unobserved s-a pairs)
-					// distribute the remaining mass 
-					foreach(obs_s; model.S()) { // for each obs state
-						foreach(obs_a; model.A(s)){ // for each obs action
-							p_success = returnedObModel[curr_gt_sa][new StateAction(obs_s,obs_a)];
-							if (p_success == 1.0 || p_success == 0) {
-								returnedObModel[curr_gt_sa][new StateAction(obs_s,obs_a)] = 
-								(1.0-tot_mass_obsSA_wd_sharedActvFeat)/cast(double)(tot_obsSA_wo_sharedActvFeat); 
-							} 
-						} 
-					}
-					total_keys_obsMod += 1;
-				} else { } //writeln("createObsModel: tot_obsSA_wo_sharedActvFeat == 0 case"); 
-			}
-
-			Distr!StateAction.normalize(returnedObModel[curr_gt_sa]);
-
-			debug {
-				// writeln (returnedObModel[new StateAction(s,a)]); 
-				// test if you can sample from the distribution 
-				tempdict_gt_sa = returnedObModel[curr_gt_sa];
-				StateAction sampled_obs_sa = Distr!StateAction.sample(tempdict_gt_sa);
-				// writeln("test sampling observation ",sampled_obs_sa);
-			}
-		}
-	}
-
-	return returnedObModel;
-
-} 
 
 double normedDiff_SA_Distr (double[StateAction] distr1, double[StateAction] distr2) {
 

@@ -1059,7 +1059,6 @@ class BoydModel : mdp.Model {
 		return l[0] >= 0 && l[0] < map.length && l[1] >= 0 && l[1] < map[0].length && map[l[0]][l[1]] == 1; 
 	}
 
-
 }
 
 class BoydModelWdObsFeatures : BoydModel {
@@ -1078,47 +1077,22 @@ class BoydModelWdObsFeatures : BoydModel {
 			
 	}
 
-	public override int [] obsFeatures(State state, Action action) {
+	public override int [] obsFeatures(State state, Action action, State obState, Action obAction) {
 		
-		//if (cast(TurnRightAction)action) { 
-		//	return [0, 1, 1, 1];
-		//} 
-
-		//if (cast(TurnLeftAction)action) { 
-		//	return [1, 0, 1, 1];
-		//} 
-		
-		//if (cast(StopAction)action) {
-		//	return [1, 1, 0, 1];
-		//} 
-		//return [1, 1, 1, 1];
-
-		//if (cast(TurnLeftAction)action) { 
-		//	return [1,0];
-		//} 
-		//return [1,1];
-
-		//if (cast(MoveForwardAction)action && (cast(BoydState)state).getLocation()[1]==0) { 
-		//	return [1,0,0];
-		//} 
-		//if (cast(TurnLeftAction)action ) { 
-		//	return [0,1,0];
-		//} 
-		//return [0,0,1];
-
+		//writeln(state," ", action, " ",  obState, " ",  obAction);
 		// location at y=0		
 		int [] result;
 		// This is where number of features is decided 
 		result.length = 4;
 		result[] = 0;
 
-		if (cast(MoveForwardAction)action) result[0] = 1;
+		if (cast(MoveForwardAction)action && cast(MoveForwardAction)obAction) result[0] = 1;
 
-		if (cast(TurnLeftAction)action )  result[1] = 1;
+		if (cast(TurnLeftAction)action && cast(TurnLeftAction)obAction)  result[1] = 1;
 
-		if ((cast(BoydState)state).getLocation()[1]==0) result[2] = 1;
+		if ( ((cast(BoydState)state).getLocation()[1]==0) && ((cast(BoydState)obState).getLocation()[1]==0) ) result[2] = 1;
 
-		if ((cast(BoydState)state).getLocation()[0]==0) result[3] = 1;
+		if ( ((cast(BoydState)state).getLocation()[0]==0) && ((cast(BoydState)obState).getLocation()[0]==0) ) result[3] = 1;
 
 		return result;
 
