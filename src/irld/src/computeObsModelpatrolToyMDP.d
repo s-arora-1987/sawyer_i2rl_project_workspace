@@ -222,6 +222,10 @@ int main() {
 	int [] obs_fv;
 	double prod;
 	//int idx_fv = 0;
+
+	// decide what values of features will help lbfgs dsitinguish events
+	bool lbfgs_use_ones = 0;
+
 	foreach(s;model.S()) {
 		foreach(a;model.A(s)){
 			foreach(os;model.S()) {
@@ -232,9 +236,11 @@ int main() {
 						possible_obs_fvs ~= obs_fv;
 						prod = 1.0;
 						foreach(i,f;obs_fv) {
-							//if (f==1) prod *= trueDistr_obsfeatures[i];
-							//else prod *= trueDistr_obsfeatures[i+model.getNumObFeatures()];
-							if (f==0) prod *= trueDistr_obsfeatures[i+model.getNumObFeatures()];
+							if (lbfgs_use_ones == 1) {
+								if (f==1) prod *= trueDistr_obsfeatures[i];
+							} else {
+								if (f==0) prod *= trueDistr_obsfeatures[i+model.getNumObFeatures()];
+							}
 						}
 						cum_prob_fvs ~= prod;
 					}
@@ -245,7 +251,7 @@ int main() {
 	}
 
 	double[StateAction][StateAction] trueObsMod;
-	trueObsMod = createObsModel(model, trueDistr_obsfeatures); 
+	trueObsMod = createObsModel(model, trueDistr_obsfeatures, lbfgs_use_ones); 
 
 	double [] learnedDistr_obsfeatures = new double[2*model.getNumObFeatures()]; 
 	// learned distribution incrementally averaged over sessions
@@ -319,7 +325,7 @@ int main() {
 		runAvgSessionLearnObsModel(num_trials_perSession, model,
 		trueDistr_obsfeatures, noiseCorrupted_obs_fvs, GT_trajs,
 		obs_trajs, trueObsMod, numSessionsSoFar,  runAvg_learnedDistr_obsfeatures,
-		avg_cum_diff1, avg_cum_diff2, arr_arr_cum_diff1);
+		avg_cum_diff1, avg_cum_diff2, arr_arr_cum_diff1, lbfgs_use_ones);
 
 
 		arr_avg_cum_diff1 ~= avg_cum_diff1; 
@@ -361,7 +367,8 @@ public double [] runAvgSessionLearnObsModel(int num_trials_perSession, Model mod
 	double [] trueDistr_obsfeatures, int  [][] noiseCorrupted_obs_fvs, sar [][] GT_trajs,
 	sac [][] obs_trajs, double[StateAction][StateAction] trueObsMod,
 	ref double numSessionsSoFar, ref double [] runAvg_learnedDistr_obsfeatures, 
-	ref double avg_cum_diff1, ref double avg_cum_diff2, ref double [] [] arr_arr_cum_diff1) {
+	ref double avg_cum_diff1, ref double avg_cum_diff2, ref double [] [] arr_arr_cum_diff1,
+	bool lbfgs_use_ones) {
 		//////// For average over 10 runs with same trueObsFeatDistr and observations /////// 
 
 	
@@ -379,7 +386,7 @@ public double [] runAvgSessionLearnObsModel(int num_trials_perSession, Model mod
 
 		auto estimateObsMod = new MaxEntUnknownObsMod(100,new ValueIteration(), 2000, .00001, .1, .1);
 		double opt_val_Obj;
-		learnedDistr_obsfeatures = estimateObsMod.solve2(model, obs_trajs, opt_val_Obj);
+		learnedDistr_obsfeatures = estimateObsMod.solve2(model, obs_trajs, opt_val_Obj, lbfgs_use_ones);
 
 		foreach (i; 0..(learnedDistr_obsfeatures.length/2)) {
 			// separately for each tau and taubar
@@ -412,7 +419,7 @@ public double [] runAvgSessionLearnObsModel(int num_trials_perSession, Model mod
 		writeln("temp_runAvg_learnedDistr_obsfeatures: ", temp_runAvg_learnedDistr_obsfeatures); 
 		writeln(); 
 		double[StateAction][StateAction] learnedObsMod;
-		learnedObsMod = createObsModel(model, temp_runAvg_learnedDistr_obsfeatures); 
+		learnedObsMod = createObsModel(model, temp_runAvg_learnedDistr_obsfeatures, lbfgs_use_ones); 
 
 		// Metric 1a: estimation of the observation likelihood of s-a pairs misidentified due to noise 
 		// They happened in input but not in output of perception pipeline 
@@ -541,7 +548,7 @@ public double [] runAvgSessionLearnObsModel(int num_trials_perSession, Model mod
 	return learnedDistr_obsfeatures;
 }
 
-public double[StateAction][StateAction] createObsModel(Model model, double [] featureWeights) {
+public double[StateAction][StateAction] createObsModel(Model model, double [] featureWeights, bool lbfgs_use_ones) {
 
 	double p_success, tot_mass_obsSA_wd_sharedActvFeat, temp_total_mass;
 
@@ -575,9 +582,11 @@ public double[StateAction][StateAction] createObsModel(Model model, double [] fe
 
 					// P(obs s, obs a | s, a) = 
 					foreach(i,f;features) {
-						//if (f == 1) p_success *= featureWeights[i];
-						//else p_success *= featureWeights[i+model.getNumObFeatures()];
-						if (f==0) p_success *= featureWeights[i+model.getNumObFeatures()];
+						if (lbfgs_use_ones == 1) {
+							if (f == 1) p_success *= featureWeights[i];
+						} else {
+							if (f==0) p_success *= featureWeights[i+model.getNumObFeatures()];
+						}
 					} 
 					
 					// if no features activated (p_success == 1.0) 
@@ -668,7 +677,7 @@ string feature_vector_to_string(int [] features) {
 
 
 
-int[][] define_events_obsMod(Model model, sac[][] samples, out int[string] eventMapping) {
+int[][] define_events_obsMod(Model model, sac[][] samples, out int[string] eventMapping, bool lbfgs_use_ones) {
 	// vector of all the outputs of feature function, that got instantiated in samples
 	// <s,a,c> c = score
 	
@@ -692,7 +701,11 @@ int[][] define_events_obsMod(Model model, sac[][] samples, out int[string] event
 						
 						int[] feature_indices;
 						foreach(i,f;features) {
-							if (f==0) feature_indices ~= cast(int)i;
+							if (lbfgs_use_ones == 1) {
+								if (f==1) feature_indices ~= cast(int)i;
+							} else {
+								if (f==0) feature_indices ~= cast(int)i;
+							}
 						} 
 						// returnval [eventIds[eID]]
 						returnval ~= feature_indices;
@@ -845,7 +858,7 @@ class MaxEntUnknownObsMod : MaxEntIrl {
 	}
 
 	
-	public double [] solve2(Model model, sac[][] obsTraj_samples, out double opt_value) {
+	public double [] solve2(Model model, sac[][] obsTraj_samples, out double opt_value, bool lbfgs_use_ones) {
 		
         // Compute feature expectations of agent = mu_E from samples
         lbfgs_parameter_t param;
@@ -859,7 +872,7 @@ class MaxEntUnknownObsMod : MaxEntIrl {
         this.sample_length = cast(int)obsTraj_samples.length;
         
         int[string] eventMapping;
-        E = define_events_obsMod(model, obsTraj_samples, eventMapping); 
+        E = define_events_obsMod(model, obsTraj_samples, eventMapping, lbfgs_use_ones); 
         debug {
         	writeln("E: ", E);
         }
