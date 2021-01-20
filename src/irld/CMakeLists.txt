@@ -64,7 +64,7 @@ target_link_libraries(meirl
 )
 add_dependencies(meirl liblbfgs)
 
-add_executable(noisyObsRobustSamplingMeirl src/mdp.d src/boydmdp.d src/irl.d src/singleTaskIRLNoisyObs.d src/sortingMDP.d)
+add_executable(noisyObsRobustSamplingMeirl src/compObsMod_IRLNoisyObs.d src/mdp.d src/irl.d src/sortingMDP.d src/solverApproximatingObsModel.d )
 target_link_libraries(noisyObsRobustSamplingMeirl
    asa047 lbfgs
 )
@@ -76,19 +76,17 @@ target_link_libraries(noisyObsRobustSamplingMeirlPatrol
 )
 add_dependencies(noisyObsRobustSamplingMeirlPatrol liblbfgs)
 
-
-add_executable(computeObsModelpatrolToyMDP src/mdp.d src/boydmdp.d src/computeObsModelpatrolToyMDP.d src/irl.d)
+add_executable(computeObsModelpatrolToyMDP src/mdp.d src/boydmdp.d src/computeObsModelpatrolToyMDP.d src/solverApproximatingObsModel.d src/irl.d)
 target_link_libraries(computeObsModelpatrolToyMDP
    asa047 lbfgs
 )
 add_dependencies(computeObsModelpatrolToyMDP liblbfgs)
 
-
-#add_executable(computeObsModelsortingMDP src/computeObsModelsortingMDP.d src/mdp.d src/boydmdp.d src/solverApproximatingObsModel.d src/irl.d src/sortingMDP.d)
-#target_link_libraries(computeObsModelsortingMDP
-#   asa047 lbfgs
-#)
-#add_dependencies(computeObsModelsortingMDP liblbfgs)
+add_executable(computeObsModelsortingMDP src/computeObsModelsortingMDP.d src/mdp.d src/solverApproximatingObsModel.d src/sortingMDP.d src/irl.d)
+target_link_libraries(computeObsModelsortingMDP
+   asa047 lbfgs
+)
+add_dependencies(computeObsModelsortingMDP liblbfgs)
 
 #add_executable(testdeb src/testdebug.d)
 
@@ -148,4 +146,4 @@ add_executable(code_test src/code_test.d)
 # set_target_properties(boydpatroller boydattacker boydirl boydsimple_t boydile PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
 # set_target_properties(boydpatroller boydattacker boydsimple_t boydile sortingMDP PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
 #set_target_properties(boydirl boydpatroller boydsimple_t dpmMEIRL boydsimple_t boydile solveSortingMDP sortingMDPILE solveboydpatroller PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
-set_target_properties(meirl noisyObsRobustSamplingMeirl solveSortingMDP sortingMDPILE code_test boydpatroller boydsimple_t noisyObsRobustSamplingMeirlPatrol computeObsModelpatrolToyMDP PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 
+set_target_properties(meirl solveSortingMDP sortingMDPILE code_test boydpatroller boydsimple_t noisyObsRobustSamplingMeirl computeObsModelpatrolToyMDP computeObsModelsortingMDP PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/bin) 

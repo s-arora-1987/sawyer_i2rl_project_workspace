@@ -140,6 +140,10 @@ class UniqueFeatureReward : LinearReward {
 class Model {
 
 	public double gamma;
+	public int numObFeatures; 
+	// observation model to be estimated 
+	public double [StateAction][StateAction] obsMod;
+
 	protected Reward reward;
 	
 	public abstract int numTFeatures();
@@ -335,6 +339,7 @@ class Model {
 
 	public abstract void setObsMod(double [StateAction][StateAction] newObsMod);
 
+	public abstract StateAction noiseIntroduction(State s, Action a);
 	
 }
 
@@ -917,23 +922,18 @@ public class ValueIteration : MDPSolver {
 					delta = max(delta, abs(V[s] - V_next[s]));
 					continue; 
 				}
-                //writeln("foreach");
 				double[Action] q;
 				if (model.is_terminal(s) && terminalIsInfinite) {
 
 					Action a = new NullAction();
 					//q.length = 1;
 					double r = model.R(s, a);
-					//writeln("getting reward value");
 					
 					q[a] = r + model.getGamma()*V[s];
 				} else {
 					//q.length = model.A(s).length;
-			        //writeln("model.A(s):",model.A(s));
 					foreach (Action a; model.A(s)) {
-				        //writeln("a ",a);
 						double r = model.R(s, a);
-				        //writeln("r ",r);
 						double[State] T = model.T(s, a);
 	
 						double expected_rewards = 0;
@@ -942,7 +942,6 @@ public class ValueIteration : MDPSolver {
 							if (s_prime in V) expected_rewards += p*V[s_prime];
 						}
 						
-				        //writeln("q[a] = r");
 						q[a] = r + model.getGamma()*expected_rewards;
 					}
 				}	
@@ -951,7 +950,6 @@ public class ValueIteration : MDPSolver {
 					if (v > m)
 						m = v;
 				V_next[s] = m;
-				//writeln("delta = max");
 				delta = max(delta, abs(V[s] - V_next[s]));
 			}
 			V = V_next.dup;
@@ -961,7 +959,6 @@ public class ValueIteration : MDPSolver {
 			i ++;
 
 			if (delta < err || i > max_iter ) {
-				//writeln("return V;");
 				return V;
 			}
 		}
@@ -1043,7 +1040,6 @@ public class TimedValueIteration : MDPSolver {
 			double[State] V_next;
 
 			foreach (State s ; model.S()) {
-
 			    //writeln("starting foreach", s.toString());
 				if (model.is_terminal(s) && ! terminalIsInfinite) {
 	                double max_R = -double.max;
@@ -1055,7 +1051,7 @@ public class TimedValueIteration : MDPSolver {
 					delta = max(delta, abs(V[s] - V_next[s]));
 					continue; 
 				}
-                //writeln("foreach");
+                
 				double[Action] q;
 				if (model.is_terminal(s) && terminalIsInfinite) {
 
@@ -1109,6 +1105,9 @@ public class TimedValueIteration : MDPSolver {
 	
 	public Agent createPolicy(Model model, double[State] V) {
 		
+		debug {
+			//writeln("TimedValueIteration createPolicy");
+		}
 		Action[State] V_next;
 		foreach (State s ; model.S()) {
 			
@@ -1131,8 +1130,10 @@ public class TimedValueIteration : MDPSolver {
 				
 				double expected_rewards = 0;
 				foreach (s_prime, p; T){
-					//writeln("s,a,s_prime");
-					//writeln(s,a,s_prime);
+					debug {
+						//writeln("TimedValueIteration createPolicy s,a,s_prime");
+						//writeln(s,a,s_prime);
+					}
 					expected_rewards += p*V[s_prime];
 				}
 				//writeln("q[a] = r");

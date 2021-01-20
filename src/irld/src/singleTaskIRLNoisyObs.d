@@ -49,20 +49,7 @@ int main() {
     Model model;
 
 	if (mapToUse == "sorting") {
-		//models ~= new sortingModel(0.05,null);
-		//models ~= new sortingModel(0.05,null);
-		//models ~= new sortingModel2(0.05,null);
-		//models ~= new sortingModel2(0.05,null);
-		//models ~= new sortingModelbyPSuresh(0.05,null);
-		//models ~= new sortingModelbyPSuresh(0.05,null);
-		//models ~= new sortingModelbyPSuresh2(0.05,null);
-		//models ~= new sortingModelbyPSuresh2(0.05,null);
-		//models ~= new sortingModelbyPSuresh3(0.05,null);
-		//models ~= new sortingModelbyPSuresh3(0.05,null);
-		//models ~= new sortingModelbyPSuresh4(0.05,null);
-		//model = new sortingModelbyPSuresh4(0.05,null);
 		model = new sortingModelbyPSuresh2WOPlaced(0.05,null);
-		//model = new sortingModelbyPSuresh3multipleInit(0.05,null);
 		
 	} 
 

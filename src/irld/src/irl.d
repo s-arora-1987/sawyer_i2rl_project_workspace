@@ -7,6 +7,8 @@ import std.numeric;
 import std.datetime;
 import core.stdc.stdlib : exit;
 import std.algorithm.iteration;
+import std.datetime;
+
 
 alias extern(C) double function(void *, const double *, double *, const int, const double) evaluate_callback;
 alias extern(C) int function(void *, const double *, const double *, const double, const double, const double, const double, int, int, int) progress_callback;
@@ -1403,12 +1405,13 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
         	temp_opt_weights = init_weights.dup;
 
 	        last_muE[] = 0.01; 
-	        writeln("\n random restart \n");
+	        writeln("\n random restart begin \n");
+		    auto starttime = Clock.currTime();
 
         	do {
 
 		        leaned_muE = SingleAgentExpectedEdgeFrequencyFeatures(
-		        	temp_opt_weights.dup,Ephi_thresh);
+		        	temp_opt_weights.dup, Ephi_thresh);
 
         		mu_E[] = 0.0;
 
@@ -1432,7 +1435,7 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 				tempdiff[] = (last_muE[] - mu_E[])/sum(last_muE);
 				last_muE[] = mu_E[];
 				diff_muE_norm = l1norm(tempdiff);
-				writeln("diff mu_E - mu_E last iteration  ",diff_muE_norm);
+				//writeln("diff mu_E - mu_E last iteration  ",diff_muE_norm);
 
 				err_moving_window_muE[moving_window_counter_muE] = diff_muE_norm;
 				moving_window_counter_muE ++;
@@ -1447,12 +1450,9 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 		        	//mu_E_copy[] = mu_E_copy[]/sum(mu_E_copy);
 		        	//mu_E_wo_sampling[] = mu_E_wo_sampling[]/sum(mu_E_wo_sampling);
 
-					//
-		        	//writeln("mu_E_copy: ", mu_E_copy);
-		        	//writeln("mu_E_wo_sampling",mu_E_wo_sampling);
 		        	temp_diff_wrt_muE_wo_sc[] = mu_E_wo_sampling[]-mu_E_copy[];
-
 		        	//writeln("diff w.r.t hat-phi without imp sampling ",l1norm(temp_diff_wrt_muE_wo_sc));
+
 		        	// For current weights, compute norm diff w.r.t. muE with ALL scores 1
 		        	trajs_scores1.length = 0;
 			        foreach(traj; noisy_samples) {
@@ -1482,7 +1482,6 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 					} 
 
 					//mu_E_scores1[] = mu_E_scores1[]/sum(mu_E_scores1);
-		        	//writeln("mu_E_scores1",mu_E_scores1);
 		        	temp_diff_wrt_muE_scores1[] = mu_E_scores1[]-mu_E_copy[];
 		        	//writeln("diff w.r.t hat-phi with ALL scores 1 ",l1norm(temp_diff_wrt_muE_scores1));
 
@@ -1507,7 +1506,8 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
         	//} while ((diff_muE_norm > conv_threshold_abs_diff_moving_wdw) && 
         		//(stdev_moving_window_diff_muE_norm > conv_threshold_stddev_diff_moving_wdw));
 
-        	//exit(0); 
+	        writeln("\n random restart ends in ",(Clock.currTime()-starttime)," time \n");
+	        //exit(0);
 
         	// calculate Q value
         	double newQValue = SingleAgentcalcQ(temp_opt_weights,Ephi_thresh);
@@ -1524,7 +1524,7 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 
 	        iterations ++;
 
-	    } while (iterations < max_iter);
+	    } while (iterations < max_iter); //max_iter is number of random restarts 
         
         debug {
         	diff_wrt_muE_wo_sc = l1norm(temp_diff_wrt_muE_wo_sc);
@@ -1548,14 +1548,17 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 		sac[][] trajs, double[] weights, double conv_threshold_gibbs) {
 		// Robust IRL
 		debug {
-			writeln("calc_feature_expectations_per_sac_trajectory_gibbsSampling ");
+			//writeln("calc_feature_expectations_per_sac_trajectory_gibbsSampling ");
 		}
+
         LinearReward rw = cast(LinearReward)model.getReward();
         rw.setParams(weights);        
 		double[StateAction] Q_value = QValueSoftMaxSolve(model, this.Qsolve_qval_thresh, this.QSolve_max_iter);        
 		Agent stochPolicy = CreateStochasticPolicyFromQValue(model, Q_value);
 		double[Action][State] stochPolicyMatrix = (cast(StochasticAgent)stochPolicy).getPolicy();
-
+		debug {
+			//writeln("stoch policy computed ");
+		}
 		// Unlike domain used by Shervin, our domain of observations is same as ground truths 		
 		// The transition probabilities P(sa|MB(sa)) are computed based on ground truths 
 		// of previous and next states. However, inputs are only observations. 
@@ -1570,41 +1573,6 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 			GT_trajs ~= GT_traj;
 		}
 
-
-		int total_sa_pairs = 0;
-		foreach(s;model.S()) {
-			foreach(a; model.A(s)) total_sa_pairs += 1;
-		}
-
-		// each sac pair in observation correspond to one distribution over groundtruth s-a pairs 
-		// Should we take into consideration all the scores before we used 
-		// observation model Pr(obs-s-a|s,a) distribution? 
-		// In temporal Bayesian Markov process, 
-		// each time step is a node defining a separate distribution. 
-		// But does that justify a separate observation model distribution for each time step? 
-		// We didn't use averaged obs model for Imp Sampling. So we won't do it for Gibbs. 
-
-		// We need to do it. how?  
-		// for each s-a pair, iterate through observations . record a list of probabilities corresponding to each pair
-		// then for each pair, compute average of list if a list exists else distribute remaining mass evenly.
-
-		double[StateAction] avg_probs_sa_score;
-		foreach(s;model.S()) {
-			foreach(a; model.A(s)) {
-				double sum = 0.0;
-				int count = 0;
-				foreach (sac[] obs_traj2; trajs) {
-					foreach(e_sac; obs_traj2){
-						if ((s == e_sac.s) && (a == e_sac.a)) {
-							sum += e_sac.c;
-							count += 1;
-						}
-					}
-				}
-				if (sum != 0) avg_probs_sa_score[new StateAction(s,a)] = sum/cast(double)count;
-			}
-		}
-
 		// Then the algorithm is as follows. 
 		// 
 		// 1) Until the relative diff in hat-phi or muE stabilizes, do following
@@ -1614,11 +1582,13 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 		// by iterating over states and allowed actions
 		// dict_gt_sa[s-a] = P(sa|MB(sa)) = P(s|prev-s,prev-a) * P(a|s) * P(next-s|s,a) * P(obs-s-a|s,a) 
 		// = P(s|prev-s,prev-a) * stochPolicyMatrix[s][a] * P(next-s|s,a) * P[obs-s-a|s,a] 
-		// where P[obs-s-a|s,a] = input_score(s-a) if s,a = obs-s-a; 
-		// 						  (1-input_score(s-a))/((number of s-a pairs) - 1) otherwise
 		// for first timestep P(s|prev-s,prev-a)  = 1, and for last, P(next-s|s,a) = 1
 		// 2 b b) Sample GT s-a pair using dict_gt_sa for the chosen timestep
 		// 3) Compute new muE and relative diff
+
+		debug {
+			//writeln("MCMC started ");
+		}
 
 		double [] muE_sampled = new double[rw.dim()];
 		muE_sampled[] = double.max;
@@ -1641,12 +1611,17 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 			// update GT_trajs by smapling every node
 			foreach(int i, sar[] traj; GT_trajs) {
 				obs_traj = trajs[i].dup;
+				debug {
+					//writeln("traj length ", traj.length);
+					//writeln("obs_traj length ", obs_traj.length);
+				}
+
 				foreach(int j, sar gt_sar; traj) {
 					// because GT_traj changes with every j increment
 					GT_traj = GT_trajs[i].dup;
 					sac e_sac = obs_traj[j];
+
 					StateAction temp_sa = new StateAction(e_sac.s,e_sac.a);
-					if (temp_sa in avg_probs_sa_score) e_sac.c = avg_probs_sa_score[temp_sa];
 
 					// define distribution for current node
 					foreach(s;model.S()) {
@@ -1676,14 +1651,14 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 							} else P_nexts_s_a = 0.0;
 
 							debug {
-								//writeln("P_nexts_s_a ",P_nexts_s_a); 
-							} 
+								//writeln("MCMC 3",new StateAction(s, a));
+								//writeln("(new StateAction(s, a)) in model.obsMod ",
+								//	(new StateAction(s, a)) in model.obsMod);
+								//writeln(new StateAction(e_sac.s,e_sac.a));
+								//writeln((new StateAction(e_sac.s,e_sac.a)) in model.obsMod[new StateAction(s, a)]);
+							}
 
-							// P(obs-s-a|GT s,a) is prediction score if GT s-a is same as obs s-a 
-							// But what if GT s-a is never seen? GT s-a isn't same as obs s-a 
-							// Mistake: assume uniform distribution among rest s-a pairs 
-							if ((s == e_sac.s) && (a == e_sac.a)) P_obssa_GTsa = e_sac.c; 
-							else P_obssa_GTsa = (1-e_sac.c)/cast(double)(total_sa_pairs-1); 
+							P_obssa_GTsa = model.obsMod[new StateAction(s, a)][new StateAction(e_sac.s,e_sac.a)];
 
 							dict_gt_sa[new StateAction(s, a)] = P_s_prevs_preva 
 							* stochPolicyMatrix[s][a] * P_nexts_s_a * P_obssa_GTsa;
@@ -1740,6 +1715,10 @@ class MaxEntIrlZiebartApproxNoisyObs : MaxEntIrlZiebartApprox {
 
 		}
 		//exit(0);
+
+		debug {
+			//writeln("MCMC finished ");
+		}
 
 		return fe_per_gt_traj;
 	} 

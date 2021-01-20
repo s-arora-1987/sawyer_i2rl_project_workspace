@@ -696,41 +696,10 @@ class sortingModelbyPSuresh3multipleInit : sortingModel {
 	}
 }
 
-class sortingModelbyPSuresh4 : sortingModel { 
+class sortingModelbyPSuresh4multipleInit_onlyPIP : sortingModelbyPSuresh3multipleInit { 
 
 	public this(double p_fail, State terminal) {
 		super(p_fail, terminal);
-
-        int [][] statesList = [[ 0, 2, 0, 0],
-        [ 3, 2, 3, 0],
-        [ 1, 0, 1, 2],
-        [ 2, 2, 2, 2],
-        [ 0, 2, 2, 2],
-        [ 3, 2, 3, 2],
-        [ 1, 1, 1, 2],
-        [ 4, 2, 0, 2],
-        [ 0, 0, 0, 1],
-        [ 3, 0, 3, 1],
-        [ 2, 2, 2, 1],
-        [ 0, 0, 2, 1],
-        [ 2, 2, 2, 0],
-        [0, 2, 0, 2],
-        [0, 2, 2, 0],
-        [0,1,0,0],[0,1,1,0],[0,1,2,0],[0,1,3,0],[0,2,1,0],[0,2,3,0],
-        [3,1,3,0],[0,0,1,1],[0,0,3,1],
-        [0,2,1,2],[0,2,3,2]];
-
-        writeln("created statesList");
-
-		sortingState [] states2;
-		foreach(ls; statesList){
-
-			states2 ~= new sortingState(ls);
-		}
-        writeln("created states ");
-
-		this.states = states2;
-		
 	}
 
 	public override Action[] A(State st = null) {
@@ -750,7 +719,7 @@ class sortingModelbyPSuresh4 : sortingModel {
 				return [new Pick(), new ClaimNewOnion()]; 
 			} else if (state._listIDs_status == 0) {
 				//return [new InspectWithoutPicking()]; 
-				return [new InspectWithoutPicking(),new Pick(), new ClaimNewOnion()]; 
+				return [new Pick(), new ClaimNewOnion()]; 
 			} else {
 				if ( state._prediction == 2) {
 					return [new ClaimNextInList()]; 
@@ -780,7 +749,7 @@ class sortingModelbyPSuresh4 : sortingModel {
 			if (state._listIDs_status == 2) {
 				return [new ClaimNewOnion()]; 
 			} else if (state._listIDs_status == 0) {
-				return [new InspectWithoutPicking()]; 
+				return [new Pick(), new ClaimNewOnion()]; 
 			} else {
 				return [new ClaimNextInList()]; 
 			}
@@ -796,7 +765,7 @@ class sortingModelbyPSuresh4 : sortingModel {
 			if (state._listIDs_status == 2) {
 				return [new ClaimNewOnion()]; 
 			} else if (state._listIDs_status == 0) {
-				return [new InspectWithoutPicking()]; 
+				return [new Pick(), new ClaimNewOnion()]; 
 			} else {
 				return [new ClaimNextInList()]; 
 			}
@@ -804,6 +773,149 @@ class sortingModelbyPSuresh4 : sortingModel {
 	}
 }
 
+
+class sortingMDPWdObsFeatures : sortingModelbyPSuresh4multipleInit_onlyPIP {
+	// This class takes has as its member an observation feature function 
+	// for estimating observation model
+
+	double chanceNoise; 
+
+	public this(double p_fail, State terminal, int inpNumObFeatures, double chanceNoise) {
+		super(p_fail, terminal);
+		this.numObFeatures = inpNumObFeatures;
+		this.chanceNoise = chanceNoise;
+			
+	}
+
+	public override int [] obsFeatures(State state, Action action, State obState, Action obAction) {
+		/*
+
+		blemish is present on onion 
+		onion moves with hand (onion rolling on conveyor doesn't count as moving) 
+		onion rotates (either rotating on table for rolling or rotating in hand for inspection)
+		onion moves from sorter to conveyor (making movement more specific)
+		onion moves from conveyor to sorter (making movement more specific)
+		orientation of all onions changed 
+		onion was on conveyor before action 
+		onion moves to bin (making movement more specific)
+		hand leaves atEye region in 2D image 
+		hand moves to bin 
+		hand moves to conveyor 
+		hand moves over all onions - 0/1
+
+		*/
+
+		int [] result;
+		// This is where number of features is decided 
+		result.length = 12;
+		//result.length = 24;
+		result[] = 0;
+		sortingState ss = cast(sortingState)state;
+		sortingState obss = cast(sortingState)obState;
+
+		if ((ss._prediction == 0) && (obss._prediction == 0)) result[0] = 1;
+
+		if ( ((cast(PlaceOnConveyor)action) || (cast(PlaceInBin)action) 
+			|| (cast(Pick)action)) && ((cast(PlaceOnConveyor)obAction) || (cast(PlaceInBin)obAction) 
+			|| (cast(Pick)obAction)) ) result[1] = 1;
+
+		if ( ((cast(InspectWithoutPicking)action) || (cast(InspectAfterPicking)action))
+			&& ((cast(InspectWithoutPicking)obAction) || (cast(InspectAfterPicking)obAction)) ) result[2] = 1;
+
+		if ( (cast(PlaceOnConveyor)action) && (cast(PlaceOnConveyor)obAction) ) result[3] = 1;
+
+		if ( (cast(Pick)action) && (cast(Pick)obAction) ) result[4] = 1;
+
+		if ((cast(InspectWithoutPicking)action) && (cast(InspectWithoutPicking)obAction)) result[5] = 1;
+
+		if ((ss._onion_location == 0) && (obss._onion_location == 0)) result[6] = 1;
+
+		if ((cast(PlaceInBin)action) && (cast(PlaceInBin)obAction)) result[7] = 1;
+
+		if ( ( (ss._EE_location == 1) && ( (cast(PlaceOnConveyor)action) || (cast(PlaceInBin)action) 
+			|| (cast(Pick)action) ) ) && 
+			( (obss._EE_location == 1) && ( (cast(PlaceOnConveyor)obAction) || (cast(PlaceInBin)obAction) 
+			|| (cast(Pick)obAction) ) ) ) result[8] = 1;
+
+		if ((cast(PlaceInBin)action) && (cast(PlaceInBin)obAction)) result[9] = 1;
+
+		if ((cast(PlaceOnConveyor)action) && (cast(PlaceOnConveyor)obAction)) result[10] = 1;
+
+		if ((cast(InspectWithoutPicking)action) && (cast(InspectWithoutPicking)obAction)) result[11] = 1;
+
+		//if ((ss._prediction == 0)) result[12] = 1;
+
+		//if ( ((cast(PlaceOnConveyor)action) || (cast(PlaceInBin)action) 
+		//	|| (cast(Pick)action)) ) result[13] = 1;
+
+		//if ( ((cast(InspectWithoutPicking)action) || (cast(InspectAfterPicking)action)) ) result[14] = 1;
+
+		//if ( (cast(PlaceOnConveyor)action) ) result[15] = 1;
+
+		//if ( (cast(Pick)action) ) result[16] = 1;
+
+		//if ((cast(InspectWithoutPicking)action)) result[17] = 1;
+
+		//if ((ss._onion_location == 0)) result[18] = 1;
+
+		//if ((cast(PlaceInBin)action)) result[19] = 1;
+
+		//if ( ( (ss._EE_location == 1) && ( (cast(PlaceOnConveyor)action) || (cast(PlaceInBin)action) 
+		//	|| (cast(Pick)action) ) ) ) result[20] = 1;
+
+		//if ((cast(PlaceInBin)action)) result[21] = 1;
+
+		//if ((cast(PlaceOnConveyor)action)) result[22] = 1;
+
+		//if ((cast(InspectWithoutPicking)action)) result[23] = 1;
+
+		return result;
+
+	}
+
+	override public void setNumObFeatures(int inpNumObFeatures) {
+		this.numObFeatures = inpNumObFeatures;
+	}
+
+	public override int getNumObFeatures() {
+		return numObFeatures;
+	}
+		
+	public override void setObsMod(double [StateAction][StateAction] newObsMod) {
+		this.obsMod = newObsMod;
+	}
+
+
+	override public StateAction noiseIntroduction(State s, Action a) {
+
+		State ss = s;
+		Action aa = a;
+		auto insertNoise = dice(chanceNoise, 1-chanceNoise);
+
+		if (insertNoise) {
+			sortingState ss2 = cast(sortingState)ss;
+
+			// Blemished onion has been picked for placing in bin. 
+			// It was perceived as unblemished. 
+			if ((ss2._prediction == 0) && cast(PlaceInBin)a) {
+				// introduce faulty input
+				ss2._prediction = 1;
+			}
+			// Adding more noise to see if trend of curve changes
+			if ((ss2._prediction == 0) && cast(PlaceOnConveyor)a) {
+				// introduce faulty input
+				ss2._prediction = 1;
+			}
+			if ((ss2._prediction == 0) && cast(Pick)a) {
+				// introduce faulty input
+				ss2._prediction = 1;
+			}
+			ss  = ss2;
+		}
+		
+		return new StateAction(ss,aa);
+	}
+}
 
 class sortingModel2 : sortingModel { 
 	

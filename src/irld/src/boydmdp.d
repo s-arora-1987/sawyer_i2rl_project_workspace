@@ -1076,6 +1076,12 @@ class BoydModelWdObsFeatures : BoydModel {
 		this.numObFeatures = inpNumObFeatures;
 			
 	}
+	public override bool is_legal(State state) {
+		BoydState s = cast(BoydState)state;
+		int [] l = s.location;
+		
+		return l[0] >= 0 && l[0] < map.length && l[1] >= 0 && l[1] < map[0].length && map[l[0]][l[1]] == 1; 
+	}
 
 	public override int [] obsFeatures(State state, Action action, State obState, Action obAction) {
 		
@@ -1083,7 +1089,7 @@ class BoydModelWdObsFeatures : BoydModel {
 		// location at y=0		
 		int [] result;
 		// This is where number of features is decided 
-		result.length = 4;
+		result.length = 8;
 		result[] = 0;
 
 		if (cast(MoveForwardAction)action && cast(MoveForwardAction)obAction) result[0] = 1;
@@ -1093,6 +1099,14 @@ class BoydModelWdObsFeatures : BoydModel {
 		if ( ((cast(BoydState)state).getLocation()[1]==0) && ((cast(BoydState)obState).getLocation()[1]==0) ) result[2] = 1;
 
 		if ( ((cast(BoydState)state).getLocation()[0]==0) && ((cast(BoydState)obState).getLocation()[0]==0) ) result[3] = 1;
+
+		if (cast(MoveForwardAction)action) result[4] = 1;
+
+		if (cast(TurnLeftAction)action)  result[5] = 1;
+
+		if ( ((cast(BoydState)state).getLocation()[1]==0) ) result[6] = 1;
+
+		if ( ((cast(BoydState)state).getLocation()[0]==0) ) result[7] = 1;
 
 		return result;
 
@@ -1112,6 +1126,31 @@ class BoydModelWdObsFeatures : BoydModel {
 
 	override public void setObsMod(double [StateAction][StateAction] newObsMod) {
 		obsMod = newObsMod;
+	}
+
+	override public StateAction noiseIntroduction(State s, Action a) {
+
+		State ss = s;
+		Action aa = a;
+		//// add meaningless noise: replace moveforward with turning ////
+
+		// single corrupted sa pair with one shared feature
+		//if (cast(MoveForwardAction)a && (cast(BoydState)s).getLocation()[1]==0) {
+		
+		// single corrupted sa pair with two shared features
+		//if (cast(MoveForwardAction)a && (cast(BoydState)s).getLocation()[1]==0
+		
+		// multiple corrupted sa pairs with two shared features
+		//	&& (cast(BoydState)s).getLocation()[0]==0) {
+		if ( cast(MoveForwardAction)a &&  ( (cast(BoydState)s).getLocation()[1]==0
+			|| (cast(BoydState)s).getLocation()[0]==0) ) {
+
+			// introduce faulty input
+			aa = new TurnLeftAction();
+			
+		}
+		return new StateAction(ss,aa);
+
 	}
 
 }
